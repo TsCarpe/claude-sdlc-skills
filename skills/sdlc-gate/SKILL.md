@@ -1,6 +1,6 @@
 ---
 name: sdlc-gate
-description: "评审关口：技术设计与测试用例定稿后的强制评审关口——4 个全新上下文子代理（3 角色预审 + 1 交叉审查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review、review-gate，或 req 确认后设计与用例并行产出完毕。用法：/sdlc-gate <需求名>"
+description: "评审关口：技术设计与测试用例定稿后的强制评审关口——4 个全新上下文子代理（3 角色预审 + 1 交叉审查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review、review-gate，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate <需求名>"
 ---
 
 # Review Gate（评审关口）
@@ -20,13 +20,13 @@ description: "评审关口：技术设计与测试用例定稿后的强制评审
 
 | 输入 | 来源 |
 |---|---|
-| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；轻量任务 = `sdlc/<需求名>/design.md`。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/req/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
+| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；轻量任务 = `sdlc/<需求名>/design.md`。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
 | 测试用例 | `sdlc/<需求名>/test/cases.md` |
-| CONTRACT 基准 | `sdlc/<需求名>/req/` 三件套（digest/audit/pm-checklist），缺失时回退原始 PRD 并注明 |
+| CONTRACT 基准 | `sdlc/<需求名>/intake/` 三件套（digest/audit/pm-checklist），缺失时回退原始 PRD 并注明 |
 
 ```text
 Review-gate 进度：
-- [ ] Step 1: 定位输入（设计 / 用例 / req 三件套），确认独立性（用例文件是否读过设计）
+- [ ] Step 1: 定位输入（设计 / 用例 / intake 三件套），确认独立性（用例文件是否读过设计）
 - [ ] Step 2: 扇出 4 个子代理预审（3 角色 + 交叉审查者）
 - [ ] Step 3: RECONCILE 过滤 → 汇总 issues 文件，状态置「待裁决」，🔒 暂停等人
 - [ ] Step 4: 逐条裁决（落改 / 驳回 / 存疑），驳回理由沉淀
@@ -68,14 +68,14 @@ explicitly that you cannot find any after thorough examination.
 审查角色：<角色名>，要点：<上表对应行>
 近期误报模式（这些方向曾被人工驳回，勿重复）：<从 false-positive-patterns.md 摘近期 3-5 条>
 ARTIFACT: <设计文档或用例文件内容>
-CONTRACT: <req 三件套相关章节>
+CONTRACT: <intake 三件套相关章节>
 ```
 
 ### 输出示例（角色 1-3，供生成子代理 prompt 时参考格式，不注入子代理上下文）
 
-> 输入：设计文档含「作品名称限 30 字以内」，req 规则清单未提名称长度
+> 输入：设计文档含「作品名称限 30 字以内」，需求规则清单未提名称长度
 > 输出：
-> - 标题：作品名称 30 字上限为设计单方拍板，req 规则清单无此约束
+> - 标题：作品名称 30 字上限为设计单方拍板，需求规则清单无此约束
 > - 原文：「作品名称限 30 字以内」
 > - 位置：design.md §2.3 字段口径
 > - 严重度：中
@@ -122,5 +122,5 @@ issues 文件的产物结构与填写规则以 [issue-template.md](references/is
 ## 通用纪律
 
 - 源码与数据库只读；写操作仅限 `sdlc/` 目录与本 skill 目录
-- 分歧三类动作：一→补用例；二→回查设计；三→**升级用户**回溯 req 假设清单 / PM 澄清，不得自行裁决口径
+- 分歧三类动作：一→补用例；二→回查设计；三→**升级用户**回溯需求假设清单 / PM 澄清，不得自行裁决口径
 - 术语统一：issue / 分歧 / 裁决 / 放行；角色名、状态名沿用 digest 口径

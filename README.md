@@ -2,9 +2,9 @@
 
 [![skills.sh](https://skills.sh/b/TsCarpe/claude-sdlc-skills)](https://skills.sh/TsCarpe/claude-sdlc-skills)
 
-**AI-native SDLC skills for Claude Code** (and other coding agents via [skills.sh](https://skills.sh)): five battle-tested skills that let AI take over the repetitive labor of requirement intake, review, testing and release auditing — while humans stay in charge at a few hard gates. Built and validated end-to-end on a real production Java project (a 57-issue review gate run, 74 test cases through browser execution). Docs are in Chinese; skills trigger on both Chinese and English phrases.
+**AI-native SDLC skills for Claude Code** (and other coding agents via [skills.sh](https://skills.sh)): five battle-tested skills that let AI take over the repetitive labor of requirement intake, test design, adversarial review, browser testing and release auditing — while humans stay in charge at a few hard gates. Built and validated end-to-end on a real production Java project (a 57-issue review gate run, 74 test cases through browser execution). Docs are in Chinese; skills trigger on both Chinese and English phrases.
 
-一套在真实 Java 项目跑通的 AI 原生 SDLC（软件开发生命周期）技能集：AI 承担梳理、评审、测试、审计的重复劳动，人只在关键关口裁决。不是玩具——每个 skill 都经过多轮真实需求迭代与官方 best-practices 复核。
+一套在真实 Java 项目跑通的 AI 原生 SDLC（软件开发生命周期）技能集：AI 承担梳理、用例、评审、测试、审计的重复劳动，人只在关键关口裁决。不是玩具——每个 skill 都经过多轮真实需求迭代与官方 best-practices 复核。
 
 ---
 
@@ -16,7 +16,7 @@
 flowchart LR
     A[PRD 输入] --> B[sdlc-intent<br/>梳理+体检]
     B --> C1[技术设计]
-    B -.互不阅读.-> C2[测试用例]
+    B -.互不阅读.-> C2[测试用例<br/>sdlc-test cases]
     C1 --> D[sdlc-gate<br/>4 子代理对抗评审]
     C2 --> D
     D --> E[人逐条裁决]
@@ -63,13 +63,13 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 - **触发**：「帮我梳理这个需求文档 \<链接或路径\>，完成后继续体检」（或 `/sdlc-intent`）
 - **输入**：PRD（飞书链接 / 本地 markdown，评论区一并读取）
-- **产物**：`sdlc/<需求名>/req/` 三件套——digest（梳理）/ audit（六层体检）/ pm-checklist（待澄清清单）
+- **产物**：`sdlc/<需求名>/intake/` 三件套——digest（梳理）/ audit（六层体检）/ pm-checklist（待澄清清单）
 - **依赖**：无必需（lark-cli 飞书集成为可选增强）
 
 ### sdlc-test — AI 测试编排
 
 - **触发**：「/sdlc-test cases \<需求名\>」「AI 测试」「生成测试用例」
-- **输入**：req 三件套（用例独立于设计推导）+ test 环境
+- **输入**：intake 三件套（用例独立于设计推导）+ test 环境
 - **产物**：cases.md（用例 + 缺陷跟踪权威文件）+ reports/\<日期\>-r\<N\>/（static、exec-log、report）
 - **依赖**：chrome-devtools / mysql / codegraph MCP（各带降级路径，缺失不炸）
 
@@ -110,11 +110,11 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 | 步 | 谁做 | 产物 |
 |---|---|---|
-| 1 需求梳理+体检 | sdlc-intent → 人确认口径 | req/ 三件套 |
+| 1 需求梳理+体检 | sdlc-intent → 人确认口径 | intake/ 三件套 |
 | 2 大需求规划 | 人逐行核对（确认点①②） | prd/design（[三段式](docs/large-req-playbook.md)） |
-| 3 设计与用例并行 | AI 两条独立路径 | design.md + cases.md |
+| 3 设计与用例并行 | sdlc-test cases 生成用例 ∥ 技术设计（互不阅读） | design.md + cases.md |
 | 4 评审关口 | sdlc-gate → **人逐条裁决** | issues 宽表 |
-| 5 AI 测试 | sdlc-test → **人过两道关卡** | cases + reports |
+| 5 AI 测试执行 | sdlc-test static/exec/report → **人过关卡2** | cases + reports |
 | 6 收尾沉淀 | 归档 + 教训回写 | 规范增量 |
 
 ## 大需求自顶向下拆分（流程方法论）
@@ -126,8 +126,8 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 ## 适用边界
 
-- **sdlc-test** 按「Java 后端 + MySQL + Element Plus 系前端」打磨；其他栈可用但交互姿势手册需自行沉淀
 - **sdlc-intent** 的飞书/评论区集成是可选增强，本地 markdown 输入完全等价
+- **sdlc-test** 按「Java 后端 + MySQL + Element Plus 系前端」打磨；其他栈可用但交互姿势手册需自行沉淀
 - **sdlc-gate** 的前提是设计与用例**独立产出**（用例不读设计）——用例读过设计时交叉审查退化为一致性检查，产物中会如实标注
 - 单人开发即可用 intent/doubt/config-review；gate/test 在有两份产物、有 test 环境时收益最大
 - 所有 skill 对 MCP 依赖均声明降级行为，缺失不炸（降级矩阵见 [docs/faq.md](docs/faq.md)）

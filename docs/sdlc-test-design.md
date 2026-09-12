@@ -2,7 +2,7 @@
 
 > 版本：v0.2（细化：工具选型论证 + 测试设计方法论 + skill 子命令化组织）
 > 日期：2026-09-02 定稿，2026-09-12 随开源整理（skill 现名 sdlc-test，文中 ai-test 为历史名）
-> 关联：[sdlc-test skill](../skills/sdlc-test/SKILL.md)、[workflow.md](workflow.md)（全流程叙述）、`sdlc/<需求名>/req/*`（需求梳理三件套，sdlc-intent 产出）
+> 关联：[sdlc-test skill](../skills/sdlc-test/SKILL.md)、[workflow.md](workflow.md)（全流程叙述）、`sdlc/<需求名>/intake/*`（需求梳理三件套，sdlc-intent 产出）
 
 ---
 
@@ -37,7 +37,7 @@
 ## 3. 总体架构：四阶段编排 + 两道人工关卡
 
 ```
-需求文档（sdlc/<需求名>/req/ 三件套优先）
+需求文档（sdlc/<需求名>/intake/ 三件套优先）
       │
       ▼ 阶段1 用例生成（信息摄入：需求文档 + YApi 契约 + CodeGraph 只读辅助）
 轻量用例 checklist → sdlc/<需求名>/test/cases.md
@@ -60,7 +60,7 @@
 
 - **输入**：需求文档路径 + 测试范围说明
 - **信息摄入**（只读，让用例更准）：
-  - `sdlc/<需求名>/req/` 需求梳理三件套（**首选输入源，优先于原始 PRD**）：梳理文档中的角色权限矩阵、状态机图、业务主流程图、规则口径清单是测试设计的直接输入；体检报告的疑似问题点直接转为重点用例；PM 清单已澄清的口径回填用例预期
+  - `sdlc/<需求名>/intake/` 需求梳理三件套（**首选输入源，优先于原始 PRD**）：梳理文档中的角色权限矩阵、状态机图、业务主流程图、规则口径清单是测试设计的直接输入；体检报告的疑似问题点直接转为重点用例；PM 清单已澄清的口径回填用例预期
   - YApi MCP：接口契约、出入参
   - CodeGraph MCP：定位相关 Controller/Service，理解系统实际行为
   - MySQL MCP（只读）：表结构、枚举值（等价类划分与边界值分析的依据）
@@ -117,7 +117,7 @@
 
 | 环节 | 工具 | 用途 |
 |---|---|---|
-| 需求摄入 | Read（sdlc/<需求名>/req/*） | 需求文档/梳理三件套 |
+| 需求摄入 | Read（sdlc/<需求名>/intake/*） | 需求文档/梳理三件套 |
 | 接口契约 | YApi MCP | 接口定义、出入参 |
 | 代码定位/理解 | CodeGraph MCP | 符号/调用链/影响面 |
 | 数据核验 | MySQL MCP（只读） | 表结构、落库校验 |
@@ -144,7 +144,7 @@ sdlc/
     accounts.local.md       # 角色 → 账号密码（gitignore，本机供给）
     repos.local.md          # 代码仓库本地路径（gitignore，本机供给）
   <需求名>/
-    req/                    # requirement-intake 三件套（digest/audit/pm-checklist）
+    intake/                 # sdlc-intent 三件套（digest/audit/pm-checklist）
     test/
       cases.md              # 用例 checklist
       reports/
@@ -210,7 +210,7 @@ skills/sdlc-test/
 
 | 阶段 | 内容 | 通过标准 |
 |---|---|---|
-| **M1 试点回测** | 拿已开发完的需求（sdlc/<需求名>/req/ 三件套现成、代码记忆新鲜）让 AI 全流程跑一遍 | 用已知结果校准 AI 检出率/误报率；产出 ≥1 用例 + ≥1 报告且人工复验可执行 |
+| **M1 试点回测** | 拿已开发完的需求（sdlc/<需求名>/intake/ 三件套现成、代码记忆新鲜）让 AI 全流程跑一遍 | 用已知结果校准 AI 检出率/误报率；产出 ≥1 用例 + ≥1 报告且人工复验可执行 |
 | **M2 新需求实测** | 下一个真实提测需求双轨跑（AI + 人工并行一轮，对比后评估单轨） | 双轨结果对比可接受 |
 | **M3 回归复用与演进** | 存量用例回归复跑常态化；高频用例沉降 Playwright 脚本；评估定时/事件触发 | 回归成本显著下降 |
 
@@ -230,6 +230,6 @@ skills/sdlc-test/
 | D8 | 执行编排 = 静态代码检测先于前端功能测试；能力沉淀为独立 skill（现名 sdlc-test，历史名 ai-test） |
 | D9 | 浏览器执行以 chrome-devtools MCP 为主（唯一具备网络请求 + console 回读）；Playwright 仅降级兜底 |
 | D10 | 不引入 gitnexus / 独立浏览器智能体框架 / 商用测试 SaaS（否决记录见 §3.6） |
-| D11 | 用例生成强制结构化设计技术（等价类/边界值/判定表/状态迁移/场景法/错误推测）+ 规则条目双向追踪；输入源优先 sdlc/<需求名>/req/ 三件套而非原始 PRD |
+| D11 | 用例生成强制结构化设计技术（等价类/边界值/判定表/状态迁移/场景法/错误推测）+ 规则条目双向追踪；输入源优先 sdlc/<需求名>/intake/ 三件套而非原始 PRD |
 | D12 | skill 组织 = 主 skill 子命令分阶段（cases/static/exec/report）独立可重入；进度与关卡状态持久化在用例文件头部 |
 | D13 | 判定证据 = 三方（页面/接口/落库）为主 + console 异常补充；造数只走前端页面，禁改库 |

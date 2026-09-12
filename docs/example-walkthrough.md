@@ -8,7 +8,7 @@
 
 ## 步骤 1：需求梳理 + 体检（sdlc-intent）
 
-产出 `sdlc/<需求名>/req/` 三件套。digest 头部长这样（注意评论区必读与版本锚点）：
+产出 `sdlc/<需求名>/intake/` 三件套。digest 头部长这样（注意评论区必读与版本锚点）：
 
 ```markdown
 # 区域评选活动 需求梳理
@@ -137,7 +137,7 @@ exec 逐用例「操作 → 等待稳定 → 页面/接口/落库/console 四类
 sdlc/
 ├── env/                          # 环境配置层（test.md/ui-recipe.md 入库；账号等 *.local.md gitignore）
 └── 区域评选活动/                  # 一需求一目录
-    ├── req/                      # digest / audit / pm-checklist（sdlc-intent 产出）
+    ├── intake/                   # digest / audit / pm-checklist（sdlc-intent 产出）
     ├── review/                   # issues-<日期>.md（sdlc-gate 产出）
     ├── test/                     # cases.md（用例+缺陷跟踪权威文件）+ reports/<日期>-r<N>/（sdlc-test 产出）
     └── dev/                      # 轻量设计方案（可选）

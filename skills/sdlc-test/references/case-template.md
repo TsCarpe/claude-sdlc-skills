@@ -5,7 +5,7 @@
 ```markdown
 # <需求名> 测试用例
 
-> 需求来源：sdlc/<需求名>/req/digest-<日期>.md（及体检/PM 清单）
+> 需求来源：sdlc/<需求名>/intake/digest-<日期>.md（及体检/PM 清单）
 > 生成日期：YYYY-MM-DD
 > ID 体系：本文件产出 用例.TC-xx、缺陷.BUG-xx；引用他产物条目须带命名空间（需求.FR-03 / 体检.P04 / 设计.D11）
 

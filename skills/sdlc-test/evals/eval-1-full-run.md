@@ -3,12 +3,12 @@
 ## 输入
 
 - query 依次：「/sdlc-test cases <需求名>」→ 用户审核用例并确认 → 「/sdlc-test static <需求名>」→ 「/sdlc-test exec <需求名>」→ 「/sdlc-test report <需求名>」
-- 前置：`sdlc/<需求名>/req/digest-*.md` 三件套存在；`sdlc/env/` 与账号文件已就绪
+- 前置：`sdlc/<需求名>/intake/digest-*.md` 三件套存在；`sdlc/env/` 与账号文件已就绪
 - 真实场景：M1 试点 = 首个真实落地项目（唯一未验证环节）
 
 ## expected_behavior
 
-- [ ] cases：输入优先 sdlc/<需求名>/req/ 三件套；用例标注六种设计技术；填双向追踪表，未覆盖条目显式列出
+- [ ] cases：输入优先 sdlc/<需求名>/intake/ 三件套；用例标注六种设计技术；填双向追踪表，未覆盖条目显式列出
 - [ ] cases 完成后 🔒 关卡1：暂停等人工审核，用例文件头部审核状态改为「已确认（日期）」后才继续
 - [ ] static：从梳理文档「关键规则与口径」逐条提取规则并标注检测端；结论三态留档本轮目录 static.md
 - [ ] static ⚠️ 项写入用例文件「重点验证项」，exec 优先执行

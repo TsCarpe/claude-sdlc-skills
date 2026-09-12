@@ -85,7 +85,7 @@ flowchart TB
 
 | 阶段 | 工具与关口 | 人工确认点 | 产物 |
 |---|---|---|---|
-| 1. 接收与梳理体检 | sdlc-intent：梳理（含流程图/状态机）→ 六层体检；评论区必读 | 梳理产物落盘后暂停 | req/ 三件套：digest（需求摘要）/ audit（缺陷体检报告）/ pm-checklist（待 PM 澄清清单） |
+| 1. 接收与梳理体检 | sdlc-intent：梳理（含流程图/状态机）→ 六层体检；评论区必读 | 梳理产物落盘后暂停 | intake/ 三件套：digest（需求摘要）/ audit（缺陷体检报告）/ pm-checklist（待 PM 澄清清单） |
 | 2. 规划（金字塔顶层） | 业务主线串联（角色×状态×功能点）→ 功能点从主线推导 → ER 后置；Q 表硬阻塞 | **确认点①** 逐行核对 | parent prd.md + design.md 上半（ER） |
 | 3. 评审（关口） | 技术设计与测试用例并行独立产出 → sdlc-gate 四子代理 + RECONCILE（对账过滤，剔除误报） | **逐条裁决**（分歧类必须人拍板）；**确认点②** D 表必答八类别齐套 | review/issues-日期.md（宽表含原文摘引+裁决列） |
 | 4. 切片开发（金字塔中/底层） | 骨架 child 先行、child prd 内联瘦身；或轻量任务主会话直做 | **确认点③** child prd 评审后才开发 | child prd、代码变更 |
@@ -93,7 +93,7 @@ flowchart TB
 | 6. AI 测试 | sdlc-test：cases → static（用例↔代码比对）→ exec（浏览器）→ report | **🔒关卡1** 用例审核；**🔒关卡2** 报告复验 | cases.md、reports/ |
 | 7. 收尾沉淀 | 归档 + 教训回写判断 + 文档同步 | — | 归档任务、规范增量、文档 |
 
-产物目录约定：每需求一目录 `sdlc/<需求名>/`（req / review / test / dev 四子目录），环境配置集中 `sdlc/env/`（账号等本机敏感文件 gitignore）。
+产物目录约定：每需求一目录 `sdlc/<需求名>/`（intake / review / test / dev 四子目录），环境配置集中 `sdlc/env/`（账号等本机敏感文件 gitignore）。
 
 ## 4. 支撑资产：四层结构
 
@@ -111,7 +111,7 @@ flowchart TB
 | | sdlc-gate | 评审关口：4 个全新上下文子代理互查设计与用例 | 📦 | 自创 |
 | | sdlc-doubt | 非平凡决策剥离结论，交全新上下文审查者「找问题」 | 📦 | skills→D2 决策 |
 | | sdlc-config-review | 发版前扫描 diff 提取三类配置 Key | 📦 | 自创 |
-| **产物层** | sdlc/<需求名>/ | 每需求一目录：req 三件套 / review issues / test cases+reports | 📦（约定随 skill） | playbook+自创 |
+| **产物层** | sdlc/<需求名>/ | 每需求一目录：intake 三件套 / review issues / test cases+reports | 📦（约定随 skill） | playbook+自创 |
 | | 决策记录 / 开发日志 / 统一 ID 体系 | 决策 ADR / 日志 / 跨产物「命名空间.编号」引用不断链 | 🏠 | bp+自创 |
 
 ## 5. AI 与人的分工与平衡

@@ -9,7 +9,7 @@
 ## <需求名> — 本期 <期号/版本>
 
 > **输入源锚点**（承接的需求梳理产物与外部基线，口径漂移时以此判断是否回溯）：
-> - digest / audit / pm-checklist：`sdlc/<需求名>/req/xxx-<日期>.md`（由 sdlc-intent 产出）
+> - digest / audit / pm-checklist：`sdlc/<需求名>/intake/xxx-<日期>.md`（由 sdlc-intent 产出）
 > - 外部基线（ER/状态 puml 等）：`doc/<版本>/xxx.puml`（定稿日期）
 > - 跨产物引用统一 `命名空间.编号`（需求.FR-xx / 需求.A-xx / 体检.P-xx / 功能.F-xx / 确认.Q-xx / 设计.D-xx），禁止裸写他产物编号
 
