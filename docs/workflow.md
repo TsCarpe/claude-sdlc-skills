@@ -107,10 +107,10 @@ flowchart TB
 | | 混合工作模式 | 轻量任务主会话直做、复杂任务分发子代理 | 🏠 | 自创 |
 | | 人工确认点体系 | 确认点①②③ + 评审逐条裁决 + 测试两道关卡 | 📦 | playbook+O |
 | **技能层** | sdlc-intent | 需求接收两段式：梳理 8 区块 → 六层缺陷体检 | 📦 | playbook+自创 |
-| | sdlc-gate | 评审关口：4 个全新上下文子代理互查设计与用例 | 📦 | 自创 |
 | | sdlc-test | AI 测试四阶段编排，子命令独立可重跑 | 📦 | 自创 |
-| | sdlc-config-review | 发版前扫描 diff 提取三类配置 Key | 📦 | 自创 |
+| | sdlc-gate | 评审关口：4 个全新上下文子代理互查设计与用例 | 📦 | 自创 |
 | | sdlc-doubt | 非平凡决策剥离结论，交全新上下文审查者「找问题」 | 📦 | skills→D2 决策 |
+| | sdlc-config-review | 发版前扫描 diff 提取三类配置 Key | 📦 | 自创 |
 | **产物层** | sdlc/<需求名>/ | 每需求一目录：req 三件套 / review issues / test cases+reports | 📦（约定随 skill） | playbook+自创 |
 | | 决策记录 / 开发日志 / 统一 ID 体系 | 决策 ADR / 日志 / 跨产物「命名空间.编号」引用不断链 | 🏠 | bp+自创 |
 

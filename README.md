@@ -49,13 +49,50 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 ## Skill 矩阵
 
-| skill | 一句话职责 | 触发例句 | 输入 | 产物 | 外部依赖 |
-|---|---|---|---|---|---|
-| [sdlc-intent](skills/sdlc-intent/SKILL.md) | 需求两段式接收：梳理成结构化共识 → 六层缺陷体检 | 「帮我梳理这个需求文档…完成后继续体检」 | PRD（飞书/本地文件） | `sdlc/<需求名>/req/` 三件套（digest/audit/pm-checklist） | 无必需（lark-cli 飞书集成可选） |
-| [sdlc-gate](skills/sdlc-gate/SKILL.md) | 评审关口：设计与用例并行独立产出后，4 个全新上下文子代理互查，人工逐条裁决 | 「/sdlc-gate <需求名>」「评审关口」 | design.md + cases.md | `review/issues-<日期>.md` 宽表 | 无硬依赖（mysql MCP 只读核对可选） |
-| [sdlc-test](skills/sdlc-test/SKILL.md) | AI 测试四阶段：用例生成 → 静态比对 → 浏览器执行 → 报告，两道人工关卡 | 「/sdlc-test cases <需求名>」「AI 测试」 | req 三件套 + test 环境 | cases.md + reports/ | chrome-devtools/mysql/codegraph MCP（各带降级） |
-| [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 对刚做出的非平凡决策发起对抗式复查：剥离结论，交全新上下文找问题 | 「这个判断我不放心，帮我质疑一下」 | 决策（代码 diff/design 片段/SQL） | 会话内五步闭环结论 | 无 |
-| [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 发版前扫描分支 diff，提取需要配置中心注入的 Key 清单 | 「梳理上线配置清单」 | git diff | Apollo/Nacos 新增 Key 清单 | 无（git 即可） |
+按生命周期排序（旁路机制列最后）：
+
+| skill | 在哪个阶段用 | 一句话职责 |
+|---|---|---|
+| [sdlc-intent](skills/sdlc-intent/SKILL.md) | 需求进来时 | 两段式接收：梳理成结构化共识 → 六层缺陷体检 |
+| [sdlc-test](skills/sdlc-test/SKILL.md) | 用例与测试期 | 四阶段：用例生成 → 静态比对 → 浏览器执行 → 报告，两道人工关卡 |
+| [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计 + 用例定稿后 | 4 个全新上下文子代理互查设计与用例，人工逐条裁决放行 |
+| [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 对刚做的非平凡决策发起对抗式复查 |
+| [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 扫描分支 diff 提取配置中心 Key 清单 |
+
+### sdlc-intent — 需求梳理 + 体检
+
+- **触发**：「帮我梳理这个需求文档 \<链接或路径\>，完成后继续体检」（或 `/sdlc-intent`）
+- **输入**：PRD（飞书链接 / 本地 markdown，评论区一并读取）
+- **产物**：`sdlc/<需求名>/req/` 三件套——digest（梳理）/ audit（六层体检）/ pm-checklist（待澄清清单）
+- **依赖**：无必需（lark-cli 飞书集成为可选增强）
+
+### sdlc-test — AI 测试编排
+
+- **触发**：「/sdlc-test cases \<需求名\>」「AI 测试」「生成测试用例」
+- **输入**：req 三件套（用例独立于设计推导）+ test 环境
+- **产物**：cases.md（用例 + 缺陷跟踪权威文件）+ reports/\<日期\>-r\<N\>/（static、exec-log、report）
+- **依赖**：chrome-devtools / mysql / codegraph MCP（各带降级路径，缺失不炸）
+
+### sdlc-gate — 评审关口
+
+- **触发**：「/sdlc-gate \<需求名\>」「评审关口」「设计评审」
+- **输入**：design.md + cases.md（两者须独立产出）
+- **产物**：`review/issues-<日期>.md` 宽表（原文摘引 + 裁决列），放行后解锁开发与测试执行
+- **依赖**：无硬依赖（mysql MCP 只读核对可选；项目规范目录缺失自动降级）
+
+### sdlc-doubt — 决策对抗复查
+
+- **触发**：「这个判断我不放心，帮我质疑一下」「doubt-review」
+- **输入**：刚做出的决策（代码 diff / design 片段 / 复杂 SQL）
+- **产物**：会话内五步闭环结论（CLAIM → EXTRACT → DOUBT → RECONCILE → STOP）
+- **依赖**：无
+
+### sdlc-config-review — 发版配置审计
+
+- **触发**：「梳理上线配置清单」「config review」
+- **输入**：当前分支相对 master/main 的 Java 代码 diff
+- **产物**：Apollo/Nacos 新增 Key 清单（表格 + 可复制纯文本块）
+- **依赖**：无（git 即可）
 
 ## 渐进采用阶梯
 

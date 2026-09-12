@@ -18,8 +18,8 @@
       "strict": false,
       "skills": [
         "./skills/sdlc-intent",
-        "./skills/sdlc-gate",
         "./skills/sdlc-test",
+        "./skills/sdlc-gate",
         "./skills/sdlc-doubt",
         "./skills/sdlc-config-review"
       ]

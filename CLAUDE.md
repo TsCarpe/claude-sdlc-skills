@@ -5,7 +5,7 @@
 ## 仓库结构
 
 ```
-skills/<name>/SKILL.md        # 5 个 skill（sdlc-intent/gate/test/doubt/config-review）
+skills/<name>/SKILL.md        # 5 个 skill（按生命周期序：sdlc-intent/test/gate/doubt/config-review）
   references/                  # skill 的详细参考文档（模板/维度表/姿势手册），SKILL.md 只留精瘦主干+指针
   evals/                       # 评估场景（输入 + expected_behavior 勾选清单）
 templates/                     # 大需求三段式产物模板（stage1/2/3），与 docs/large-req-playbook.md 配套
