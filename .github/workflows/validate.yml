@@ -1,0 +1,42 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: marketplace.json 合法性
+        run: python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
+
+      - name: 每个 skill 目录有合法 frontmatter name（kebab-case）
+        run: |
+          fail=0
+          for f in skills/*/SKILL.md; do
+            name=$(awk '/^name:/{sub(/^name:[ ]*/,""); print; exit}' "$f")
+            if [ -z "$name" ] || ! echo "$name" | grep -Eq '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+              echo "非法 name: $f -> '$name'"; fail=1
+            fi
+          done
+          exit $fail
+
+      - name: marketplace.json skills 数组与 skills/ 目录一致
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          m = json.load(open('.claude-plugin/marketplace.json'))
+          declared = {os.path.basename(p) for p in m['plugins'][0]['skills']}
+          actual = {d for d in os.listdir('skills') if os.path.isdir(f'skills/{d}')}
+          assert declared == actual, f"不一致: 仅在json={declared-actual} 仅在目录={actual-declared}"
+          print(f"OK: {len(declared)} skills 一致")
+          EOF
+
+      - name: 敏感词防回归（应零命中）
+        run: |
+          ! rg -i "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . \
+            --glob '!.git' --glob '!CHANGELOG.md' --glob '!CLAUDE.md' --glob '!.github/**'

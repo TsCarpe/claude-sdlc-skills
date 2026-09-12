@@ -1,0 +1,28 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-sdlc-skills",
+  "description": "AI-native SDLC skills for Claude Code and other coding agents: requirement intake & audit, adversarial review gate, AI test orchestration, in-flight decision review, release config audit.",
+  "owner": {
+    "name": "TsCarpe"
+  },
+  "plugins": [
+    {
+      "name": "claude-sdlc-skills",
+      "description": "Five battle-tested SDLC skills: sdlc-intent (PRD digest + six-layer audit), sdlc-gate (fresh-context review gate with 4 adversarial subagents), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos).",
+      "author": {
+        "name": "TsCarpe"
+      },
+      "category": "development",
+      "keywords": ["sdlc", "code-review", "testing", "requirement", "agent-skills"],
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/sdlc-intent",
+        "./skills/sdlc-gate",
+        "./skills/sdlc-test",
+        "./skills/sdlc-doubt",
+        "./skills/sdlc-config-review"
+      ]
+    }
+  ]
+}
