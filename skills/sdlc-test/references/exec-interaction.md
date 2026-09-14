@@ -26,7 +26,26 @@
 
 ## 证据采集
 
-- 判定证据三连在同一条消息并行发出：take_screenshot + list_network_requests + list_console_messages
+- 判定证据三连在同一条消息并行发出：take_screenshot + get/list_network_requests + list_console_messages
+- **接口响应定向获取**：已知目标请求 URL 时直接 `get_network_request` 按 URL/请求 ID 取响应；`list_network_requests` 仅在定位不到目标请求时使用（全量列表是 token 大头）
+- **截图先落盘后查看**：take_screenshot 落本轮 screenshots/ 即算采集完成；仅展示类断言或异常疑点时 Read 查看，其余情况不以图片进上下文为默认
+
+## 表单推进与静默拦截排障（2026-09-13 R2 沉淀）
+
+点「下一步/提交」无反应时按以下顺序排查（按命中率排序，禁止跳步乱猜）：
+
+1. **空必填项优先**：静默拦截的第一大原因是隐藏的空必填（如奖项名额默认空、介绍未填）——表单对空必填可能**不显示任何错误提示**、按钮也不报错。逐项读输入值与计数器（`0/100` 类），空值补齐后重试
+2. **toast 抓取**：提示文案是瞬态（~1.5s 消失），动作前先挂 MutationObserver 缓冲（evaluate_script 同步执行），动作+等待后立即读取：
+   ```js
+   // 挂（动作前）
+   window.__toasts=[];const o=new MutationObserver(()=>{[...document.querySelectorAll('.el-message__content')].forEach(m=>{if(!window.__toasts.includes(m.textContent.trim()))window.__toasts.push(m.textContent.trim())})});o.observe(document.body,{childList:true,subtree:true});window.__obs=o;
+   // 读（动作后，读完断开）
+   window.__obs.disconnect();JSON.stringify(window.__toasts)
+   ```
+   表单行内错误用 `.el-form-item__error` 查（常驻不消失，可直接读）
+3. **网络层**：确认校验/保存请求是否真的发出、请求体是否符合预期（`get_network_request` 按 URL 定向）
+
+配套纪律——**步骤推进「动作+验证」配对**：点下一步后立即验证当前步骤（步骤标题/区块特征文本，如"审核步骤/评分标准"），验证不过先原地排查，不带病前进（否则后续断言全部作废）。注意步骤标题的匹配文本要从快照取实词，不要凭用例措辞猜（如步骤二标题是"比赛介绍"还是"介绍内容"以页面为准）。
 
 ## 失败归因
 

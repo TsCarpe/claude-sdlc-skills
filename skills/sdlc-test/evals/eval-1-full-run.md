@@ -4,7 +4,7 @@
 
 - query 依次：「/sdlc-test cases <需求名>」→ 用户审核用例并确认 → 「/sdlc-test static <需求名>」→ 「/sdlc-test exec <需求名>」→ 「/sdlc-test report <需求名>」
 - 前置：`sdlc/<需求名>/intake/digest-*.md` 三件套存在；`sdlc/env/` 与账号文件已就绪
-- 真实场景：M1 试点 = 首个真实落地项目（唯一未验证环节）
+- 真实场景：比赛需求已实测 cases/static/exec/spec（2026-09-10~14）；report 及全流程串联的完整首跑仍待 M1 试点
 
 ## expected_behavior
 

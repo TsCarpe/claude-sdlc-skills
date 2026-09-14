@@ -49,6 +49,24 @@
 | frontend | /path/to/<frontend-repo> | codegraph ✅／无（降级 grep+读文件） |
 ```
 
+## 回归档 Playwright runner（标准布局 2026-09-14 试点定型）
+
+```text
+sdlc/
+├── package.json          # @playwright/test（版本锁定）——必须在 sdlc 根
+├── playwright.config.ts  # testDir:'.'、channel:'chrome'（系统 Chrome 零下载）、workers:1、storageState/outputDir 以 __dirname 绝对化
+├── node_modules/         # 依赖必须装 sdlc 根：装在 env/runner/ 子目录时 specs 模块解析会命中项目根另一份库 → 双树冲突
+└── env/runner/
+    ├── capture-login.mjs     # 登录态采集：node capture-login.mjs —— 弹 Chrome 用户辅助登录，自动检测鉴权键并保存（勿用 codegen）
+    ├── browser-state.json    # 登录态（含会话凭据，.gitignore 强制；失效表现=runner 重定向「欢迎登录」）
+    ├── spike.spec.ts         # runner 健康检查（登录态+环境连通）
+    └── test-results/         # 失败留痕（error-context.md 含 ARIA 快照 / trace.zip / 截图）
+```
+
+- 调用（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
+- 首建参考（edu-region 实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
+- 详见 skill `references/spec-guide.md`（含 EP spec 姿势表）
+
 ## sdlc/env/ui-recipe.md（环境配方，入库口径同 test.md）
 
 （exec 首跑侦察后按本模板沉淀，跨需求复用；组件库通用交互姿势不在本文件——见 SKILL.md 引用的交互姿势手册 exec-interaction.md，此处只记项目特有内容）
@@ -76,6 +94,6 @@
 
 ## 纪律
 
-- `accounts.local.md`、`repos.local.md` 必须加入 `.gitignore`（含 `sdlc/env/*.local.md`）
-- 前置数据一律通过前端页面构造，禁止直接改库
+- `accounts.local.md`、`repos.local.md` 必须加入 `.gitignore`（含 `sdlc/env/*.local.md`）；`runner/browser-state.json` 含会话凭据同样必须 gitignore
+- 前置数据：探索档通过前端页面构造；spec 档允许 API 直调（走后端完整校验）；**任何档禁止直接改库**
 - ui-recipe.md 只记项目特有内容，通用姿势回写交互姿势手册，不放本文件
