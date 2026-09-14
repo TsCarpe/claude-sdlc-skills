@@ -150,8 +150,8 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 版本兼容：已在 Claude Code + skills CLI（2026-09 版）验证；skill 遵循 Agent Skills 开放标准，其他兼容 agent（Cursor 等）经 skills.sh 亦可安装。
 
 
-## Acknowledgements
+## Community
 
-Inspired and supported by the LINUX DO community.
+Thanks to the discussions and feedback from the LINUX DO community.
 
-- https://linux.do
+https://linux.do
