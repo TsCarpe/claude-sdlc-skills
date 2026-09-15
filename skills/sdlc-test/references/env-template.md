@@ -65,11 +65,11 @@ sdlc/
 
 - 调用（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
 - 首建参考（edu-region 实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
-- 详见 skill `references/spec-guide.md`（含 EP spec 姿势表）
+- 详见 skill `references/spec/spec-guide.md`（含 EP spec 姿势表）
 
 ## sdlc/env/ui-recipe.md（环境配方，入库口径同 test.md）
 
-（exec 首跑侦察后按本模板沉淀，跨需求复用；组件库通用交互姿势不在本文件——见 SKILL.md 引用的交互姿势手册 exec-interaction.md，此处只记项目特有内容）
+（exec 首跑侦察后按本模板沉淀，跨需求复用；组件库通用交互姿势不在本文件——见 SKILL.md 引用的交互姿势手册 references/exec/exec-interaction.md，此处只记项目特有内容）
 
 ```markdown
 # <项目> UI 环境配方

@@ -28,7 +28,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 - **回归轮（r2+）默认范围**：
   - static：只复检上轮 ⚠️ 疑似偏差与 ❓ 未确认项（代码已变），增量留档；`--all` 全量重比
   - exec：只重跑上轮失败/疑似/阻塞用例 + 缺陷跟踪表未闭环项（状态≠已修复验证）关联用例；`--all` 全量重跑。存在 specs/ 时回归轮分两步（见阶段3「回归轮两步」）：已资产化用例先跑 runner，其余走 agent 执行
-- **用例文件是当前状态快照**：「结果」列只反映最新轮次，格式 `通过（R2）`；历史判定在各轮 exec-log 留档
+- **用例文件是当前状态快照**：「结果」字段（新格式=用例总览结果列；存量表格文件=结果列）只反映最新轮次，格式 `通过（R2）`；历史判定在各轮 exec-log 留档
 - **缺陷生命周期只在用例文件「缺陷跟踪」表维护**：新失败登记 BUG-xx，回归通过后更新状态/修复轮次；各轮 report 的缺陷清单摘引该表当轮切片
 
 **关卡强制**：执行 `static`/`exec` 前读用例文件头部，`审核状态 ≠ 已确认` 时拒绝并提示用户先完成关卡1（人工审核用例后，将头部状态改为 `已确认（日期）`，或让用户口头确认后代改）。若 `sdlc/<需求名>/review/` 存在，关卡1 以 sdlc-gate 状态为准：`评审状态 = 已放行` 视同关卡1 通过（代改时引用 issues 文件），`≠ 已放行` 时拒绝并提示先完成 sdlc-gate 裁决；review 目录不存在则维持本条原行为。
@@ -41,13 +41,13 @@ Cases 进度：
 - [ ] 信息摄入（梳理文档/YApi/CodeGraph/MySQL 只读）
 - [ ] 按六种设计技术生成用例并标注技术
 - [ ] 填双向追踪表，未覆盖条目显式列出
-- [ ] 写 sdlc/<需求名>/test/cases.md（模板：references/case-template.md）
+- [ ] 写 sdlc/<需求名>/test/cases.md（模板：references/cases/case-template.md）
 - [ ] 🔒 关卡1：暂停等人审核
 ```
 
 - 输入优先级：`sdlc/<需求名>/intake/digest-*.md` 三件套 > 原始需求文档。梳理文档的角色权限矩阵、状态机图、流程图、规则口径清单是设计直接输入；体检报告疑似问题转重点用例；PM 清单已澄清口径回填预期
 - **独立性纪律（红线）**：生成过程禁止读技术设计文档（`sdlc/<需求名>/design.md`、任务系统/协作工具中的设计文档等）——用例必须与设计从 intake 三件套独立推导，sdlc-gate 交叉审查才有价值。用户坚持要读时先说明后果并征得明确确认，且在 cases.md 头部注明「已读设计，交叉独立性破坏」
-- 设计技术清单与生成规则见 `references/design-techniques.md`，必须先读
+- 设计技术清单与生成规则见 `references/cases/design-techniques.md`，必须先读
 - 关卡1 措辞：「用例已生成于 <路径>，请审核；确认后我继续，需修改请直接说」。迭代直至用户确认，然后把头部 `审核状态` 改为 `已确认（日期）`
 
 ## 阶段2 static：静态代码检测（前后端）
@@ -55,27 +55,27 @@ Cases 进度：
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
 2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（三件套缺失时回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
 3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则降级定向 grep + 读文件，结果注明证据降级
-4. 按 `references/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ ❓静态无法确认
+4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ ❓静态无法确认
 5. ⚠️ 项写入用例文件「重点验证项」区块，阶段3 优先执行；重大偏差立即报告用户
 
 ## 阶段3 exec：前端功能测试
 
-> 执行≠验证：跑通创建流程≠验证了业务规则；页面表现正常≠无缺陷（接口/落库/console 必查）；用例预期与实现冲突时**禁止静默按实现校正**。首次执行参考 `references/exec-example.md` 完整范例
+> 执行≠验证：跑通创建流程≠验证了业务规则；页面表现正常≠无缺陷（接口/落库/console 必查）；用例预期与实现冲突时**禁止静默按实现校正**。首次执行参考 `references/exec/exec-example.md` 完整范例
 
 ```text
 Exec 进度：
 - [ ] 读 sdlc/env/test.md 与 accounts.local.md（缺失则按 references/env-template.md 引导创建）
 - [ ] 前置健康检查：chrome-devtools:list_pages 确认浏览器/页面存活、目标路由可达、MySQL 连通（SELECT 1）、上传目录就绪；读 sdlc/env/ui-recipe.md（无则首条用例侦察后按 env-template 沉淀）
 - [ ] 读用例头部进度，确定本轮目录与用例范围（--from TC-xx 断点续跑；回归轮默认重跑上轮失败/疑似/阻塞+缺陷未闭环项；--all 全量）；回归轮且存在 specs/ 时先走 runner 批量回归（见下「回归轮两步」）
-- [ ] 按 `references/exec-dispatch.md` 切批派发子 agent（每批 3-5 条，批间串行；证据采集/判定/exec-log 留档在子 agent 上下文完成）
-- [ ] 每批回传后：主 agent 按压缩结论回填 cases.md（结果列 + 缺陷跟踪表 + 头部进度）；P0 缺陷立即快报
+- [ ] 按 `references/exec/exec-dispatch.md` 切批派发子 agent（每批 3-5 条，批间串行；证据采集/判定/exec-log 留档在子 agent 上下文完成）
+- [ ] 每批回传后：主 agent 按压缩结论回填 cases.md（结果字段 + 证据摘要 + 缺陷跟踪表 + 头部进度——新格式：总览表结果列与 TC 小节证据行；存量表格：结果列与证据列）；P0 缺陷立即快报
 - [ ] 全部完成，更新用例头部阶段进度
 ```
 
-- **派发执行**：主 agent 不在自身上下文逐用例操作浏览器；按 exec-dispatch.md 组装自包含 prompt（批内用例原文 + 红线原文 + 最小挂载姿势），子 agent 完成侦察/执行/四类证据/截图查看/exec-log 留档，只回传每用例一行压缩结论。本节全部纪律与反合理化表**对子 agent 同样强制**，回传里禁止出现截图/报文/快照原文
-- **回归轮两步（存在 specs/ 时）**：① 以绝对路径形态跑 runner：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`（禁 `cd`+`npx` 形态，cwd 无关——详见 spec-guide「runner 执行纪律」）——绿色项直接回填 cases.md，红色项按 `references/spec-guide.md`「失败三向」诊断（trace/截图在 runner test-results/）；② 其余范围（新用例/失败现场/无 spec 用例）照常按 exec-dispatch 派发。登录态重采（capture-login.mjs）、DB 抽查衔接见 spec-guide
+- **派发执行**：主 agent 不在自身上下文逐用例操作浏览器；按 exec-dispatch.md 组装自包含 prompt（批内用例条目原文 + 红线原文 + 最小挂载姿势），子 agent 完成侦察/执行/四类证据/截图查看/exec-log 留档，只回传每用例一行压缩结论。本节全部纪律与反合理化表**对子 agent 同样强制**，回传里禁止出现截图/报文/快照原文
+- **回归轮两步（存在 specs/ 时）**：① 以绝对路径形态跑 runner：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`（禁 `cd`+`npx` 形态，cwd 无关——详见 spec-guide「runner 执行纪律」）——绿色项直接回填 cases.md，红色项按 `references/spec/spec-guide.md`「失败三向」诊断（trace/截图在 runner test-results/）；② 其余范围（新用例/失败现场/无 spec 用例）照常按 exec-dispatch 派发。登录态重采（capture-login.mjs）、DB 抽查衔接见 spec-guide
 - 登录：test 环境账号密码直登（账号在 `sdlc/env/accounts.local.md`，gitignored）
-- **交互姿势**：浏览器/数据库操作按 `references/exec-interaction.md` 执行（浮层失明降级、日期键盘路径、evaluate 同步返回等）；新控件姿势 ≤3 次试错后回写该手册
+- **交互姿势**：浏览器/数据库操作按 `references/exec/exec-interaction.md` 执行（浮层失明降级、日期键盘路径、evaluate 同步返回等）；新控件姿势 ≤3 次试错后回写该手册
 - **分组合并执行**：同 G-xx 组（见用例文件「执行分组」区块）拦截类用例在同一表单会话内连续验证（改字段→断言→复原），每条用例仍独立留档判定；涉及提交/落库的用例不合并
 - **落库断言前置**：表结构/列名以本轮 static.md 为准；bigint 主键按 exec-interaction 规范用业务键定位（JSON 往返舍入）
 - **等待稳定再取证**：操作后先等页面稳定（`chrome-devtools:wait_for` 目标文本/元素出现，或确认对应网络请求已完成）再采集证据——禁止轮询 take_snapshot 等稳定——防抢跑拿到 loading 骨架误判"功能缺失"；等待超时本身是证据，写入备注
@@ -84,7 +84,7 @@ Exec 进度：
 - **口径冲突三去向**：用例预期模型与实现不符（如时间链模型、快照口径）时，先以需求/拍板口径判定——实现偏离=登记 BUG-xx；需求未定=转 Q 待用户裁决；用例写错=修用例并在 exec-log 留档；仅确认实现正确后才按实际口径校正预期
 - 截图：`chrome-devtools:take_screenshot` 一律先落本轮目录 `screenshots/`；仅展示类断言或异常疑点时 Read 查看（查看发生在子 agent 上下文，主上下文不加载图片）
 - **疑似偶发失败 retry-once**：失败先按 exec-interaction 失败归因排查姿势/等待问题；疑似偶发/环境性失败单条重跑一次，两次一致才定论，不一致标 `flake疑似` 不登记 BUG（详见 exec-dispatch.md「anti-flake」）
-- **留档**：按 `references/exec-log-template.md` 逐用例写 `exec-log.md`（判定+证据引用+备注），当日志而非汇总写——每用例一段，执行完立即追加；备注除偏差外，执行中任何让你停顿的观察（文案/交互/性能/意外行为）都记录，不预筛"是不是缺陷"
+- **留档**：按 `references/exec/exec-log-template.md` 逐用例写 `exec-log.md`（判定+证据引用+备注），当日志而非汇总写——每用例一段，执行完立即追加；本轮开始先按范围预填「结果总览」表（结果列留空），执行期只更新对应行；证据按页面/接口/落库/console 四类分行；备注除偏差外，执行中任何让你停顿的观察（文案/交互/性能/意外行为）都记录，不预筛"是不是缺陷"
 - **缺陷跟踪**：新失败在用例文件「缺陷跟踪」表登记 BUG-xx（缺陷四要素详见 report-template）；回归轮重跑通过后更新「状态=已修复、修复轮次=R<N>」；不复现在备注说明
 - **P0 缺陷快报**：发现口径违背/数据污染风险级缺陷立即报告用户裁决，不等整批执行完
 - **造数纪律：探索档允许通过前端页面操作（点击触发后端接口）生成前置数据；spec 档允许 API 直调造前置（走后端完整校验，鉴权头见 ui-recipe）；两档均禁止改库/任何 DB 直写**；MySQL MCP 只读仅做核验
@@ -94,16 +94,16 @@ Exec 进度：
 
 ## 阶段 3.5 spec：资产化（回归档）
 
-> 通过且口径拍板的用例 → Playwright spec；此后回归轮该部分由 runner 执行（零 agent token），agent 只诊断红色项。完整规则（粒度/前置复用/选择器/证据映射/失败三向/生命周期）见 `references/spec-guide.md`，必须先读。
+> 通过且口径拍板的用例 → Playwright spec；此后回归轮该部分由 runner 执行（零 agent token），agent 只诊断红色项。完整规则（粒度/前置复用/选择器/证据映射/失败三向/生命周期）见 `references/spec/spec-guide.md`，必须先读。
 
-1. 准入：默认范围 = BUG 关联用例 + P0/P1 稳定流；cases.md 手标可扩围
+1. 准入：默认范围 = BUG 关联用例 + P0/P1 稳定流；用例条目手标可扩围
 2. 读 cases.md + exec-log「复现锚点」翻译为 spec：`test()` = 一用例、按 G-xx 组/模块归档、前置 API 直调优先 / flows/ UI 函数兜底（≥2 用例用到才抽）
 3. **生成后立即 runner 验证，全绿才算资产化完成**；红色按失败三向处置（实现坏=BUG / 页面变=修 spec 留档 / 环境=备注重跑）
-4. cases.md 用例行标注 `spec ✓（日期）`；DB 断言不进 spec，出过 DB BUG 的用例在 spec 头部挂 SQL 清单（回归轮 agent 抽查）
+4. cases.md 用例条目标注 `spec ✓（日期）`（新格式=总览表 spec 列；存量表格文件=行内标注）；DB 断言不进 spec，出过 DB BUG 的用例在 spec 头部挂 SQL 清单（回归轮 agent 抽查）
 
 ## 阶段4 report：报告生成
 
-1. 按 `references/report-template.md` 汇总产出本轮目录 `report.md`（回归轮为回归报告：重跑范围+缺陷闭环情况）；含 runner 执行时按模板「回归档」口径呈现 runner 切片与 DB 抽查结果
+1. 按 `references/report/report-template.md` 汇总产出本轮目录 `report.md`（回归轮为回归报告：重跑范围+缺陷闭环情况）；含 runner 执行时按模板「回归档」口径呈现 runner 切片与 DB 抽查结果
 2. 🔒 关卡2 措辞：「报告已生成于 <路径>，请复验缺陷真伪；确认后的缺陷由你转达开发」。缺陷不自动推送任何外部系统。用户复验确认后，勾选用例头部「🔒 关卡2 报告复验」并注明轮次（如 `已复验（R2，YYYY-MM-DD）`）——与关卡1 代改口径对称，多轮场景可从用例文件看出各轮报告复验状态
 
 ## 通用纪律

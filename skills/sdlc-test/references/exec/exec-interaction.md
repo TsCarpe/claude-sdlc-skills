@@ -14,7 +14,8 @@
 |---|---|---|
 | el-select 单选 | 选项渲染在 teleport popper，take_snapshot 无选项 uid | click 输入框 → evaluate 同步执行：`document.querySelectorAll('.el-select-dropdown__item')` 过滤 `offsetParent !== null` 后按文本匹配 `.click()` |
 | el-date-picker | `fill` 只写 input.value 不触发解析（blur 后值丢失） | evaluate `focus()+select()` → type_text `yyyy-MM-dd` + Enter → evaluate 复核 input.value |
-| el-select 多选（远程搜索） | 同单选失明；selected class 点击后不更新；过滤词变更可能清空已选；同步连点两目标会因引用 detach 只生效一个 | evaluate 逐个点：**每次点击前重新查询可见选项+按文本去重**（点过不再点），点后以「已选 N 人」计数核对递增，不足换下一个目标；搜索框残留过滤词用 `InputEvent('input',{inputType:'deleteContentBackward'})` 清空并等 ~1s 远程刷新（2026-09-12 补充实测） |
+| el-date-picker 非法值拒绝判定 | 已有合法值时键入违反 disabledDate 的日期（含面板禁选日），框内短暂显示原始连字符文本（未格式化 yyyy/MM/dd=解析失败特征），blur 后回退旧值、下一步照常放行（模型未变）——**「文本进框但模型回退」=组件在输入层整体拒绝，不是「可输入待校验」**（2026-09-15 实测：比赛时间链相邻相等场景，面板 td.disabled + 键入回退双保险） | 拦截类用例判定口径：非法状态不可构造时按「天然满足」处理并留档，勿反复重试键入 |
+| el-select 多选（远程搜索） | 同单选失明；selected class 点击后不更新；过滤词变更可能清空已选；同步连点两目标会因引用 detach 只生效一个 | evaluate 逐个点：**每次点击前重新查询可见选项+按文本去重**（点过不再点），点后以「已选 N 人」计数核对递增，不足换下一个目标；**计数核对可能滞后——点后必读已选 tags 明细逐项核对，点前待一拍等过滤刷新完成再点**（2026-09-15 补充实测：参与学校多选 3 连点仅落 1 次+点错目标各 1 次）；搜索框残留过滤词用 `InputEvent('input',{inputType:'deleteContentBackward'})` 清空并等 ~1s 远程刷新（2026-09-12 补充实测） |
 | el-upload | upload_file 拒绝 workspace root 外路径（如 /tmp） | 上传文件预置 `<项目根>/.tmp-upload/` 后再 upload_file |
 | 富文本 contenteditable | 快照仅见 generic 容器无输入框 | click 容器 → type_text |
 
