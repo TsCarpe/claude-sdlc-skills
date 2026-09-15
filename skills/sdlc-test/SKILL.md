@@ -65,7 +65,7 @@ Cases 进度：
 ```text
 Exec 进度：
 - [ ] 读 sdlc/env/test.md 与 accounts.local.md（缺失则按 references/env-template.md 引导创建）
-- [ ] 前置健康检查：chrome-devtools:list_pages 确认浏览器/页面存活、目标路由可达、MySQL 连通（SELECT 1）、上传目录就绪；读 sdlc/env/ui-recipe.md（无则首条用例侦察后按 env-template 沉淀）
+- [ ] 前置健康检查：chrome-devtools:list_pages 确认浏览器/页面存活、目标路由可达、MySQL 连通（SELECT 1）、上传目录就绪；失败项先按 ui-recipe「环境检查」的恢复动作处置（仍失败再报告，不空等人工）；读 sdlc/env/ui-recipe.md（无则首条用例侦察后按 env-template 沉淀）
 - [ ] 读用例头部进度，确定本轮目录与用例范围（--from TC-xx 断点续跑；回归轮默认重跑上轮失败/疑似/阻塞+缺陷未闭环项；--all 全量）；回归轮且存在 specs/ 时先走 runner 批量回归（见下「回归轮两步」）
 - [ ] 按 `references/exec/exec-dispatch.md` 切批派发子 agent（每批 3-5 条，批间串行；证据采集/判定/exec-log 留档在子 agent 上下文完成）
 - [ ] 每批回传后：主 agent 按压缩结论回填 cases.md（结果字段 + 证据摘要 + 缺陷跟踪表 + 头部进度——新格式：总览表结果列与 TC 小节证据行；存量表格：结果列与证据列）；P0 缺陷立即快报

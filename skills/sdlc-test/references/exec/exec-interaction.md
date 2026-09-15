@@ -7,6 +7,7 @@
 - 优先 take_snapshot 拿 uid 直接交互；浮层类组件快照失明时降级 evaluate_script 执行真实 DOM click（走组件事件系统，不算绕过校验）
 - **evaluate_script 一律同步执行、立即返回**：禁止 Promise/setTimeout 等待链（浮层关闭导致死等，MCP 120s 挂起）。需要等待用 `chrome-devtools:wait_for`
 - 侦察先行：进入新页面类型先 snapshot + 一次 evaluate 摸清表单组件清单（控件类型/浮层结构/file input/富文本），再开始操作
+- **页面身份断言**：每条用例开始操作前断言当前 URL/页面特征文本 = 预期路由（对照 ui-recipe 路由清单），不匹配先导航回去再操作——防重定向换页/上一用例残留页面静默污染本用例；页面结构性变化（跳转/弹层开关/提交）后旧 uid 全部失效，重试前重新 snapshot（2026-09-15 借鉴 agent-browser tab-pinning 思想）
 
 ## Element Plus 姿势表（2026-09 真实项目实测）
 
