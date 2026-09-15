@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.2 (2026-09-15)
+
+sdlc-test 产物格式与文档结构重做（R3 派发验证轮落地）。
+
+- references/ 按阶段分组为 cases/ exec/ report/ spec/ static/ 五个子目录，全部交叉引用同步
+- cases.md 新格式：用例总览表（结果/spec/BUG 状态唯一权威）+ TC 独立小节；存量表格文件就地兼容不重排
+- exec-log 模板升级：结果总览预填表（断点续跑锚点）、证据按页面/接口/落库/console 四类分行、五态图标仅用于 exec-log、G-xx 组合并执行口径
+- exec-interaction 姿势手册补两条实测：el-date-picker 非法值拒绝判定（文本进框但模型回退=输入层整体拒绝）、el-select 多选计数核对滞后（点后必读已选 tags 明细）
+
+## v0.1.1 (2026-09-14)
+
+sdlc-test 新增 spec 资产化与 exec 派发两大机制，官方 best-practices 复核修复。
+
+- 阶段 3.5 spec 资产化：通过且口径拍板的用例转 Playwright spec，回归轮由 runner 执行（零 agent token），agent 只诊断红色项（新增 spec-guide.md：粒度/前置复用/失败三向/生命周期）
+- exec 派发协议（新增 exec-dispatch.md）：切批派发全新上下文子 agent，证据采集/判定/留档在子 agent 完成，主上下文只收每用例一行压缩结论
+- runner 命令统一为绝对路径二进制形态（红线，禁 `cd`+`npx` 形态分裂）
+- 新增 eval-5（token 效率）/ eval-6（spec 回归）评估场景；官方 best-practices 三度复核修 10 处
+
 ## v0.1.0 (2026-09-12)
 
 首个公开版本。
