@@ -32,6 +32,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 - **缺陷生命周期只在用例文件「缺陷跟踪」表维护**：新失败登记 BUG-xx，回归通过后更新状态/修复轮次；各轮 report 的缺陷清单摘引该表当轮切片
 
 **关卡强制**：执行 `static`/`exec` 前读用例文件头部，`审核状态 ≠ 已确认` 时拒绝并提示用户先完成关卡1（人工审核用例后，将头部状态改为 `已确认（日期）`，或让用户口头确认后代改）。若 `sdlc/<需求名>/review/` 存在，关卡1 以 sdlc-gate 状态为准：`评审状态 = 已放行` 视同关卡1 通过（代改时引用 issues 文件），`≠ 已放行` 时拒绝并提示先完成 sdlc-gate 裁决；review 目录不存在则维持本条原行为。
+**本条已机械化**（2026-09-15）：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认）、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
 
 ## 阶段1 cases：用例生成
 
@@ -52,6 +53,7 @@ Cases 进度：
 
 ## 阶段2 static：静态代码检测（前后端）
 
+0. 入口守卫：`python3 ~/.claude/skills/sdlc-test/scripts/guard_exec.py <项目根> <需求名> static`——exit≠0 时停止并向用户呈现缺失清单（关卡1 未过/轮次命名违规/spec 资产失真），禁止绕过
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
 2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（三件套缺失时回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
 3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则降级定向 grep + 读文件，结果注明证据降级
@@ -64,6 +66,7 @@ Cases 进度：
 
 ```text
 Exec 进度：
+- [ ] 入口守卫：`python3 ~/.claude/skills/sdlc-test/scripts/guard_exec.py <项目根> <需求名> exec`——exit≠0 时停止并向用户呈现缺失清单，禁止绕过
 - [ ] 读 sdlc/env/test.md 与 accounts.local.md（缺失则按 references/env-template.md 引导创建）
 - [ ] 前置健康检查：chrome-devtools:list_pages 确认浏览器/页面存活、目标路由可达、MySQL 连通（SELECT 1）、上传目录就绪；失败项先按 ui-recipe「环境检查」的恢复动作处置（仍失败再报告，不空等人工）；读 sdlc/env/ui-recipe.md（无则首条用例侦察后按 env-template 沉淀）
 - [ ] 读用例头部进度，确定本轮目录与用例范围（--from TC-xx 断点续跑；回归轮默认重跑上轮失败/疑似/阻塞+缺陷未闭环项；--all 全量）；回归轮且存在 specs/ 时先走 runner 批量回归（见下「回归轮两步」）

@@ -1,0 +1,25 @@
+#!/bin/sh
+# sdlc guardrails pre-commit 兜底 —— 复用 harness/engine/check.py 检查 staged java 文件
+# 接入（每台机器一次）：git config core.hooksPath .githooks
+# 逃生（明知违规临时提交，勿滥用）：git commit --no-verify
+#
+# 引擎定位：SDLCSKILLS_HOME 环境变量 > 默认 checkout 路径。
+# 引擎缺失时警告放行（不阻塞未接入的同事），设 SDLCSKILLS_HOME 可启用。
+
+ENGINE="${SDLCSKILLS_HOME:-$HOME/IdeaProjects/claude-sdlc-skills}/harness/engine/check.py"
+if [ ! -f "$ENGINE" ]; then
+    echo "⚠  guardrails: 引擎未找到（$ENGINE），跳过检查"
+    echo "   设 export SDLCSKILLS_HOME=<claude-sdlc-skills checkout 路径> 可启用"
+    exit 0
+fi
+
+# 只查 staged 的新增/复制/修改/重命名 java 文件
+FILES=$(git diff --cached --name-only --diff-filter=ACMR -- '*.java')
+[ -z "$FILES" ] && exit 0
+
+if ! echo "$FILES" | xargs python3 "$ENGINE" --check; then
+    echo ""
+    echo "🔴 guardrails 拒绝提交：修复上述违规后重试"
+    echo "   明确逃生：git commit --no-verify（勿滥用，绕过即失去兜底意义）"
+    exit 1
+fi

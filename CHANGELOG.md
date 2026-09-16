@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.2.0 (2026-09-16)
+
+新增 harness 可移植强制层（红线从 skill 文字下沉到确定性执行），sdlc-test 关卡强制机械化。
+
+- **harness/**（新顶层组件）：guardrails 检查引擎 `engine/check.py`——规则四类（forbid / require / count_ge 锚点计数 / require_if 条件触发），纯 regex 不做 AST；Write 全文件全规则、Edit 只查本次新增文本（存量旧账不阻塞编辑者）；无规则文件 no-op；引擎异常静默退出，永不打断 agent 循环
+- **规则与引擎分离**：引擎全局一份，各项目 `.claude/guardrails.yaml` 自定义规则（从被检文件向上查找），新项目接入三步（挂载段模板 + 规则文件 + pipe-test，见 harness/README.md）
+- **`engine/audit_profiles.py`**：OVAL `@Validate` ↔ `profiles` 跨文件对账——悬空分组（接口无专属校验规则）单文件检查抓不到，首轮实测即发现 6 个
+- **`engine/check_runner_form.py`**：全仓 md 的 runner 命令形态自检（绝对路径红线守护，豁免 install/反例引文）
+- **模板**：`templates/`（settings hook 挂载段 / pre-commit 薄壳 / run_regression.sh 一键回归——人工触发零 token，spike 健康检查→runner→`-manual` 报告不占轮次号）
+- **sdlc-test 关卡机械化**：新增 `scripts/guard_exec.py` 挂阶段2/3 入口第 0 步——关卡1 判定（含 sdlc-gate 互认）、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防资产丢失后标注失真导致回归轮静默跳过）；SKILL.md 关卡强制段标注"已机械化"
+- 设计依据：载体路由三档（CLI 入口守卫 / hook 写入拦截 / pre-commit 提交兜底）——同脚本多时点复用，存量违规不追溯只拦增量
+
 ## v0.1.3 (2026-09-15)
 
 exec 执行纪律增强（agent-browser 设计思想借鉴 + 官方 best-practices 四度复核通过）。
