@@ -1,6 +1,6 @@
 # sdlc-guardrails — 可移植红线检查引擎
 
-> 对应心智模型 [docs/design/agent-stack-mental-model.md](../../docs/design/agent-stack-mental-model.md) §4：时机定载体——
+> 对应心智模型见开源仓库 docs/design/agent-stack-mental-model.md §4（skill 安装副本中该文件缺失，以本 README 为准）：时机定载体——
 > 服从性规则（可机械校验的"写了就是错"）在**写文件瞬间**由 hook 拦截，
 > 判断性规则留在 skill/spec（知识层本职）。
 
@@ -8,7 +8,7 @@
 
 - **引擎（机制）**：本 skill 目录 `engine/check.py`，全局一份（`npx skills add` 安装到用户级 `~/.claude/skills/sdlc-guardrails/`），python3 + PyYAML
 - **规则（内容）**：各项目 `.claude/guardrails.yaml`，从被检文件向上查找
-- **模板**：`templates/`——hook 挂载段 / pre-commit / run_regression.sh / `runner/`（回归 runner 四件：playwright.config.ts、package.json、capture-login.mjs、spike.spec.ts，占位符按项目替换；用法见 docs/project-setup.md，仓库根相对路径 `skills/sdlc-guardrails/templates/`）
+- **模板**：`templates/`——hook 挂载段（settings-hook.json）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test skill（../sdlc-test/templates/，单独安装时仅作来源说明）
 - 引擎零项目知识；换项目 = 只写规则文件 + 挂载段
 
 ## 新项目接入（三步）
@@ -17,7 +17,7 @@
 
    见 [templates/settings-hook.json](templates/settings-hook.json)
 
-2. 写项目 `.claude/guardrails.yaml`（从零，或参考 [docs/dev-standards-reference/guardrails.example.yaml](../../docs/dev-standards-reference/guardrails.example.yaml)）：
+2. 写项目 `.claude/guardrails.yaml`（从零，或参考 [references/guardrails.example.yaml](references/guardrails.example.yaml)——23 条规则示例）：
 
    ```yaml
    version: 1

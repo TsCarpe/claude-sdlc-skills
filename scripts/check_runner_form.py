@@ -11,7 +11,7 @@ cd+npx 三形态实测不可靠；路径过滤禁 ../../ 相对前缀。
   - spec-guide 红线自带的反例引文（含「实测不可靠」）
 
 用法：
-    python3 check_runner_form.py <skills仓根> [--out <报告路径>]
+    python3 scripts/check_runner_form.py <仓根> [--out <报告路径>]
 退出码：0 = 基线干净；1 = 有违形态（基线应为 0，09-14 三度复核后定型）
 """
 from __future__ import annotations

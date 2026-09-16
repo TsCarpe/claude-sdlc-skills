@@ -3,7 +3,7 @@
 > 本清单是入口层（claude-entry.md）§4「编码完成后自检」的落地，汇总各规范文档中的高杠杆硬规则。
 > 每节头部标注源规范文档，规则细节以 `details/` 为准（与入口层冲突时亦以细则为准）。本清单不复制规则全文，只做自检提示。
 >
-> 🤖 **guardrails hook 已自动拦截**（写文件瞬间打回，下列条目的存在性检查不必在自检环节重复核对）：§2.1 五件套注解存在性/`ResultJson<`/URL 格式；§2.2 分页三件套注解（有 page 字段时）；§2.3 禁 `BeanUtils.copyProperties`/连续 set(get()) 手搬/domain Service 禁 import client；§2.4 禁手算 offset/手写 buildPagination；§3 禁 `printStackTrace`；§4 禁全路径内联 new/Map/JSONObject 出参。规则：`.claude/guardrails.yaml`（示例见本目录 `guardrails.example.yaml`）。
+> 🤖 **guardrails hook 已自动拦截**（写文件瞬间打回，下列条目的存在性检查不必在自检环节重复核对）：§2.1 五件套注解存在性/`ResultJson<`/URL 格式；§2.2 分页三件套注解（有 page 字段时）；§2.3 禁 `BeanUtils.copyProperties`/连续 set(get()) 手搬/domain Service 禁 import client；§2.4 禁手算 offset/手写 buildPagination；§3 禁 `printStackTrace`；§4 禁全路径内联 new/Map/JSONObject 出参。规则：`.claude/guardrails.yaml`（示例见 [sdlc-guardrails skill 的 references/guardrails.example.yaml](../../skills/sdlc-guardrails/references/guardrails.example.yaml)）。
 > ⚙️ profiles 与 @Validate 一致性由 `audit_profiles.py` 基线审计承接（跨文件对账，首轮实测即发现 6 个悬空分组）。
 > 语义类检查（OpeEnum 读/写、OVAL 注解组合、命名质量）不在此列，仍需自检。
 

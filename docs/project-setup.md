@@ -59,7 +59,7 @@ flowchart TB
 | 项目侧文件 | 怎么来的 | 作用 |
 |---|---|---|
 | `.claude/settings.json` 的 `PostToolUse` hooks 段 | **复制** [`skills/sdlc-guardrails/templates/settings-hook.json`](../skills/sdlc-guardrails/templates/settings-hook.json)，默认引擎路径即全局安装位置（`~/.claude/skills/sdlc-guardrails/engine/check.py`，通常无需改；clone 仓库使用者改为 checkout 内绝对路径），合并进项目已有 hooks | Write/Edit 写文件瞬间调 `check.py` 拦红线（子代理写入同样拦） |
-| `.claude/guardrails.yaml` | **项目自写**：从项目规范里挑「可 grep 机械化」的条目翻译成四类规则（forbid / require / require_if / count_ge）；写法参考 [`docs/dev-standards-reference/guardrails.example.yaml`](dev-standards-reference/guardrails.example.yaml)（20 条示例） | 规则集。知识层（怎么写对）留在项目规范文档，本文件只拦「写了就是错」 |
+| `.claude/guardrails.yaml` | **项目自写**：从项目规范里挑「可 grep 机械化」的条目翻译成四类规则（forbid / require / require_if / count_ge）；写法参考 [`sdlc-guardrails/references/guardrails.example.yaml`](../skills/sdlc-guardrails/references/guardrails.example.yaml)（23 条示例） | 规则集。知识层（怎么写对）留在项目规范文档，本文件只拦「写了就是错」 |
 | `.githooks/pre-commit` | **复制** [`skills/sdlc-guardrails/templates/pre-commit`](../skills/sdlc-guardrails/templates/pre-commit)，执行一次 `git config core.hooksPath .githooks` | git commit 兜底（不经 Claude 的提交也拦）；引擎路径可用 `SDLCSKILLS_HOME` 环境变量覆盖，引擎缺失时警告放行（不阻塞未接入的同事） |
 
 三步接入的完整细节（含 pipe-test 实测拦截）见 [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md)。
@@ -70,18 +70,18 @@ sdlc-test 的 spec 资产化与回归轮依赖一套 Playwright runner，全部�
 
 ```text
 <项目根>/sdlc/
-├── package.json          ← 复制 skills/sdlc-guardrails/templates/runner/package.json
-├── playwright.config.ts  ← 复制 skills/sdlc-guardrails/templates/runner/playwright.config.ts（baseURL 按项目替换）
+├── package.json          ← 复制 skills/sdlc-test/templates/runner/package.json
+├── playwright.config.ts  ← 复制 skills/sdlc-test/templates/runner/playwright.config.ts（baseURL 按项目替换）
 ├── node_modules/         ← 在 sdlc/ 根执行 npm install（位置红线，见下）
 └── env/runner/
-    ├── capture-login.mjs     ← 复制 skills/sdlc-guardrails/templates/runner/capture-login.mjs（3 处占位符按项目替换）
-    ├── spike.spec.ts         ← 复制 skills/sdlc-guardrails/templates/runner/spike.spec.ts（3 处占位符按项目替换）
+    ├── capture-login.mjs     ← 复制 skills/sdlc-test/templates/runner/capture-login.mjs（3 处占位符按项目替换）
+    ├── spike.spec.ts         ← 复制 skills/sdlc-test/templates/runner/spike.spec.ts（3 处占位符按项目替换）
     ├── browser-state.json    ← 运行 node capture-login.mjs 产出（SSO 登录态，gitignore）
-    ├── run_regression.sh     ← 复制 skills/sdlc-guardrails/templates/run_regression.sh（一键回归，不占轮次号）
+    ├── run_regression.sh     ← 复制 skills/sdlc-test/templates/run_regression.sh（一键回归，不占轮次号）
     └── test-results/         ← runner 运行产出（失败留痕，可随时清）
 ```
 
-要点（依据与坑的完整记录见 skill 的 `references/spec/spec-guide.md`「runner 标准布局」）：
+要点（接入操作表——模板 → 落位 → 占位符 → 就绪判据——随 sdlc-test skill 分发，见其 `references/env-template.md`「回归档 runner」节；依据与坑的完整记录见 skill 的 `references/spec/spec-guide.md`「runner 标准布局」）：
 
 - **依赖必须装在 sdlc 根**：装在 `env/runner/` 子目录时 specs 的模块解析会命中项目根另一份 `@playwright/test` → 双树冲突（实测踩坑）
 - `channel:'chrome'` 走系统 Chrome，零下载、不碰日常浏览器会话

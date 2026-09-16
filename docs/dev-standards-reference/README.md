@@ -19,7 +19,7 @@
 |---|---|---|---|
 | ① 入口层 | `claude-entry.md`（示例的 CLAUDE.md） | 每轮会话全量 | token 换来的注意力，只放最高杠杆内容 |
 | ② 细则层 | `details/*.md` + `development-checklist.md` | 触发对应任务时按表加载 | CLAUDE.md §4 的触发场景表路由 |
-| ③ 强制层 | `guardrails.example.yaml` | Write/Edit 写文件的瞬间 | [sdlc-guardrails 引擎](../../skills/sdlc-guardrails/README.md) hook 拦截，确定性 |
+| ③ 强制层 | [`guardrails.example.yaml`](../../skills/sdlc-guardrails/references/guardrails.example.yaml) | Write/Edit 写文件的瞬间 | [sdlc-guardrails 引擎](../../skills/sdlc-guardrails/README.md) hook 拦截，确定性 |
 
 ## 目录对照
 
@@ -27,7 +27,7 @@
 |---|---|---|
 | `claude-entry.md` | `CLAUDE.md` | 入口层示例（含「按需加载表」和「正例锚点」两个关键设计） |
 | `development-checklist.md` | `dev_standards/development_checklist.md` | 自检清单；头部标注了哪些条目已由 guardrails 机器拦截（自检只做判断类） |
-| `guardrails.example.yaml` | `.claude/guardrails.yaml` | 23 条规则示例；由 checklist 中可 grep 的条目机械化而来 |
+| `guardrails.example.yaml`（已迁至 [sdlc-guardrails skill](../../skills/sdlc-guardrails/references/guardrails.example.yaml)） | `.claude/guardrails.yaml` | 23 条规则示例；由 checklist 中可 grep 的条目机械化而来 |
 | `details/api-interface-design.md` | `development_standards/api_interface_design.md` | Controller 模板与必填注解 |
 | `details/coding-norms.md` | `development_standards/coding_norms.md` | 类/方法/字段命名 |
 | `details/ai-code-hygiene.md` | `development_standards/ai_code_hygiene.md` | AI 生成代码卫生（散参/Map 出参/全路径内联） |
@@ -45,7 +45,7 @@
 
 ## 红线如何下沉到引擎
 
-checklist 里「写了就是错」的条目（存在性检查类：注解五件套、禁 `BeanUtils.copyProperties`、禁手算 offset……）已机械化进 `guardrails.example.yaml`，由 [sdlc-guardrails/engine/check.py](../../skills/sdlc-guardrails/engine/check.py) 在写文件瞬间拦截；checklist 头部相应标注「机器已拦，自检不必重复核对」。**知识层（怎么写对）与强制层（写了就拦）的分工原则**见 [agent-stack-mental-model.md](../design/agent-stack-mental-model.md) §4。
+checklist 里「写了就是错」的条目（存在性检查类：注解五件套、禁 `BeanUtils.copyProperties`、禁手算 offset……）已机械化进 [`guardrails.example.yaml`](../../skills/sdlc-guardrails/references/guardrails.example.yaml)，由 [sdlc-guardrails/engine/check.py](../../skills/sdlc-guardrails/engine/check.py) 在写文件瞬间拦截；checklist 头部相应标注「机器已拦，自检不必重复核对」。**知识层（怎么写对）与强制层（写了就拦）的分工原则**见 [agent-stack-mental-model.md](../design/agent-stack-mental-model.md) §4。
 
 新项目接入（三步）：复制 hook 挂载段 → 按本示例写自己的 guardrails.yaml → pipe-test。详见 [sdlc-guardrails/README.md](../../skills/sdlc-guardrails/README.md)。
 

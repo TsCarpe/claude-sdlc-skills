@@ -1,5 +1,5 @@
 # HRSystem guardrails 红线规则集 v1（示例，2026-09 脱敏整理收录）
-# 引擎：claude-sdlc-skills/harness/engine/check.py（用法与挂载见 harness/README.md）
+# 引擎：sdlc-guardrails skill 的 engine/check.py（用法与挂载见同 skill README.md）
 # 规则来源：development-checklist.md 中可 grep 机械化条目（checklist 头部已标注机器拦截范围）
 # 知识层（怎么写对）仍在 checklist/细则；本文件只拦"写了就是错"的
 # 存量违规不追溯（hook 只查本次写入），基线扫描：check.py --check <files>

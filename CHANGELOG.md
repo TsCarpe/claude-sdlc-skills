@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.1 (2026-09-16)
+
+v0.5.0 harness 迁移的域归属修正 + 安装用户接入引导补全。
+
+- **runner 模板迁域**：`skills/sdlc-guardrails/templates/runner/` 四件与 `run_regression.sh` → `skills/sdlc-test/templates/`（git mv 保留历史）——回归 runner 服务 sdlc-test 的 spec 资产与回归轮，guardrails 模板只留 hook 挂载段与 pre-commit
+- **check_runner_form.py 独立为仓级脚本**：engine/ → `scripts/`，接入 validate.yml（runner 命令形态 0 违规基线进 CI；此前为无调用点的孤儿工具）
+- **guardrails.example.yaml 迁入 skill**：docs/dev-standards-reference/ → skills/sdlc-guardrails/references/（单一来源，安装副本内可链接），docs 各处反向指向；头部残留 harness 旧路径修正；规则条数口径统一为 23 条
+- **sdlc-test runner 接入引导**：env-template.md runner 节扩为接入表（模板→落位→占位符→就绪判据，安装副本自洽、零仓库级指针）；SKILL.md 阶段 3.5 前置路由 + 回归轮两步补语；run_regression.sh 用法首次入 skill
+- **guardrails 安装副本断链修复**：README 心智模型链接改声明性提及（sdlc-test 同款降级口径）、example.yaml 改指 skill 内 references/；SKILL.md 三步接入补项目级安装引擎路径改法、pre-commit 补 `*.java` 过滤适配点
+- project-setup / workflow-landscape / agent-stack-mental-model / dev-standards-reference / docs 导读路径同步
+
 ## v0.5.0 (2026-09-16)
 
 harness 从顶层目录迁为第 6 个可安装 skill（sdlc-guardrails）——`npx skills add` 与 plugin 渠道现在直接分发红线引擎，接入不再要求 clone 本仓库。

@@ -42,6 +42,9 @@ jobs:
           print("OK: 相对链接检查通过")
           EOF
 
+      - name: runner 命令形态一致性（scripts/check_runner_form.py，基线 0 违规）
+        run: python3 scripts/check_runner_form.py .
+
       - name: 每个 skill 目录有合法 frontmatter name（kebab-case）
         run: |
           fail=0

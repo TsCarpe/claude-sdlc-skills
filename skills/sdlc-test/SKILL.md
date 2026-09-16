@@ -78,7 +78,7 @@ Exec 进度：
 ```
 
 - **派发执行**：主 agent 不在自身上下文逐用例操作浏览器；按 exec-dispatch.md 组装自包含 prompt（批内用例条目原文 + 红线原文 + 最小挂载姿势），子 agent 完成侦察/执行/四类证据/截图查看/exec-log 留档，只回传每用例一行压缩结论。本节全部纪律与反合理化表**对子 agent 同样强制**，回传里禁止出现截图/报文/快照原文
-- **回归轮两步（存在 specs/ 时）**：① 以绝对路径形态跑 runner：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`（禁 `cd`+`npx` 形态，cwd 无关——详见 spec-guide「runner 执行纪律」）——绿色项直接回填 cases.md，红色项按 `references/spec/spec-guide.md`「失败三向」诊断（trace/截图在 runner test-results/）；② 其余范围（新用例/失败现场/无 spec 用例）照常按 exec-dispatch 派发。登录态重采（capture-login.mjs）、DB 抽查衔接见 spec-guide
+- **回归轮两步（存在 specs/ 时）**：① 以绝对路径形态跑 runner：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`（禁 `cd`+`npx` 形态，cwd 无关——详见 spec-guide「runner 执行纪律」）——绿色项直接回填 cases.md，红色项按 `references/spec/spec-guide.md`「失败三向」诊断（trace/截图在 runner test-results/）；② 其余范围（新用例/失败现场/无 spec 用例）照常按 exec-dispatch 派发。登录态重采（capture-login.mjs）、DB 抽查衔接见 spec-guide；runner 基础设施缺失时先按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建
 - 登录：test 环境账号密码直登（账号在 `sdlc/env/accounts.local.md`，gitignored）
 - **交互姿势**：浏览器/数据库操作按 `references/exec/exec-interaction.md` 执行（浮层失明降级、日期键盘路径、evaluate 同步返回等）；新控件姿势 ≤3 次试错后回写该手册
 - **分组合并执行**：同 G-xx 组（见用例文件「执行分组」区块）拦截类用例在同一表单会话内连续验证（改字段→断言→复原），每条用例仍独立留档判定；涉及提交/落库的用例不合并
@@ -100,6 +100,7 @@ Exec 进度：
 ## 阶段 3.5 spec：资产化（回归档）
 
 > 通过且口径拍板的用例 → Playwright spec；此后回归轮该部分由 runner 执行（零 agent token），agent 只诊断红色项。完整规则（粒度/前置复用/选择器/证据映射/失败三向/生命周期）见 `references/spec/spec-guide.md`，必须先读。
+> **前置（首次）**：runner 基础设施（`sdlc/` 根两件 + `env/runner/` 三件）缺失时，按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建——复制模板 → 替换占位符 → sdlc/ 根 npm install → spike 全绿即就绪。
 
 1. 准入：默认范围 = BUG 关联用例 + P0/P1 稳定流；用例条目手标可扩围
 2. 读 cases.md + exec-log「复现锚点」翻译为 spec：`test()` = 一用例、按 G-xx 组/模块归档、前置 API 直调优先 / flows/ UI 函数兜底（≥2 用例用到才抽）

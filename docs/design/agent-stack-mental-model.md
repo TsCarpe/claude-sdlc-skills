@@ -277,7 +277,7 @@ CC (harness)
 
 1. **红线盘点下沉**：✅ **已落地（2026-09-15/16）**——引擎 [sdlc-guardrails/engine/check.py](../../skills/sdlc-guardrails/engine/check.py)（规则由项目侧 `.claude/guardrails.yaml` 定义）+ PostToolUse hook 拦写入（含 Edit 增量语义）+ pre-commit 拦提交（[sdlc-guardrails/templates/pre-commit](../../skills/sdlc-guardrails/templates/pre-commit)）+ `audit_profiles.py` 管跨文件对账 + `guard_exec.py` 管 sdlc-test 关卡；首轮存量基线扫描（约 1200 文件）命中 109 处 + 6 个悬空分组，口径存量不追溯
 2. **固定编排上浮**：⏸ **未做，待议**——sdlc-gate 4 角色扇出 + RECONCILE 预理的 workflow 化未实施；exec 批量轮维持 skill 指示派发。触发条件：再次出现编排漂移事故时重议
-3. **可验证重复劳动继续 spec 化**：◐ **部分落地**——一键回归命令已建（模板 [sdlc-guardrails/templates/run_regression.sh](../../skills/sdlc-guardrails/templates/run_regression.sh)，人工触发，spike 健康检查→runner→`-manual` 报告，不占轮次号）；定时触发经评估否决（迭代生命周期短）；specs 资产重建随 exec 轮滚动进行
+3. **可验证重复劳动继续 spec 化**：◐ **部分落地**——一键回归命令已建（模板 [sdlc-test/templates/run_regression.sh](../../skills/sdlc-test/templates/run_regression.sh)，人工触发，spike 健康检查→runner→`-manual` 报告，不占轮次号）；定时触发经评估否决（迭代生命周期短）；specs 资产重建随 exec 轮滚动进行
 
 skill 知识资产（校准、模板、判断规则）不动——换任何载体都有效，且它们本就该住知识层。
 

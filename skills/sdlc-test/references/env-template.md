@@ -49,7 +49,25 @@
 | frontend | /path/to/<frontend-repo> | codegraph ✅／无（降级 grep+读文件） |
 ```
 
-## 回归档 Playwright runner（标准布局 2026-09-14 试点定型）
+## 回归档 Playwright runner（接入 + 标准布局 2026-09-14 试点定型）
+
+runner 基础设施五件从**本 skill 安装目录 `templates/`** 复制到项目（项目级安装 `<项目根>/.claude/skills/sdlc-test/templates/`，全局安装 `~/.claude/skills/sdlc-test/templates/`）：
+
+| 模板 | 复制到 | 占位符/适配点 | 就绪判据 |
+|---|---|---|---|
+| `runner/package.json` | `sdlc/package.json` | 无（@playwright/test 锁定版本，直接可用） | 在 sdlc/ 根 `npm install` 成功 |
+| `runner/playwright.config.ts` | `sdlc/playwright.config.ts` | 1 处：baseURL → test 环境地址 | 与 spike 联合判据（下） |
+| `runner/capture-login.mjs` | `sdlc/env/runner/capture-login.mjs` | 3 处：TARGET 默认值 / AUTHED_URL_PREFIX / AUTHED_KEY_RE（鉴权键特征） | `node capture-login.mjs` 弹 Chrome 完成 SSO 后自动落 browser-state.json |
+| `runner/spike.spec.ts` | `sdlc/env/runner/spike.spec.ts` | 3 处：`<list-api>` / `/<app>/<目标页路径>` / `<登录后可见按钮文案>` | spike 全绿 = 基础设施就绪 |
+| `run_regression.sh` | `sdlc/env/runner/run_regression.sh` | 无占位符（路径硬编码 sdlc/ 布局约定，布局变更需同步改脚本） | `./run_regression.sh` 阶段① 输出「环境就绪」 |
+
+- 配置两件（package.json / playwright.config.ts）必须落 **sdlc 根**，`npm install` 也在 sdlc/ 根执行——模块解析红线（原因见下 tree 注释）
+- spike 冒烟（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts spike`
+- 一键回归：`sdlc/env/runner/run_regression.sh [<需求名>]`——纯 runner、不回填 cases.md、不占轮次号（报告落 `<日期>-manual` 目录）；登录态失效先 `node capture-login.mjs` 重采
+- 项目 `.gitignore` 三条：`sdlc/env/*.local.md`、`sdlc/env/runner/browser-state.json`（含会话凭据）、`sdlc/env/runner/test-results/`
+- 首建参考（源项目实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
+
+标准布局（tree 注释即红线依据）：
 
 ```text
 sdlc/
@@ -64,7 +82,6 @@ sdlc/
 ```
 
 - 调用（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
-- 首建参考（源项目实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
 - 详见 skill `references/spec/spec-guide.md`（含 EP spec 姿势表）
 
 ## sdlc/env/ui-recipe.md（环境配方，入库口径同 test.md）

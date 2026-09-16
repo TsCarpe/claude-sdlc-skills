@@ -25,7 +25,7 @@ description: Deterministic guardrail engine that enforces "write-it-and-it's-wro
 
 ## 三步接入（脆弱操作：按序执行，不给发挥空间）
 
-1. **挂载 hook**：把 [templates/settings-hook.json](templates/settings-hook.json) 的 `hooks` 段合并进项目 `.claude/settings.json`（保留已有事件），引擎路径用安装位置 `~/.claude/skills/sdlc-guardrails/engine/check.py`（`npx skills add` 全局安装即在此；`~` 不展开则改用 `$HOME`）
+1. **挂载 hook**：把 [templates/settings-hook.json](templates/settings-hook.json) 的 `hooks` 段合并进项目 `.claude/settings.json`（保留已有事件），引擎路径用安装位置 `~/.claude/skills/sdlc-guardrails/engine/check.py`（`npx skills add` 全局安装即在此；项目级安装（未加 `-g`）改用 `<项目根>/.claude/skills/sdlc-guardrails/engine/check.py`；`~` 不展开则改用 `$HOME`）
 2. **写规则文件**：项目根 `.claude/guardrails.yaml`——不凭空编规则，从用户红线清单或 [README.md](README.md) 样例起步
 3. **pipe-test 实测（反馈环，必做）**：写一个故意违规的文件，执行
 
@@ -43,7 +43,7 @@ description: Deterministic guardrail engine that enforces "write-it-and-it's-wro
 | 增删规则 | 编辑项目 `guardrails.yaml`，每次写入即时生效；改完 pipe-test 复验一条 |
 | Edit 存量文件 | 引擎只查本次新增文本，存量旧账不阻塞编辑者 |
 | 存量基线报告 | 执行 `python3 <引擎路径> --check <文件...>`（违规 exit 1，人类可读输出） |
-| git 提交兜底 | 复制 [templates/pre-commit](templates/pre-commit) 到 `.githooks/`，执行 `git config core.hooksPath .githooks` |
+| git 提交兜底 | 复制 [templates/pre-commit](templates/pre-commit) 到 `.githooks/`，执行 `git config core.hooksPath .githooks`（模板默认只查 `*.java`，非 Java 项目改脚本内过滤串） |
 
 ## 边界与排障
 
@@ -54,4 +54,4 @@ description: Deterministic guardrail engine that enforces "write-it-and-it's-wro
 ## 参考（一层引用）
 
 - [README.md](README.md)：架构细则、规则语法全量、语义要点（Write/Edit 差异、no-op 行为）、已知边界
-- [templates/](templates/)：settings-hook.json / pre-commit / run_regression.sh / runner 四件（回归 runner 模板，配合 sdlc-test 的 spec 资产使用）
+- [templates/](templates/)：settings-hook.json（hook 挂载段）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test（../sdlc-test/templates/，单独安装时仅作来源说明）
