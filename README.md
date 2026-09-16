@@ -105,7 +105,7 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 ## 适用边界（诚实版）
 
 - **sdlc-intent** 的飞书/评论区集成是可选增强，本地 markdown 输入完全等价
-- **sdlc-test** 按「Java 后端 + MySQL + Element Plus 系前端」打磨；其他栈可用但交互姿势手册需自行沉淀
+- **sdlc-test** 方法论栈无关，按「Java 后端 + MySQL + Element Plus 系前端」预置姿势；其他栈按 [stack-profile](skills/sdlc-test/references/stack-profile.md) 五面清单接入
 - **sdlc-gate** 的前提是设计与用例**独立产出**（用例不读设计）——读过则交叉审查退化为一致性检查，产物中会如实标注
 - 单人开发即可用 intent / doubt / config-review；gate / test 在有两份产物、有 test 环境时收益最大
 - 强制层（hook 拦截）建成时间尚短，未经大量真实任务检验（[热力图自评](docs/design/sdlc-workflow-landscape.md)）

@@ -7,6 +7,8 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 
 方案全文见开源仓库 `docs/sdlc-test-design.md`（设计决策记录，非 references 一层引用；skill 安装副本中该文件缺失，以本 SKILL.md 与 references/ 为准继续执行）。测试对象是 test 环境的 Web 前端（Java DDD 后端 + MySQL）。
 
+**栈适配**：方法论栈无关；栈绑定面的盘点与换栈入口见 `references/stack-profile.md`（换栈/新项目接入时读，日常执行不加载）。
+
 产物目录（相对当前项目根）：`sdlc/<需求名>/test/` 下放 `cases.md` 与 `reports/<日期>-r<N>/`；共享环境配置在 `sdlc/env/`。
 
 ## 路由
