@@ -8,6 +8,7 @@
 
 - **引擎（机制）**：本目录 `engine/check.py`，全局一份，python3 + PyYAML
 - **规则（内容）**：各项目 `.claude/guardrails.yaml`，从被检文件向上查找
+- **模板**：`templates/`——hook 挂载段 / pre-commit / run_regression.sh / `runner/`（回归 runner 四件：playwright.config.ts、package.json、capture-login.mjs、spike.spec.ts，占位符按项目替换；用法见 docs/project-setup.md）
 - 引擎零项目知识；换项目 = 只写规则文件 + 挂载段
 
 ## 新项目接入（三步）

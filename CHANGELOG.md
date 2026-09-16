@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.2 (2026-09-16)
+
+项目侧接入指南 + runner 模板收录（新项目从装 skill 到全功能的配置地图）。
+
+- **新增 [docs/project-setup.md](docs/project-setup.md)**：项目侧配置全景——harness 强制层（hook 挂载段 / guardrails.yaml / pre-commit）、runner 基础设施、sdlc/env 环境文件，每个文件标注来源（复制模板 / 按约定自写 / skill 首跑引导生成），附最小配置阶梯与已知边界；README 安装段与 docs 导读挂载
+- **runner 四件模板收录**（`harness/templates/runner/`）：playwright.config.ts / package.json / capture-login.mjs / spike.spec.ts——自源项目实测脚本脱敏（占位符按项目替换），补齐「登录态采集与冒烟脚本无模板，新项目需自写」缺口
+- **叙述类文档补 mermaid 图 ×4**：project-setup（配置全景一图流）、large-req-playbook（三段式总流程含偏差回写回边）、example-walkthrough（六步产物流转图）、ai-native-sdlc-guide（六阶段工件链）；SKILL.md 与决策记录类文档不加图（token 纪律 / 收益低）
+- **README 重写**：首屏重排（badges + 一句话定位 + 一行安装 + 为什么是这套三条纪律 + 实测数字）；主流程图升级（旁路入图、人工关口六边形标注）；Skill 矩阵与原 5 小节合并为单表（触发示例/产物/依赖一屏尽览）；删与流程图重复的 6 步表格；文档导航补 project-setup 路径；版本号对齐 v0.2.2
+- harness README 架构段补 `templates/` 清单说明
+
 ## v0.2.1 (2026-09-16)
 
 docs 资产回收 + 重组导读（方法论源项目沉淀文档脱敏收录，skills 与 harness 机制零改动）。
@@ -10,7 +20,7 @@ docs 资产回收 + 重组导读（方法论源项目沉淀文档脱敏收录，
 - **新增 dev-standards-reference/**：项目级分层规范体系全套参考实现（入口层示例 + 自检清单 + guardrails 20 条规则示例 + 8 份细则，含飞书技术设计文档生成规范）；统一脱敏为 HRSystem/hr-* 中性示例
 - **docs/README.md 导读**（新增）：文档地图（按性质四分类）+ 三条阅读路径 + 按问题找文档索引；仓库 README 加「文档怎么读」段并修正版本号引用
 - **红线清理**：harness/README、check.py、env-template、eval-6 中的源项目名残留改中性表述
-- **断链与历史名清理**（官方 best-practices 复核）：sdlc-test SKILL.md 与 spec-guide 中 `doc/ai-testing-solution.md` 历史路径断链改指 [docs/sdlc-test-design.md](docs/sdlc-test-design.md)；全仓 skill 历史名（ai-test / requirement-intake / review-gate）统一为现名并从触发词移除；入口守卫命令去掉 `~/.claude/skills/` 全局安装路径假设，改按 skill 安装目录说明（项目级/全局均适用）
+- **断链与历史名清理**（官方 best-practices 复核）：sdlc-test SKILL.md 与 spec-guide 中「doc/ai-testing-solution.md」历史路径断链改指 [docs/sdlc-test-design.md](docs/sdlc-test-design.md)；全仓 skill 历史名（ai-test / requirement-intake / review-gate）统一为现名并从触发词移除；入口守卫命令去掉全局安装路径假设，改按 skill 安装目录说明（项目级/全局均适用）
 - **harness README 补 require_if**：规则类型说明与 check.py 实现、guardrails.example.yaml 对齐（四类）；settings-hook 挂载段引用改链接形式消歧
 - **CI 新增断链检查**：markdown 相对链接 + 反引号路径引用存在性（零容忍）；.gitignore 补 `.idea/`、`.serena/`、`.claude/settings.local.json`；case-template 顶部补模板区块目录，术语「关卡 1」统一为「关卡1」
 

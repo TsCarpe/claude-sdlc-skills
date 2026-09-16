@@ -16,6 +16,7 @@
 | [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md) | 决策记录 | 「点击员→脚本作者」演进：流派研究 + 改进计划（已实施） | 想理解 spec 资产化与 runner 回归的来龙去脉 |
 | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) | 决策记录 | 跨产物 ID 体系（命名空间.编号）与交界衔接机制（已实施） | 产物互引断链 / 要新增产物类型时 |
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
+| [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
 
 ## 三条阅读路径
@@ -55,3 +56,4 @@
 | 规则写 skill 还是写 hook？ | [design/agent-stack-mental-model.md](design/agent-stack-mental-model.md) §3 决策流程 |
 | 怎么给自己的项目配红线拦截？ | [harness/README.md](../harness/README.md) + [dev-standards-reference/guardrails.example.yaml](dev-standards-reference/guardrails.example.yaml) |
 | 产物间怎么互相引用？ | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) §2 命名空间注册表 |
+| 装完 skill 后项目侧还要配什么？ | [project-setup.md](project-setup.md) |

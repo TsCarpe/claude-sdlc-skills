@@ -1,0 +1,8 @@
+{
+  "name": "sdlc-test-runner",
+  "private": true,
+  "comment": "模板：复制到 <项目根>/sdlc/package.json（必须在 sdlc 根，原因见 playwright.config.ts 头注释），复制后在该目录执行 npm install",
+  "devDependencies": {
+    "@playwright/test": "1.61.0"
+  }
+}

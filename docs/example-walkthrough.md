@@ -4,7 +4,29 @@
 
 需求：区域评选活动管理（管理员五步向导创建/修改/终止/删除活动，多角色报名投稿，可配置的三级审核，专家评分，颁奖公示）。
 
+六步走查的产物流转（⚠ 菱形 = 人工关口；实线 = 产物被下游消费）：
+
+```mermaid
+flowchart TB
+    A["① sdlc-intent 梳理 + 体检"] --> PA["intake/ 三件套<br/>digest · audit · pm-checklist"]
+    PA --> B["② 大需求规划（三段式）<br/>⏸ 确认点①② 人逐行核对"]
+    B --> PB["prd（功能点 / Q 表）· design 骨架"]
+    PA -->|"业务规则与口径（禁止读设计）"| C["③ sdlc-test cases"]
+    PB -->|"互不阅读 —— 独立推导"| D
+    C --> PC["test/cases.md<br/>用例 + 双向追踪表"]
+    PB --> D["④ sdlc-gate 评审关口<br/>4 子代理扇出 + RECONCILE"]
+    PC --> D
+    D --> PD["review/issues 宽表（分歧置顶）<br/>⏸ 人逐条裁决 → 已放行"]
+    PD -->|"放行 = 关卡1 互认"| E["⑤ sdlc-test static → exec"]
+    PC --> E
+    E --> PE["reports/日期-r1/<br/>static.md · exec-log · 截图<br/>BUG 登记 → cases 回填"]
+    PE --> F["⑥ sdlc-test report"]
+    F --> PF["report.md 缺陷四要素表<br/>⏸ 关卡2 人复验真伪"]
+```
+
 ---
+
+## 步骤 1：需求梳理 + 体检（sdlc-intent）
 
 ## 步骤 1：需求梳理 + 体检（sdlc-intent）
 
