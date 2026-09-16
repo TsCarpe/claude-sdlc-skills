@@ -22,7 +22,7 @@ AI 写代码已经够快，瓶颈移到了**需求理解、测试与评审**：�
 2. **对抗出真问题**——评审与决策复查用全新上下文的子代理扇出互查，独立推导的设计与用例交叉比对，分歧即信号
 3. **服从的事走代码，判断的事走人**——红线（关卡、命名、规范违规）由 hook/脚本机械拦截，不打扰；口径冲突、issue 裁决、放行全部留给真人
 
-来自源项目（某 Java DDD 生产系统）的实测数字：**57 条**评审 issue 单轮关口产出（12 分歧 + 45 角色问题）、**74 条**用例走完浏览器执行、回归轮 **0 agent token**（用例资产化为 Playwright spec 后由 runner 跑）、5 个 skill 全部经官方 [best-practices](https://platform.claude.com/docs/zh-CN/agents-and-tools/agent-skills/best-practices) 多轮复核。
+来自源项目（某 Java DDD 生产系统）的实测数字：**57 条**评审 issue 单轮关口产出（12 分歧 + 45 角色问题）、**74 条**用例走完浏览器执行、回归轮 **0 agent token**（用例资产化为 Playwright spec 后由 runner 跑）、6 个 skill 对齐官方 [best-practices](https://platform.claude.com/docs/zh-CN/agents-and-tools/agent-skills/best-practices)（5 个经多轮复核，sdlc-guardrails 按同标准新增）。
 
 ## 一个需求怎么走
 
@@ -43,7 +43,7 @@ flowchart LR
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
 
-## Skill 矩阵（5 个）
+## Skill 矩阵（6 个）
 
 | skill | 阶段 | 触发示例 | 产物 | 依赖 |
 |---|---|---|---|---|
@@ -52,6 +52,7 @@ flowchart LR
 | [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计+用例定稿后 | `/sdlc-gate <需求名>` | issues 宽表（原文摘引+裁决列），放行后解锁开发与测试执行 | 无硬依赖 |
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 「这个判断我不放心，帮我质疑一下」 | 会话内五步闭环（CLAIM→EXTRACT→DOUBT→RECONCILE→STOP） | 无 |
 | [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 「梳理上线配置清单」 | 配置 Key 清单 + xxl-job 任务/MQ 订阅平台操作清单 + 知会项 | git 即可 |
+| [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | 「给这个项目接红线拦截」 | hook 拦截（guardrails.yaml 四类规则）+ pre-commit 兜底 + `--check` 基线报告 | python3 |
 
 关键机制：**关卡互认**（sdlc-gate 放行视同 sdlc-test 关卡1 通过）、**用例独立性红线**（cases 禁止读设计——交叉审查的价值前提）、**降级不炸**（任一 MCP 缺失都有声明过的降级路径，见 [faq](docs/faq.md)）。
 
@@ -75,7 +76,7 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 > 帮我梳理这个需求文档 <链接或路径>，完成后继续体检
 
-装完只是开始：harness 红线拦截、回归 runner、测试环境文件在项目侧怎么搭，见 [docs/project-setup.md](docs/project-setup.md)。
+装完只是开始：sdlc-guardrails 红线拦截、回归 runner、测试环境文件在项目侧怎么搭，见 [docs/project-setup.md](docs/project-setup.md)。
 
 ## 渐进采用阶梯
 
@@ -86,6 +87,7 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 3. **sdlc-doubt**（观念转变）——关键决策落定前多一道对抗复查
 4. **sdlc-gate**（1 天上手）——需要先有「设计+用例并行产出」的习惯，收益最大
 5. **sdlc-test**（持续投入）——需要 test 环境 + MCP 配套，建议 ①-④ 稳定后再上
+6. **sdlc-guardrails**（10 分钟）——改一次项目 settings.json + 写规则文件，红线从文档变机械拦截
 
 ## 大需求三段式拆分
 
@@ -100,7 +102,7 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 - **上手用**（30 分钟）：README → [example-walkthrough](docs/example-walkthrough.md)（看产物长什么样）→ [faq](docs/faq.md)
 - **理解方法论**（2 小时）：[workflow](docs/workflow.md) → [ai-native-sdlc-guide](docs/ai-native-sdlc-guide.md)（业界理论）→ [agent-stack-mental-model](docs/design/agent-stack-mental-model.md)（skill 还是 hook 的判断框架）
-- **接入与改造**（按需）：[project-setup](docs/project-setup.md)（项目侧配什么）→ [sdlc-test-design](docs/sdlc-test-design.md)（D1-D21 决策）→ [dev-standards-reference](docs/dev-standards-reference/README.md)（给自己的项目搭规范底座）→ [harness](harness/README.md)（红线引擎）
+- **接入与改造**（按需）：[project-setup](docs/project-setup.md)（项目侧配什么）→ [sdlc-test-design](docs/sdlc-test-design.md)（D1-D21 决策）→ [dev-standards-reference](docs/dev-standards-reference/README.md)（给自己的项目搭规范底座）→ [sdlc-guardrails](skills/sdlc-guardrails/README.md)（红线引擎）
 
 ## 适用边界（诚实版）
 

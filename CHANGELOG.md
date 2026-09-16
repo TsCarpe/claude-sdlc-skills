@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0 (2026-09-16)
+
+harness 从顶层目录迁为第 6 个可安装 skill（sdlc-guardrails）——`npx skills add` 与 plugin 渠道现在直接分发红线引擎，接入不再要求 clone 本仓库。
+
+- **目录迁移**：`harness/` → `skills/sdlc-guardrails/`（git mv 保留历史）；新增 SKILL.md（三步接入主干：挂载 hook → 写规则文件 → pipe-test 反馈环，脆弱操作低自由度）与 evals/ 三场景（接入闭环 / 规则语法 / 排障与基线）
+- **引擎默认路径改安装位置**：settings-hook 与 pre-commit 模板默认 `~/.claude/skills/sdlc-guardrails/engine/check.py`（`SDLCSKILLS_HOME` 覆盖机制保留；clone 仓库使用者可改 checkout 内绝对路径）——项目侧配置从此零 checkout 依赖
+- **文档口径同步**：README（Skill 矩阵 6 个、渐进阶梯第 6 级）、project-setup（全局侧删除「本仓库 checkout」依赖行，mermaid 全景图同步）、docs 导读、dev-standards-reference、sdlc-workflow-landscape 资产图、agent-stack-mental-model 附录全部指向新路径
+- **CI**：断链扫描排除 CHANGELOG.md（历史条目路径不回改，与敏感词扫描同口径）
+- marketplace.json 登记 sdlc-guardrails（skills CLI 与 plugin 两渠道集合一致）
+
 ## v0.4.0 (2026-09-16)
 
 评审注意力分层 + 产物链追溯机械化 + 栈解耦显式化（外部优化建议对照仓库现状逐条分析后收敛的四个增量，已实施约半数建议的前提上只补真实缺口）。

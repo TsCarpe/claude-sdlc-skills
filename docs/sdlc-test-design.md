@@ -236,7 +236,7 @@ skills/sdlc-test/
 
 ## 9. v0.3 增补：回归档（spec 资产化 + Playwright runner，2026-09-14）
 
-> 缘起：[sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（脚本作者 vs 点击员流派研究）。此前回归轮由 agent 驾驶浏览器重演用例（全量重跑付整轮全价），慢、贵、无执行资产。改造为两层架构：**探索档**（chrome-devtools MCP 首验/新用例/失败诊断，D9/D13 纪律不变）+ **回归档**（通过用例资产化为 Playwright spec，runner 执行零 agent token，agent 只诊断红色项）。skill 落地：`spec` 子命令与 [spec-guide](../skills/sdlc-test/references/spec/spec-guide.md)；runner 基础设施在目标项目侧（一键回归脚本模板见 [harness/templates/run_regression.sh](../harness/templates/run_regression.sh)）。
+> 缘起：[sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（脚本作者 vs 点击员流派研究）。此前回归轮由 agent 驾驶浏览器重演用例（全量重跑付整轮全价），慢、贵、无执行资产。改造为两层架构：**探索档**（chrome-devtools MCP 首验/新用例/失败诊断，D9/D13 纪律不变）+ **回归档**（通过用例资产化为 Playwright spec，runner 执行零 agent token，agent 只诊断红色项）。skill 落地：`spec` 子命令与 [spec-guide](../skills/sdlc-test/references/spec/spec-guide.md)；runner 基础设施在目标项目侧（一键回归脚本模板见 [sdlc-guardrails 模板](../skills/sdlc-guardrails/templates/run_regression.sh)）。
 
 | # | 决策 |
 |---|---|

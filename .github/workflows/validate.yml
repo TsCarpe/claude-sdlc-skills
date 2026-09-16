@@ -24,7 +24,7 @@ jobs:
               if any(x in dp for x in ['.git', '.idea', '.serena', 'node_modules']):
                   continue
               for fn in fns:
-                  if not fn.endswith('.md'):
+                  if not fn.endswith('.md') or fn == 'CHANGELOG.md':
                       continue
                   f = os.path.join(dp, fn)
                   text = re.sub(r'```.*?```', '', open(f, encoding='utf-8').read(), flags=re.S)

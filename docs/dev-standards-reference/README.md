@@ -19,7 +19,7 @@
 |---|---|---|---|
 | ① 入口层 | `claude-entry.md`（示例的 CLAUDE.md） | 每轮会话全量 | token 换来的注意力，只放最高杠杆内容 |
 | ② 细则层 | `details/*.md` + `development-checklist.md` | 触发对应任务时按表加载 | CLAUDE.md §4 的触发场景表路由 |
-| ③ 强制层 | `guardrails.example.yaml` | Write/Edit 写文件的瞬间 | [harness 引擎](../../harness/README.md) hook 拦截，确定性 |
+| ③ 强制层 | `guardrails.example.yaml` | Write/Edit 写文件的瞬间 | [sdlc-guardrails 引擎](../../skills/sdlc-guardrails/README.md) hook 拦截，确定性 |
 
 ## 目录对照
 
@@ -45,9 +45,9 @@
 
 ## 红线如何下沉到引擎
 
-checklist 里「写了就是错」的条目（存在性检查类：注解五件套、禁 `BeanUtils.copyProperties`、禁手算 offset……）已机械化进 `guardrails.example.yaml`，由 [harness/engine/check.py](../../harness/engine/check.py) 在写文件瞬间拦截；checklist 头部相应标注「机器已拦，自检不必重复核对」。**知识层（怎么写对）与强制层（写了就拦）的分工原则**见 [agent-stack-mental-model.md](../design/agent-stack-mental-model.md) §4。
+checklist 里「写了就是错」的条目（存在性检查类：注解五件套、禁 `BeanUtils.copyProperties`、禁手算 offset……）已机械化进 `guardrails.example.yaml`，由 [sdlc-guardrails/engine/check.py](../../skills/sdlc-guardrails/engine/check.py) 在写文件瞬间拦截；checklist 头部相应标注「机器已拦，自检不必重复核对」。**知识层（怎么写对）与强制层（写了就拦）的分工原则**见 [agent-stack-mental-model.md](../design/agent-stack-mental-model.md) §4。
 
-新项目接入（三步）：复制 hook 挂载段 → 按本示例写自己的 guardrails.yaml → pipe-test。详见 [harness/README.md](../../harness/README.md)。
+新项目接入（三步）：复制 hook 挂载段 → 按本示例写自己的 guardrails.yaml → pipe-test。详见 [sdlc-guardrails/README.md](../../skills/sdlc-guardrails/README.md)。
 
 ## 脱敏说明
 

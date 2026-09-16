@@ -1,11 +1,11 @@
 # claude-sdlc-skills 仓库导航（给在此仓库工作的 AI 与贡献者）
 
-这是一个 Claude Code skill 集合仓库：5 个可安装 skill + 大需求三段式方法论文档。本文件是仓库结构约定与改动护栏。
+这是一个 Claude Code skill 集合仓库：6 个可安装 skill + 大需求三段式方法论文档。本文件是仓库结构约定与改动护栏。
 
 ## 仓库结构
 
 ```
-skills/<name>/SKILL.md        # 5 个 skill（按生命周期序：sdlc-intent/test/gate/doubt/config-review）
+skills/<name>/SKILL.md        # 6 个 skill（生命周期序：sdlc-intent/test/gate/doubt/config-review + 横切引擎 sdlc-guardrails）
   references/                  # skill 的详细参考文档（模板/维度表/姿势手册），SKILL.md 只留精瘦主干+指针
   evals/                       # 评估场景（输入 + expected_behavior 勾选清单）
 templates/                     # 大需求三段式产物模板（stage1/2/3），与 docs/large-req-playbook.md 配套

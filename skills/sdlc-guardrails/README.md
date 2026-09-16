@@ -1,23 +1,23 @@
-# harness — 可移植红线检查引擎
+# sdlc-guardrails — 可移植红线检查引擎
 
-> 对应心智模型 [docs/design/agent-stack-mental-model.md](../docs/design/agent-stack-mental-model.md) §4：时机定载体——
+> 对应心智模型 [docs/design/agent-stack-mental-model.md](../../docs/design/agent-stack-mental-model.md) §4：时机定载体——
 > 服从性规则（可机械校验的"写了就是错"）在**写文件瞬间**由 hook 拦截，
 > 判断性规则留在 skill/spec（知识层本职）。
 
 ## 架构
 
-- **引擎（机制）**：本目录 `engine/check.py`，全局一份，python3 + PyYAML
+- **引擎（机制）**：本 skill 目录 `engine/check.py`，全局一份（`npx skills add` 安装到用户级 `~/.claude/skills/sdlc-guardrails/`），python3 + PyYAML
 - **规则（内容）**：各项目 `.claude/guardrails.yaml`，从被检文件向上查找
-- **模板**：`templates/`——hook 挂载段 / pre-commit / run_regression.sh / `runner/`（回归 runner 四件：playwright.config.ts、package.json、capture-login.mjs、spike.spec.ts，占位符按项目替换；用法见 docs/project-setup.md）
+- **模板**：`templates/`——hook 挂载段 / pre-commit / run_regression.sh / `runner/`（回归 runner 四件：playwright.config.ts、package.json、capture-login.mjs、spike.spec.ts，占位符按项目替换；用法见 docs/project-setup.md，仓库根相对路径 `skills/sdlc-guardrails/templates/`）
 - 引擎零项目知识；换项目 = 只写规则文件 + 挂载段
 
 ## 新项目接入（三步）
 
-1. 复制挂载段到项目 `.claude/settings.json`（把引擎路径改为本机 checkout 位置）：
+1. 复制挂载段到项目 `.claude/settings.json`（引擎路径默认用全局安装位置 `~/.claude/skills/sdlc-guardrails/engine/check.py`；clone 仓库使用的把路径改成本机 checkout 内对应文件）：
 
-   见 [templates/settings-hook.json](templates/settings-hook.json)（harness 目录下，非仓库根 templates/）
+   见 [templates/settings-hook.json](templates/settings-hook.json)
 
-2. 写项目 `.claude/guardrails.yaml`（从零，或参考 [docs/dev-standards-reference/guardrails.example.yaml](../docs/dev-standards-reference/guardrails.example.yaml)）：
+2. 写项目 `.claude/guardrails.yaml`（从零，或参考 [docs/dev-standards-reference/guardrails.example.yaml](../../docs/dev-standards-reference/guardrails.example.yaml)）：
 
    ```yaml
    version: 1

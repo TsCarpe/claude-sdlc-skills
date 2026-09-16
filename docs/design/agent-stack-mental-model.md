@@ -2,7 +2,7 @@
 
 > 沉淀自 2026-09-15 与 Claude 的架构讨论（skill 路线 vs 调整工作流 → 概念分层 → 落地判据 → hooks/CI 机制与载体路由）。
 > 用途：遇到 AI 开发栈的新概念时先归层；调整工作流时按决策流程选承载形式。
-> 2026-09-16 随资产回收整理；本仓库 harness/ 即本文 §4「判断的留下，服从的下沉」的落地产物。
+> 2026-09-16 随资产回收整理；本仓库 skills/sdlc-guardrails/ 即本文 §4「判断的留下，服从的下沉」的落地产物。
 
 ## 0. 总纲：两个桶 + 一个问题
 
@@ -223,7 +223,7 @@ if missing:
 - ② 脚本读 file_path 自己判断，不相关就秒退
 - ③ 真正的规则校验
 
-> 注解名随示例框架而异——通用做法是把"框架强制注解存在性"写成规则集（本仓库的落地形态见 [harness/](../../harness/README.md)：引擎 `engine/check.py` + 项目侧 `guardrails.yaml`）。
+> 注解名随示例框架而异——通用做法是把"框架强制注解存在性"写成规则集（本仓库的落地形态见 [sdlc-guardrails](../../skills/sdlc-guardrails/README.md)：引擎 `engine/check.py` + 项目侧 `guardrails.yaml`）。
 
 ### 4.4 CI 速查
 
@@ -275,9 +275,9 @@ CC (harness)
 
 ## 附录 B：对当前体系的三个调整方向（本框架的推导输出，2026-09-16 标注落地状态）
 
-1. **红线盘点下沉**：✅ **已落地（2026-09-15/16）**——引擎 [harness/engine/check.py](../../harness/engine/check.py)（规则由项目侧 `.claude/guardrails.yaml` 定义）+ PostToolUse hook 拦写入（含 Edit 增量语义）+ pre-commit 拦提交（[harness/templates/pre-commit](../../harness/templates/pre-commit)）+ `audit_profiles.py` 管跨文件对账 + `guard_exec.py` 管 sdlc-test 关卡；首轮存量基线扫描（约 1200 文件）命中 109 处 + 6 个悬空分组，口径存量不追溯
+1. **红线盘点下沉**：✅ **已落地（2026-09-15/16）**——引擎 [sdlc-guardrails/engine/check.py](../../skills/sdlc-guardrails/engine/check.py)（规则由项目侧 `.claude/guardrails.yaml` 定义）+ PostToolUse hook 拦写入（含 Edit 增量语义）+ pre-commit 拦提交（[sdlc-guardrails/templates/pre-commit](../../skills/sdlc-guardrails/templates/pre-commit)）+ `audit_profiles.py` 管跨文件对账 + `guard_exec.py` 管 sdlc-test 关卡；首轮存量基线扫描（约 1200 文件）命中 109 处 + 6 个悬空分组，口径存量不追溯
 2. **固定编排上浮**：⏸ **未做，待议**——sdlc-gate 4 角色扇出 + RECONCILE 预理的 workflow 化未实施；exec 批量轮维持 skill 指示派发。触发条件：再次出现编排漂移事故时重议
-3. **可验证重复劳动继续 spec 化**：◐ **部分落地**——一键回归命令已建（模板 [harness/templates/run_regression.sh](../../harness/templates/run_regression.sh)，人工触发，spike 健康检查→runner→`-manual` 报告，不占轮次号）；定时触发经评估否决（迭代生命周期短）；specs 资产重建随 exec 轮滚动进行
+3. **可验证重复劳动继续 spec 化**：◐ **部分落地**——一键回归命令已建（模板 [sdlc-guardrails/templates/run_regression.sh](../../skills/sdlc-guardrails/templates/run_regression.sh)，人工触发，spike 健康检查→runner→`-manual` 报告，不占轮次号）；定时触发经评估否决（迭代生命周期短）；specs 资产重建随 exec 轮滚动进行
 
 skill 知识资产（校准、模板、判断规则）不动——换任何载体都有效，且它们本就该住知识层。
 

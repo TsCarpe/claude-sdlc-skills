@@ -119,7 +119,7 @@ Rust 全栈项目（Server + CLI + Tauri）55 个 E2E 的分层实践，附给 A
 ### 2.3 实施步骤（当时草案 → 落地情况）
 
 **P0 工程搭建**
-1. runner 工程：`playwright.config.ts`（baseURL 指向 test 环境，`trace: 'retain-on-failure'`，`screenshot: 'only-on-failure'`）；目录 `specs/<分组>/tc-xx.spec.ts`、`fixtures/`、`.auth/`——✅ 落地为项目侧 runner 工程（一键回归脚本模板见 [harness/templates/run_regression.sh](../harness/templates/run_regression.sh)）
+1. runner 工程：`playwright.config.ts`（baseURL 指向 test 环境，`trace: 'retain-on-failure'`，`screenshot: 'only-on-failure'`）；目录 `specs/<分组>/tc-xx.spec.ts`、`fixtures/`、`.auth/`——✅ 落地为项目侧 runner 工程（一键回归脚本模板见 [skills/sdlc-guardrails/templates/run_regression.sh](../skills/sdlc-guardrails/templates/run_regression.sh)）
 2. 登录态方案（该环境最大特殊点：SSO 用户辅助登录、无账密直登）：
    - 辅助登录一次 → 保存 `storageState` 到 `.auth/<角色>.json` 全局复用
    - globalSetup 用环境配方的鉴权直调头 fetch 轻接口探活，401 → 提示重新辅助登录

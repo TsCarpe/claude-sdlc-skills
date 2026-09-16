@@ -31,12 +31,12 @@
 │      依赖个人全局环境，暂不在本仓库——见 Roadmap）                    │
 │                                                                   │
 │ 🔒 强制层（什么必须/禁止，不经模型）                                 │
-│    harness/engine/check.py           规则引擎（项目侧配置规则）      │
-│    harness/engine/audit_profiles.py  OVAL 分组跨文件对账            │
-│    harness/engine/check_runner_form.py  文档命令形态自检            │
+│    sdlc-guardrails/engine/check.py 规则引擎（项目侧配置规则）       │
+│    sdlc-guardrails/engine/audit_profiles.py OVAL 分组跨文件对账    │
+│    sdlc-guardrails/engine/check_runner_form.py 文档命令形态自检    │
 │    sdlc-test/scripts/guard_exec.py   关卡守卫                       │
 │    sdlc-gate/scripts/check_trace.py  产物链追溯校验                 │
-│    harness/templates/                hook 段 / pre-commit / 回归   │
+│    sdlc-guardrails/templates/ hook 段 / pre-commit / 回归         │
 ├─────────────────────────────────────────────────────────────────┤
 │ 项目层（目标项目里自建，源项目为范例）                                │
 │                                                                   │
@@ -104,7 +104,7 @@
    → 上线前 sdlc-config-review（Apollo key 清单）
 
    之后随手回归：runner 一键回归脚本（人工触发，不占轮次号；
-   模板见 harness/templates/run_regression.sh）
+   模板见 sdlc-guardrails/templates/run_regression.sh）
 ```
 
 ---

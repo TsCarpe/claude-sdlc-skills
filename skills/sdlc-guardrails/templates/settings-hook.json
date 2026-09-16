@@ -1,0 +1,17 @@
+{
+  "_comment": "挂载段模板：合并进项目 .claude/settings.json 的 hooks 对象（保留已有事件）。引擎路径默认为 npx skills add 全局安装位置；clone 仓库使用者改为本机 checkout 内 skills/sdlc-guardrails/engine/check.py 的绝对路径。",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/skills/sdlc-guardrails/engine/check.py",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

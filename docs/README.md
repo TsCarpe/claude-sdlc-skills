@@ -44,7 +44,7 @@
 
 1. 测试侧：[sdlc-test-design.md](sdlc-test-design.md)（D1-D21 决策）→ [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（回归档演进）
 2. 产物互引：[design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md)（ID 体系）
-3. 项目侧接入：[dev-standards-reference/README.md](dev-standards-reference/README.md)（规范底座）→ [harness/README.md](../harness/README.md)（红线引擎三步接入）
+3. 项目侧接入：[dev-standards-reference/README.md](dev-standards-reference/README.md)（规范底座）→ [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md)（红线引擎三步接入）
 
 ## 按问题找文档
 
@@ -54,6 +54,6 @@
 | 为什么用例生成禁止读设计？ | [workflow.md](workflow.md) §3 + [sdlc-test-design.md](sdlc-test-design.md) D11 |
 | 回归测试怎么不烧 token？ | [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md) + sdlc-test spec 子命令 |
 | 规则写 skill 还是写 hook？ | [design/agent-stack-mental-model.md](design/agent-stack-mental-model.md) §3 决策流程 |
-| 怎么给自己的项目配红线拦截？ | [harness/README.md](../harness/README.md) + [dev-standards-reference/guardrails.example.yaml](dev-standards-reference/guardrails.example.yaml) |
+| 怎么给自己的项目配红线拦截？ | [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md) + [dev-standards-reference/guardrails.example.yaml](dev-standards-reference/guardrails.example.yaml) |
 | 产物间怎么互相引用？ | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) §2 命名空间注册表 |
 | 装完 skill 后项目侧还要配什么？ | [project-setup.md](project-setup.md) |
