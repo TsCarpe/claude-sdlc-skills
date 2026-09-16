@@ -1,6 +1,6 @@
 # 用例文件模板
 
-产出路径：`sdlc/<需求名>/test/cases.md`。严格按此结构（ALWAYS use this exact template）：
+产出路径：`sdlc/<需求名>/test/cases.md`。严格按此结构（ALWAYS use this exact template）。模板区块顺序：头部元数据 → 设计技术覆盖矩阵 → 双向追踪表 → 重点验证项 → 执行分组 → 用例总览（状态唯一权威）→ 用例明细 → 缺陷跟踪；字段口径与存量兼容见文末：
 
 ```markdown
 # <需求名> 测试用例

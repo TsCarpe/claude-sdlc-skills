@@ -1,6 +1,6 @@
 # eval-6：spec 资产化与 runner 回归（生成验证循环/三向诊断/cwd 纪律）
 
-背景（2026-09-14 spike 实测）：storageState 登录态复用可行（edu-region-linping_* 鉴权键），系统 Chrome 零下载路线（channel:'chrome'）跑通，单条 spec 4.2s。首试点 = 比赛需求 A 组 BUG 关联 + P0/P1 用例。
+背景（2026-09-14 spike 实测）：storageState 登录态复用可行（源项目实测，鉴权键前缀随项目而异），系统 Chrome 零下载路线（channel:'chrome'）跑通，单条 spec 4.2s。首试点 = 比赛需求 A 组 BUG 关联 + P0/P1 用例。
 
 ## 6a 生成验证循环（/sdlc-test spec）
 

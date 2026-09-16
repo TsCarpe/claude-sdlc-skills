@@ -6,7 +6,7 @@
 
 一套在真实 Java 项目跑通的 AI 原生 SDLC（软件开发生命周期）技能集：AI 承担梳理、用例、评审、测试、审计的重复劳动，人只在关键关口裁决。不是玩具——每个 skill 都经过多轮真实需求迭代与官方 best-practices 复核。
 
-> 更新日志：[CHANGELOG.md](CHANGELOG.md) · 最新 v0.1.2（2026-09-15）
+> 更新日志：[CHANGELOG.md](CHANGELOG.md) · 最新 v0.2.1（2026-09-16）
 
 ---
 
@@ -28,6 +28,14 @@ flowchart LR
 ```
 
 旁路随时可用：sdlc-doubt（对刚做的决策发起对抗式复查）、sdlc-config-review（发版前扫描配置 Key）。
+
+## 文档怎么读
+
+全部文档带导读地图与三条阅读路径，见 [docs/README.md](docs/README.md)：
+
+- **上手用**（30 分钟）：README → [example-walkthrough](docs/example-walkthrough.md)（看产物长什么样）→ [faq](docs/faq.md)
+- **理解方法论**（2 小时）：[workflow](docs/workflow.md)（全流程叙述）→ [ai-native-sdlc-guide](docs/ai-native-sdlc-guide.md)（业界理论）→ [design/agent-stack-mental-model](docs/design/agent-stack-mental-model.md)（skill 还是 hook 的判断框架）
+- **深入设计**（按需）：[sdlc-test-design](docs/sdlc-test-design.md)（D1-D21 决策）→ [dev-standards-reference](docs/dev-standards-reference/README.md)（给自己的项目搭规范底座）→ [harness](harness/README.md)（红线引擎接入）
 
 ## 安装
 
@@ -151,9 +159,6 @@ npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills
 
 版本兼容：已在 Claude Code + skills CLI（2026-09 版）验证；skill 遵循 Agent Skills 开放标准，其他兼容 agent（Cursor 等）经 skills.sh 亦可安装。
 
-
 ## Community
 
-Thanks to the discussions and feedback from the LINUX DO community.
-
-https://linux.do
+感谢 LINUX DO 社区的讨论与反馈：<https://linux.do>

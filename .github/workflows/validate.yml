@@ -14,6 +14,34 @@ jobs:
       - name: marketplace.json 合法性
         run: python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
 
+      - name: markdown 相对链接与路径引用存在性（断链零容忍）
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          broken = []
+          link_re = re.compile(r'\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
+          for dp, dns, fns in os.walk('.'):
+              if any(x in dp for x in ['.git', '.idea', '.serena', 'node_modules']):
+                  continue
+              for fn in fns:
+                  if not fn.endswith('.md'):
+                      continue
+                  f = os.path.join(dp, fn)
+                  text = re.sub(r'```.*?```', '', open(f, encoding='utf-8').read(), flags=re.S)
+                  for m in link_re.finditer(text):
+                      t = m.group(1)
+                      if t.startswith(('http://', 'https://', '#', 'mailto:')):
+                          continue
+                      p = t.split('#')[0]
+                      if p and not os.path.exists(os.path.normpath(os.path.join(dp, p))):
+                          broken.append(f"{f} -> {t}")
+                  for m in re.finditer(r'`(doc|docs|templates|harness|skills)/[A-Za-z0-9_\-./]+\.(md|json|py|sh|yaml|yml)`', text):
+                      if not os.path.exists(m.group(0).strip('`')):
+                          broken.append(f"{f} -> {m.group(0)}")
+          assert not broken, "断链:\n" + "\n".join(broken)
+          print("OK: 相对链接检查通过")
+          EOF
+
       - name: 每个 skill 目录有合法 frontmatter name（kebab-case）
         run: |
           fail=0

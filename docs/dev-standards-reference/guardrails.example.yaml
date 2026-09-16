@@ -1,0 +1,120 @@
+# HRSystem guardrails 红线规则集 v1（示例，2026-09 脱敏整理收录）
+# 引擎：claude-sdlc-skills/harness/engine/check.py（用法与挂载见 harness/README.md）
+# 规则来源：development-checklist.md 中可 grep 机械化条目（checklist 头部已标注机器拦截范围）
+# 知识层（怎么写对）仍在 checklist/细则；本文件只拦"写了就是错"的
+# 存量违规不追溯（hook 只查本次写入），基线扫描：check.py --check <files>
+version: 1
+rules:
+  # ---- Controller 层（checklist §2.1 五件套）----
+  - id: ctrl-requestbody
+    glob: "**/controller/**/*Controller.java"
+    type: count_ge
+    anchor: "@PostMapping"
+    pattern: "@RequestBody"
+    message: "每个 @PostMapping 方法必须带 @RequestBody"
+  - id: ctrl-logrecord
+    glob: "**/controller/**/*Controller.java"
+    type: count_ge
+    anchor: "@PostMapping"
+    pattern: "@LogRecord"
+    message: "每个 @PostMapping 方法必须带 @LogRecord"
+  - id: ctrl-loginrequired
+    glob: "**/controller/**/*Controller.java"
+    type: count_ge
+    anchor: "@PostMapping"
+    pattern: "@LoginRequired"
+    message: "每个 @PostMapping 方法必须带 @LoginRequired"
+  - id: ctrl-validate
+    glob: "**/controller/**/*Controller.java"
+    type: count_ge
+    anchor: "@PostMapping"
+    pattern: "@Validate"
+    message: "每个 @PostMapping 方法必须带 @Validate（分组名与方法语义一致）"
+  - id: ctrl-resultjson
+    glob: "**/controller/**/*Controller.java"
+    type: require
+    pattern: "ResultJson<"
+    message: "Controller 返回值必须直接用 ResultJson<T>（禁子类/裸类型）"
+  - id: ctrl-url-v1
+    glob: "**/controller/**/*Controller.java"
+    type: require
+    pattern: "Mapping\\(\\s*(value\\s*=\\s*)?\"[^\"]*/v1/"
+    message: "接口路径必须含 /v1/ 版本段"
+  - id: ctrl-url-snake
+    glob: "**/controller/**/*Controller.java"
+    type: forbid
+    pattern: "Mapping\\(\\s*(value\\s*=\\s*)?\"[^\"]*[A-Z]"
+    message: "URL path 含大写字母（须 snake_case，如 /apply_add）"
+  - id: ctrl-no-getmapping
+    glob: "**/controller/**/*Controller.java"
+    type: forbid
+    pattern: "@GetMapping"
+    message: "REST 接口统一 @PostMapping（五大件套口径）"
+  - id: ctrl-no-infra-import
+    glob: "**/controller/**/*Controller.java"
+    type: forbid
+    pattern: "import\\s+com\\.example\\.hr\\.infrastructure\\."
+    message: "Controller 禁止直接依赖 infrastructure 层"
+
+  # ---- 全局 Java 红线（checklist §2.3/§2.4/§3/§4）----
+  - id: no-beanutils-copy
+    glob: "**/*.java"
+    type: forbid
+    pattern: "BeanUtils?\\s*\\.\\s*copyProperties"
+    message: "禁止 BeanUtils.copyProperties（对象转换走 Assembler/Convert/Struct）"
+  - id: no-manual-offset
+    glob: "**/*.java"
+    type: forbid
+    pattern: "\\(page\\s*-\\s*1\\)\\s*\\*"
+    message: "禁止手算 offset（用 PageUtil.toOffset）"
+  - id: no-hand-buildpagination
+    glob: "**/*.java"
+    type: forbid
+    pattern: "buildPagination"
+    message: "禁止手写 buildPagination（用 PageUtil.toPagination）"
+  - id: no-printstacktrace
+    glob: "**/*.java"
+    type: forbid
+    pattern: "printStackTrace\\s*\\("
+    message: "禁止 printStackTrace（异常走统一处理）"
+  - id: no-fqcn-inline-new
+    glob: "**/*.java"
+    type: forbid
+    pattern: "new\\s+com\\."
+    message: "禁止全路径类名内联 new（须 import）"
+
+  # ---- Map/JSONObject 出参（checklist §4 AI 代码卫生）----
+  - id: no-map-out-business
+    glob: "**/business/**/*Business.java"
+    type: forbid
+    pattern: "public\\s+(Map\\s*<|JSONObject\\b)"
+    message: "Business 方法禁止 Map/JSONObject 出参（定义 DTO/VO）"
+  - id: no-map-out-controller
+    glob: "**/controller/**/*Controller.java"
+    type: forbid
+    pattern: "public\\s+(Map\\s*<|JSONObject\\b)"
+    message: "Controller 方法禁止 Map/JSONObject 出参"
+
+  # ---- v2 扩充（checklist §2.2 分页三件套 / §2.3 转换 / 分层依赖）----
+  - id: no-consecutive-setters
+    glob: "**/*.java"
+    type: forbid
+    pattern: "(?:[ \\t]*\\w+\\.set\\w+\\(\\s*\\w+\\.get\\w+\\(\\)\\s*\\);\\s*\\n){3,}"
+    message: "连续 3 行以上 set(get()) 手搬字段（迁 Assembler/Convert/Struct/DTOStruct）"
+  - id: page-req-notnull
+    glob: "**/req/**/*.java"
+    type: require_if
+    when: "private\\s+Integer\\s+page\\b"
+    pattern: "@NotNull"
+    message: "分页 Req 的 page/pageSize 字段缺 @NotNull（分页三件套）"
+  - id: page-req-min
+    glob: "**/req/**/*.java"
+    type: require_if
+    when: "private\\s+Integer\\s+page\\b"
+    pattern: "@Min\\s*\\("
+    message: "分页 Req 的 page/pageSize 字段缺 @Min(1)（分页三件套）"
+  - id: domain-no-client-import
+    glob: "**/domain/**/service/**/*.java"
+    type: forbid
+    pattern: "import\\s+com\\.example\\.hr\\.client\\."
+    message: "domain 层 Service 禁止依赖 client（出参 VO/Entity，入参用 Query/VO）"

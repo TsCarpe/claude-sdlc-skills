@@ -1,6 +1,6 @@
 ---
 name: sdlc-gate
-description: "评审关口：技术设计与测试用例定稿后的强制评审关口——4 个全新上下文子代理（3 角色预审 + 1 交叉审查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review、review-gate，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate <需求名>"
+description: "评审关口：技术设计与测试用例定稿后的强制评审关口——4 个全新上下文子代理（3 角色预审 + 1 交叉审查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate <需求名>"
 ---
 
 # Review Gate（评审关口）

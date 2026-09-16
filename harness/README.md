@@ -1,6 +1,6 @@
 # harness — 可移植红线检查引擎
 
-> 对应心智模型 `doc/analysis/agent-stack-mental-model.md` §4：时机定载体——
+> 对应心智模型 [docs/design/agent-stack-mental-model.md](../docs/design/agent-stack-mental-model.md) §4：时机定载体——
 > 服从性规则（可机械校验的"写了就是错"）在**写文件瞬间**由 hook 拦截，
 > 判断性规则留在 skill/spec（知识层本职）。
 
@@ -14,22 +14,23 @@
 
 1. 复制挂载段到项目 `.claude/settings.json`（把引擎路径改为本机 checkout 位置）：
 
-   见 `templates/settings-hook.json`
+   见 [templates/settings-hook.json](templates/settings-hook.json)（harness 目录下，非仓库根 templates/）
 
-2. 写项目 `.claude/guardrails.yaml`（从零或参考 edu-region 版）：
+2. 写项目 `.claude/guardrails.yaml`（从零，或参考 [docs/dev-standards-reference/guardrails.example.yaml](../docs/dev-standards-reference/guardrails.example.yaml)）：
 
    ```yaml
    version: 1
    rules:
      - id: no-printstacktrace        # 唯一标识
        glob: "**/*.java"             # ** 跨目录 / * 单段
-       type: forbid                  # forbid | require | count_ge
+       type: forbid                  # forbid | require | require_if | count_ge
        pattern: "printStackTrace\\s*\\("   # 正则（YAML 单引号防转义坑）
        message: "禁止 printStackTrace"
    ```
 
    - `forbid`：pattern 出现即违规
    - `require`：pattern 至少出现一次（文件级）
+   - `require_if`：文件命中 `when` 模式时 `pattern` 必须出现（如"Req 含 page 字段则须有 @Min"）；`when` 为该类型必填
    - `count_ge`：`pattern` 出现次数 ≥ `anchor` 出现次数（如"每个 @PostMapping 都要有 @LogRecord"的文件级近似）
 
 3. 写一个违规文件实测拦截（pipe-test）：

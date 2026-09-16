@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """sdlc guardrails engine — 可移植的确定性红线检查引擎。
 
-设计约定（与 doc/analysis/agent-stack-mental-model.md §4 对应）：
+设计约定（与 docs/design/agent-stack-mental-model.md §4 对应）：
 - 引擎（机制）全局一份，规则（内容）在项目 `.claude/guardrails.yaml`
 - 新项目接入只写规则文件 + settings 挂载段，不改本文件
 - hook 模式永不阻塞 agent 循环：任何内部异常静默退出 0，拦截只通过 JSON decision 表达

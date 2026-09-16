@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.2.1 (2026-09-16)
+
+docs 资产回收 + 重组导读（方法论源项目沉淀文档脱敏收录，skills 与 harness 机制零改动）。
+
+- **新增 5 篇方法论文档**：[ai-native-sdlc-guide](docs/ai-native-sdlc-guide.md)（Google/Anthropic/OpenAI 三篇权威文章融合提炼）；design/ 三篇——[agent-stack-mental-model](docs/design/agent-stack-mental-model.md)（两桶心智模型 + 载体路由，harness README 原断链指向此文，已修复）、[sdlc-workflow-landscape](docs/design/sdlc-workflow-landscape.md)（资产全貌快照）、[sdlc-id-linkage-plan](docs/design/sdlc-id-linkage-plan.md)（跨产物 ID 体系，标注已实施 + 落地核对）
+- **新增 sdlc-test-spec-evolution**：「点击员→脚本作者」流派研究 + 改进计划合并（标注已实施，决策点裁决对照 D14-D21）
+- **sdlc-test-design 升 v0.3**：补 §9 回归档（D13-D21，D20 按现行红线改写为绝对路径命令形态）
+- **新增 dev-standards-reference/**：项目级分层规范体系全套参考实现（入口层示例 + 自检清单 + guardrails 20 条规则示例 + 8 份细则，含飞书技术设计文档生成规范）；统一脱敏为 HRSystem/hr-* 中性示例
+- **docs/README.md 导读**（新增）：文档地图（按性质四分类）+ 三条阅读路径 + 按问题找文档索引；仓库 README 加「文档怎么读」段并修正版本号引用
+- **红线清理**：harness/README、check.py、env-template、eval-6 中的源项目名残留改中性表述
+- **断链与历史名清理**（官方 best-practices 复核）：sdlc-test SKILL.md 与 spec-guide 中 `doc/ai-testing-solution.md` 历史路径断链改指 [docs/sdlc-test-design.md](docs/sdlc-test-design.md)；全仓 skill 历史名（ai-test / requirement-intake / review-gate）统一为现名并从触发词移除；入口守卫命令去掉 `~/.claude/skills/` 全局安装路径假设，改按 skill 安装目录说明（项目级/全局均适用）
+- **harness README 补 require_if**：规则类型说明与 check.py 实现、guardrails.example.yaml 对齐（四类）；settings-hook 挂载段引用改链接形式消歧
+- **CI 新增断链检查**：markdown 相对链接 + 反引号路径引用存在性（零容忍）；.gitignore 补 `.idea/`、`.serena/`、`.claude/settings.local.json`；case-template 顶部补模板区块目录，术语「关卡 1」统一为「关卡1」
+
 ## v0.2.0 (2026-09-16)
 
 新增 harness 可移植强制层（红线从 skill 文字下沉到确定性执行），sdlc-test 关卡强制机械化。

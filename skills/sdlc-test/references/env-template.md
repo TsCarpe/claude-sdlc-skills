@@ -64,7 +64,7 @@ sdlc/
 ```
 
 - 调用（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
-- 首建参考（edu-region 实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
+- 首建参考（源项目实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
 - 详见 skill `references/spec/spec-guide.md`（含 EP spec 姿势表）
 
 ## sdlc/env/ui-recipe.md（环境配方，入库口径同 test.md）

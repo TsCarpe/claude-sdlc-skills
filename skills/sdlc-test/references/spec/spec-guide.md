@@ -1,7 +1,7 @@
 # 回归档 spec 指南（资产化与 runner 执行）
 
 > 定位：通过且口径拍板的用例资产化为 Playwright spec；回归轮跑 runner（零 agent token），agent 只诊断红色项。探索档（chrome-devtools MCP 首验/新用例/失败现场诊断）纪律不变，本指南只管回归档。
-> 依据：两层架构决策见 `doc/ai-testing-solution.md` v0.3（仓库内，跨项目使用缺失时以本指南为准）；runner 基础设施在 `sdlc/env/runner/`。
+> 依据：两层架构决策见开源仓库 `docs/sdlc-test-design.md` v0.3（skill 安装副本中缺失，以本指南为准）；runner 基础设施在 `sdlc/env/runner/`。
 
 ## 目录
 
@@ -77,7 +77,7 @@ SQL 清单格式（spec 文件头注释）：
 ```ts
 /**
  * DB 抽查清单（回归轮 agent 用 MySQL MCP 执行；业务键定位，禁大 ID 直查）
- * - TC-01/BUG-01: SELECT school_id FROM skill_contest_school WHERE contest_id=(SELECT id FROM skill_contest WHERE name='创建验证-<规则>')
+ * - TC-01/BUG-01: SELECT school_id FROM activity_school WHERE activity_id=(SELECT id FROM activity WHERE name='创建验证-<规则>')
  *   预期：全部学校也落全量快照行（D-01 口径）
  */
 ```

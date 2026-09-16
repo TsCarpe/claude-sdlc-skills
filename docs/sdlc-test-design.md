@@ -1,8 +1,8 @@
- # AI 替代人工测试方案（sdlc-test 设计决策记录）
+# AI 替代人工测试方案（sdlc-test 设计决策记录）
 
-> 版本：v0.2（细化：工具选型论证 + 测试设计方法论 + skill 子命令化组织）
-> 日期：2026-09-02 定稿，2026-09-12 随开源整理（skill 现名 sdlc-test，文中 ai-test 为历史名）
-> 关联：[sdlc-test skill](../skills/sdlc-test/SKILL.md)、[workflow.md](workflow.md)（全流程叙述）、`sdlc/<需求名>/intake/*`（需求梳理三件套，sdlc-intent 产出）
+> 版本：v0.3（v0.2 细化：工具选型论证 + 测试设计方法论 + skill 子命令化组织；v0.3 增补 §9 回归档：spec 资产化 + Playwright runner）
+> 日期：2026-09-02 定稿，2026-09-12 随开源整理，2026-09-16 补录 §9 与演进研究文档
+> 关联：[sdlc-test skill](../skills/sdlc-test/SKILL.md)、[workflow.md](workflow.md)（全流程叙述）、[sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（回归档演进研究）、`sdlc/<需求名>/intake/*`（需求梳理三件套，sdlc-intent 产出）
 
 ---
 
@@ -71,7 +71,7 @@
   4. **状态迁移覆盖**：梳理文档每条状态机迁移边至少一例，含非法迁移尝试
   5. **场景法**：基本流 + 备选流 + 异常流（对应梳理文档的业务主流程图）
   6. **错误推测**：重复提交 / 越权访问 / 并发操作 / 必填缺失 / 格式非法
-- **覆盖度自检（双向追踪）**：用例文件内维护"需求规则条目 ↔ 用例 ID"映射表；无用例覆盖的规则条目必须显式列出并注明原因（豁免/待补充）。这是关卡 1 人工审核的核心抓手，也是压制漏报（方案最大风险）的唯一手段
+- **覆盖度自检（双向追踪）**：用例文件内维护"需求规则条目 ↔ 用例 ID"映射表；无用例覆盖的规则条目必须显式列出并注明原因（豁免/待补充）。这是关卡1 人工审核的核心抓手，也是压制漏报（方案最大风险）的唯一手段
 - **产出**：`sdlc/<需求名>/test/cases.md`，结构见 `references/cases/case-template.md`：头部元数据（审核状态 + 阶段进度 checklist）/ 设计技术覆盖矩阵 / 双向追踪表 / 用例总览 / 用例明细（TC 小节，含"设计技术"标注）
 
 ### 3.2 人工关卡1：用例审核（强制）
@@ -227,9 +227,25 @@ skills/sdlc-test/
 | D5 | 环境/角色配置入库；账号文件 gitignore |
 | D6 | test 环境账号密码直登，AI 全自动登录 |
 | D7 | 人工发起触发；自动触列为演进 |
-| D8 | 执行编排 = 静态代码检测先于前端功能测试；能力沉淀为独立 skill（现名 sdlc-test，历史名 ai-test） |
+| D8 | 执行编排 = 静态代码检测先于前端功能测试；能力沉淀为独立 skill（sdlc-test） |
 | D9 | 浏览器执行以 chrome-devtools MCP 为主（唯一具备网络请求 + console 回读）；Playwright 仅降级兜底 |
 | D10 | 不引入 gitnexus / 独立浏览器智能体框架 / 商用测试 SaaS（否决记录见 §3.6） |
 | D11 | 用例生成强制结构化设计技术（等价类/边界值/判定表/状态迁移/场景法/错误推测）+ 规则条目双向追踪；输入源优先 sdlc/<需求名>/intake/ 三件套而非原始 PRD |
 | D12 | skill 组织 = 主 skill 子命令分阶段（cases/static/exec/report）独立可重入；进度与关卡状态持久化在用例文件头部 |
+| D13 | 判定证据 = 三方（页面/接口/落库）为主 + console 异常补充；造数只走前端页面，禁改库 |
+
+## 9. v0.3 增补：回归档（spec 资产化 + Playwright runner，2026-09-14）
+
+> 缘起：[sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（脚本作者 vs 点击员流派研究）。此前回归轮由 agent 驾驶浏览器重演用例（全量重跑付整轮全价），慢、贵、无执行资产。改造为两层架构：**探索档**（chrome-devtools MCP 首验/新用例/失败诊断，D9/D13 纪律不变）+ **回归档**（通过用例资产化为 Playwright spec，runner 执行零 agent token，agent 只诊断红色项）。skill 落地：`spec` 子命令与 [spec-guide](../skills/sdlc-test/references/spec/spec-guide.md)；runner 基础设施在目标项目侧（一键回归脚本模板见 [harness/templates/run_regression.sh](../harness/templates/run_regression.sh)）。
+
+| # | 决策 |
+|---|---|
+| D14 | 两层架构：探索档沿用 MCP 实时执行；回归档 spec + runner。不做整体范式翻转（研究启示 5） |
+| D15 | 资产化准入 = 通过 + 口径拍板；默认范围 BUG 关联 + P0/P1 稳定流，cases.md 手标可扩围；生成后立即 runner 验证全绿才算完成 |
+| D16 | 粒度：test()=一用例、文件=G-xx 组/模块；前置复用 = storageState 登录态 + API 直调优先 + flows/ UI 函数兜底（≥2 用例共用才抽）；禁 beforeAll 组内共享一场提交 |
+| D17 | 造数纪律修订：spec 档允许 API 直调造前置（走后端完整校验）；两档均禁 DB 直写；探索档维持走前端页面（D13 收窄为探索档口径） |
+| D18 | 四类证据映射：页面/接口/console 进 spec 断言；落库核验不进 spec（共享环境污染 + 表结构随轮变 + bigint 舍入），DB 类 BUG 用例在 spec 头挂 SQL 清单由 agent 回归轮抽查；runner 绿 ≠ 四类证据全过 |
+| D19 | 浏览器路线（spike 实测 2026-09-14）：channel:'chrome' 系统 Chrome 零下载（缓存 chromium 与稳定/alpha 版本均不对齐，捆绑下载被否）；登录态 = storageState 采集脚本（codegen 关窗时机不可控会落空状态，弃用）；SSO 登录态可复用，单条 spec 4.2s |
+| D20 | 运行纪律：runner 命令用**绝对路径二进制 + 绝对路径 config**（cwd 无关；`cd` + npx 相对形态实测不可靠——cwd 不持久、从项目根直跑会撞根目录另一份 playwright）；路径过滤传需求名子串（禁相对前缀），单跑用 `--grep "TC-xx"`；spec 失败三向 = 实现坏→BUG / 页面变→修 spec 留档 / 环境→备注重跑，禁"红了删 spec 改人工跑" |
+| D21 | spec 失败诊断读 runner 留痕（trace + 截图，test-results/），agent 读产物；研究启示 3（开发仓"每功能必须带脚本"规则）与 Healer/Generator 本轮不引入 |
 | D13 | 判定证据 = 三方（页面/接口/落库）为主 + console 异常补充；造数只走前端页面，禁改库 |
