@@ -35,6 +35,7 @@
 │    harness/engine/audit_profiles.py  OVAL 分组跨文件对账            │
 │    harness/engine/check_runner_form.py  文档命令形态自检            │
 │    sdlc-test/scripts/guard_exec.py   关卡守卫                       │
+│    sdlc-gate/scripts/check_trace.py  产物链追溯校验                 │
 │    harness/templates/                hook 段 / pre-commit / 回归   │
 ├─────────────────────────────────────────────────────────────────┤
 │ 项目层（目标项目里自建，源项目为范例）                                │

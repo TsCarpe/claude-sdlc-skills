@@ -192,3 +192,4 @@ pm-checklist   #1~ 问PM     design.md  D1~ 实现决策           A-01~ 架构 
 - `skills/sdlc-intent/references/digest-template.md`——头部 ID 体系声明行 + §7 规则表 FR-01 起编号列 ✅
 - `skills/sdlc-test/references/cases/design-techniques.md` / `case-template.md` / `static/static-check-template.md`——追踪表行主键 `需求.FR-xx`、命名空间引用语法 ✅
 - `skills/sdlc-gate/references/issue-template.md`——落点/状态列与放行前闭环校验 ✅
+- `skills/sdlc-gate/scripts/check_trace.py`——引用可达、计数同源、落改闭环三约定机械化（2026-09-16）：issues 生成后自动校验，`--release` 模式承载放行前闭环校验 ✅
