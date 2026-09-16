@@ -51,7 +51,7 @@ flowchart LR
 | [sdlc-test](skills/sdlc-test/SKILL.md) | 用例与测试期 | `/sdlc-test cases\|static\|exec\|spec\|report <需求名>` | cases.md（用例+缺陷权威文件）+ 各轮 reports；通过用例可资产化为 Playwright spec | chrome-devtools / mysql / codegraph MCP（均带降级） |
 | [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计+用例定稿后 | `/sdlc-gate <需求名>` | issues 宽表（原文摘引+裁决列），放行后解锁开发与测试执行 | 无硬依赖 |
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 「这个判断我不放心，帮我质疑一下」 | 会话内五步闭环（CLAIM→EXTRACT→DOUBT→RECONCILE→STOP） | 无 |
-| [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 「梳理上线配置清单」 | Apollo/Nacos 新增 Key 清单（表格+可复制块） | git 即可 |
+| [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 「梳理上线配置清单」 | 配置 Key 清单 + xxl-job 任务/MQ 订阅平台操作清单 + 知会项 | git 即可 |
 
 关键机制：**关卡互认**（sdlc-gate 放行视同 sdlc-test 关卡1 通过）、**用例独立性红线**（cases 禁止读设计——交叉审查的价值前提）、**降级不炸**（任一 MCP 缺失都有声明过的降级路径，见 [faq](docs/faq.md)）。
 
