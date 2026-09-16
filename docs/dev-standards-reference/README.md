@@ -27,7 +27,7 @@
 |---|---|---|
 | `claude-entry.md` | `CLAUDE.md` | 入口层示例（含「按需加载表」和「正例锚点」两个关键设计） |
 | `development-checklist.md` | `dev_standards/development_checklist.md` | 自检清单；头部标注了哪些条目已由 guardrails 机器拦截（自检只做判断类） |
-| `guardrails.example.yaml` | `.claude/guardrails.yaml` | 22 条规则示例；由 checklist 中可 grep 的条目机械化而来 |
+| `guardrails.example.yaml` | `.claude/guardrails.yaml` | 23 条规则示例；由 checklist 中可 grep 的条目机械化而来 |
 | `details/api-interface-design.md` | `development_standards/api_interface_design.md` | Controller 模板与必填注解 |
 | `details/coding-norms.md` | `development_standards/coding_norms.md` | 类/方法/字段命名 |
 | `details/ai-code-hygiene.md` | `development_standards/ai_code_hygiene.md` | AI 生成代码卫生（散参/Map 出参/全路径内联） |

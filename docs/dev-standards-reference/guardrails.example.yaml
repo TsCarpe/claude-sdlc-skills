@@ -118,3 +118,20 @@ rules:
     type: forbid
     pattern: "import\\s+com\\.example\\.hr\\.client\\."
     message: "domain 层 Service 禁止依赖 client（出参 VO/Entity，入参用 Query/VO）"
+
+  # ---- v3 扩充（checklist §2.3 结构红线：内部类/嵌套类型）----
+  - id: no-nested-type-service
+    glob: "**/service/**/*.java"
+    type: forbid
+    pattern: '(?m)^[ \t]+[^\n*/]*\b(class|enum|interface|record)\s+[A-Z]\w*'
+    message: "Service 层禁止内部类/嵌套类型（class/enum/interface/record 一律顶级声明）"
+  - id: no-nested-type-convert
+    glob: "**/convert/**/*.java"
+    type: forbid
+    pattern: '(?m)^[ \t]+[^\n*/]*\b(class|enum|interface|record)\s+[A-Z]\w*'
+    message: "Convert 层禁止内部类/嵌套类型（class/enum/interface/record 一律顶级声明）"
+  - id: no-nested-type-business
+    glob: "**/business/**/*Business.java"
+    type: forbid
+    pattern: '(?m)^[ \t]+[^\n*/]*\b(class|enum|interface|record)\s+[A-Z]\w*'
+    message: "Business 层禁止内部类/嵌套类型（class/enum/interface/record 一律顶级声明）"
