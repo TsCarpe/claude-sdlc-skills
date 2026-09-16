@@ -39,9 +39,9 @@ Review-gate 进度：
 
 | # | 角色 | ARTIFACT | 审查要点 |
 |---|---|---|---|
-| 1 | 架构一致性 / 分层规范 | 设计 | 分层职责、跨层对象、接口契约读写口径；规范源 = 项目分层规范文档（如 `.trellis/spec/`、`dev_standards/` 等项目自建规范目录），读不到则降级通用清单并在 issues 注明证据降级 |
-| 2 | 数据模型与 SQL | 设计 | 表结构/字段口径/索引与查询匹配；可用 `mysql:mysql_query` 只读核对表结构 |
-| 3 | 测试可测性 | 设计 + 用例（分别审，不做对齐） | 设计侧：校验/异常/状态是否显式可验；用例侧：断言口径、覆盖矩阵与双向追踪表完整性 |
+| 1 | 架构一致性 / 分层规范 | 设计 | 分层职责、跨层对象、接口契约读写口径、存量兼容（接口/字段变更对既有调用方影响）与回滚可逆性；规范源 = 项目分层规范文档（如 `.trellis/spec/`、`dev_standards/` 等项目自建规范目录），读不到则降级通用清单并在 issues 注明证据降级 |
+| 2 | 数据模型与 SQL | 设计 | 表结构/字段口径/索引与查询匹配、并发与一致性（事务边界/幂等/竞态窗口/软删对账）；可用 `mysql:mysql_query` 只读核对表结构 |
+| 3 | 测试可测性 | 设计 + 用例（分别审，不做对齐） | 设计侧：校验/异常/状态/并发与兼容场景是否显式可验；用例侧：断言口径、覆盖矩阵与双向追踪表完整性 |
 | 4 | 交叉审查者 | 设计 + 用例（**唯一同时读两份的代理**） | 只产出分歧清单，按 [cross-check-guide.md](references/cross-check-guide.md) 三分类，不产普通 issue |
 
 ### 对抗 Prompt 模板（角色 1-3）
@@ -57,6 +57,8 @@ Assume the author is overconfident. Look for:
 - Ways the contract could be violated
 - Existing conventions this might break
 - Failure modes under unexpected input
+- Concurrency or race conditions under parallel access
+- Irreversible or hard-to-rollback changes
 Do NOT validate. Do NOT summarize. Find issues, or state
 explicitly that you cannot find any after thorough examination.
 输出仅限问题清单，每条必须包含四个字段：
@@ -64,6 +66,7 @@ explicitly that you cannot find any after thorough examination.
 - 原文：引用 artifact 原文 ≤2 句（禁止只给行号）
 - 位置：文件 + 精确位置（章节/行号）
 - 严重度：高/中/低
+- 依据：hard（原文直接支撑）/ soft（推导——写一句依据链）
 
 审查角色：<角色名>，要点：<上表对应行>
 近期误报模式（这些方向曾被人工驳回，勿重复）：<从 false-positive-patterns.md 摘近期 3-5 条>
@@ -91,6 +94,8 @@ CONTRACT: <intake 三件套相关章节>
 | 有效权衡 | 真取舍但修复成本大于接受成本 | 进清单，标「权衡」 |
 | 噪音 | 同义反复/风格偏好/不存在场景 | 不进清单 |
 
+过滤后执行**同根因合并**：同一根因多条（跨角色或单角色内）并成一个裁决单元——人裁决的是裁决单元数，不是发现数；严重度=低且无动作建议的进备案区。规则与示例见 issue-template.md。
+
 issues 文件的产物结构与填写规则以 [issue-template.md](references/issue-template.md) 为**唯一权威**——宽表一行一条、分歧清单置顶、头部速览与裁决焦点、可读性红线（标题与原文摘引原样保留、`<br>` 分行、代号内联释义、严重度降序、速览与明细同源）全部以模板为准，本文件不重复。头部状态置 `待裁决`。
 
 🔒 关卡措辞：「issue 清单已生成于 <路径>，共 X 条（分歧 Y 条）；请逐条裁决，确认后我继续，需修改请直接说」。
@@ -107,13 +112,13 @@ issues 文件的产物结构与填写规则以 [issue-template.md](references/is
 
 - **高优逐条**：三类分歧全部 + 严重度=高的角色条目，按主题分组（同改动对象合并）逐批裁决，每批 ≤4 题
 - **其余批量**：中/低/权衡条目由 sdlc-gate 预填建议裁决——落改组（写明改动对象与方向）与权衡记档组（写明记档去向），汇总成一张处置清单一次性让用户确认；用户可对任何一条单独改判
-- **护栏**：①条目 <15 条时全部逐条，不开批量；②需边界确认或存在多个技术方案的条目不得进批量，必须逐条；③用户显式要求「全部逐条」「线下看文件」时切换
+- **护栏**：①条目 <15 条时全部逐条，不开批量；②需边界确认或存在多个技术方案的条目不得进批量，必须逐条；③用户显式要求「全部逐条」「线下看文件」时切换；④备案区条目不裁决；soft 依据的中/低严重度条目不得进高优逐条组（严重度=高除外）
 
 **驳回理由沉淀**：每条驳回追加到 [false-positive-patterns.md](references/false-positive-patterns.md) 对应角色分组——这是下轮预审 prompt 注入的校准材料。
 
 ## Step 5: 放行
 
-全部条目裁决完毕 → 头部状态改 `已放行（日期）`，裁决记录区块补齐汇总。
+全部裁决单元裁决完毕（备案区除外）→ 头部状态改 `已放行（日期）`，裁决记录区块补齐汇总。
 
 **放行前闭环校验（硬规则）**：置「已放行」前逐条核对裁决=落改的条目——「落点/状态」列落点非空且状态=已执行；不满足时拦截并逐条列出未执行项（标题+落点），完成修订后才可放行。防批量裁决组吞条目/漏执行。
 

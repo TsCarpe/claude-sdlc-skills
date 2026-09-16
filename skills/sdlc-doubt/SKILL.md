@@ -84,6 +84,8 @@ Assume the author is overconfident. Look for:
 - Ways the contract could be violated
 - Existing conventions this might break
 - Failure modes under unexpected input
+- Concurrency or race conditions under parallel access
+- Irreversible or hard-to-rollback changes
 
 Do NOT validate. Do NOT summarize. Find issues, or state
 explicitly that you cannot find any after thorough examination.
