@@ -1,5 +1,15 @@
 # 环境配置模板
 
+## 目录
+
+> 本目录是 env-template.md 自身的导航（本文 >100 行，供部分读取时预览范围），非产物内容；按模板创建的 sdlc/env/ 各文件不复制此目录。
+
+- [sdlc/env/test.md（入库）](#sdlcenvtestmd入库)
+- [sdlc/env/accounts.local.md（gitignore，本机供给）](#sdlcenvaccountslocalmdgitignore本机供给)
+- [sdlc/env/repos.local.md（gitignore，本机供给）](#sdlcenvreposlocalmdgitignore本机供给)
+- [回归档 Playwright runner 接入](#回归档-playwright-runner接入--标准布局-2026-09-14-试点定型)
+- [sdlc/env/ui-recipe.md（环境配方）](#sdlcenvui-recipemd环境配方入库口径同-testmd)
+
 ## sdlc/env/test.md（入库）
 
 ```markdown
