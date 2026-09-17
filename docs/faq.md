@@ -10,6 +10,17 @@ A：① 确认安装位置被识别——`npx skills list` 或会话内问 AI「
 **Q：能只装其中一两个 skill 吗？**
 A：可以。`npx skills add` 交互选择或 `-s` 指定；plugin 渠道整包安装但每个 skill 独立使用。唯一例外：**sdlc-gate 与 sdlc-test 存在关卡互认**（gate 放行后代改用例审核状态）——单独用 sdlc-test 时该机制自动退化为人工确认，不报错；单独用 sdlc-gate 无影响。
 
+**Q：`npx skills update` 报 Failed to update 怎么办？**
+A：多发生在**版本间有文件移动/删除**时（如 v0.5.0 → v0.5.1 的 runner 模板迁域）——skills CLI 的 update 对 skill 内文件集增删处理不了，且不给出原因。恢复路径（实测有效）：
+
+```bash
+npx skills list -g                                          # 先确认装了哪些
+npx skills remove <skill名> -g -y
+npx skills add TsCarpe/claude-sdlc-skills -g -a claude-code -s <skill名> -y
+```
+
+注意 `-s` 每次只认一个 skill 名（不支持逗号分隔）。plugin 渠道用 `/plugin` 重装不受此影响。
+
 **Q：MCP 工具缺失会怎样？**
 A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能力打折（下表）：
 
@@ -23,7 +34,7 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**
-A：不必须。5 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
+A：不必须。6 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
 
 ### 使用建议
 

@@ -63,7 +63,10 @@ flowchart LR
 ```bash
 npx skills add TsCarpe/claude-sdlc-skills        # 装到当前项目 .claude/skills/
 npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills/
+npx skills update <skill名> -g                   # 更新单个；跨文件迁移版本可能报 Failed to update
 ```
+
+> **update 报 Failed to update？** 常见于版本间有文件移动/删除时（如 v0.5.0 → v0.5.1 的 runner 模板迁域）——remove 后重新 add 即可恢复，步骤见 [faq](docs/faq.md)。
 
 **方式二：Claude Code 插件市场**
 
