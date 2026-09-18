@@ -43,7 +43,7 @@ flowchart LR
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
 
-## Skill 矩阵（6 个）
+## Skill 矩阵（7 个）
 
 | skill | 阶段 | 触发示例 | 产物 | 依赖 |
 |---|---|---|---|---|
@@ -53,6 +53,7 @@ flowchart LR
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 「这个判断我不放心，帮我质疑一下」 | 会话内五步闭环（CLAIM→EXTRACT→DOUBT→RECONCILE→STOP） | 无 |
 | [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 「梳理上线配置清单」 | 配置 Key 清单 + xxl-job 任务/MQ 订阅平台操作清单 + 知会项 | git 即可 |
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | 「给这个项目接红线拦截」 | hook 拦截（guardrails.yaml 四类规则）+ pre-commit 兜底 + `--check` 基线报告 | python3 |
+| [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 「把三件套推上平台 / 拉一下 PM 的答复 / 用例上平台」 | 平台需求卡 + 澄清答复闭环 + 标准需求文档 + 用例登记表（平台本体：独立仓 sdlc-platform） | 平台服务运行中 + curl |
 
 关键机制：**关卡互认**（sdlc-gate 放行视同 sdlc-test 关卡1 通过）、**用例独立性红线**（cases 禁止读设计——交叉审查的价值前提）、**降级不炸**（任一 MCP 缺失都有声明过的降级路径，见 [faq](docs/faq.md)）。
 
@@ -119,6 +120,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 
 - [ ] sdlc-flow：三段式引导 skill（把 playbook 机制化为流程编排）
 - [ ] examples/：完整脱敏样例需求产物目录
+- [x] sdlc-sync：产物协作平台同步桥（需求+用例上平台、PM 答复回环、标准文档发布）——平台本体在独立仓 `sdlc-platform`（Spring Boot + Vue + SQLite），skill 源在本仓 `skills/sdlc-sync/`
 - [ ] sdlc-doc / sdlc-yapi：技术设计文档与接口文档同步（飞书/YApi 生态，视需求拆出）
 - [ ] 英文文档
 
