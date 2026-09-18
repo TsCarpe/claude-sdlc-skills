@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: Syncs local SDLC artifacts (requirement digest/audit/checklist, test cases) to a team-facing web platform and pulls PM clarification answers back into local markdown files. Bridges the single-developer local workflow with multi-role collaboration: push artifacts for sharing, pull answers to close the clarification loop, publish the clarified standard requirement document, register test cases for team traceability. Use when the user wants to 推送产物到平台 / 同步到平台 / 拉回答复 / 发布标准文档 / 用例上平台 / sdlc-sync. 触发词：同步平台、产物上平台、推送需求、拉回答复、用例登记、sdlc-sync.
+description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, test cases) to a team-facing web platform and pulls PM clarification answers back into local markdown files. Bridges the single-developer local workflow with multi-role collaboration: push artifacts for sharing, pull answers to close the clarification loop, publish the clarified standard requirement document, register test cases for team traceability. Use when the user wants to 推送产物到平台 / 同步到平台 / 拉回答复 / 发布标准文档 / 用例上平台 / sdlc-sync. 触发词：同步平台、产物上平台、推送需求、拉回答复、用例登记、sdlc-sync."
 ---
 
 # 产物同步桥（sdlc-sync）

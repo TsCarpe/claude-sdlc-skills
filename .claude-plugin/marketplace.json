@@ -1,14 +1,14 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claude-sdlc-skills",
-  "description": "AI-native SDLC skills for Claude Code and other coding agents: requirement intake & audit, AI test orchestration, adversarial review gate, in-flight decision review, release config audit, write-time guardrail enforcement.",
+  "description": "AI-native SDLC skills for Claude Code and other coding agents: requirement intake & audit, AI test orchestration, adversarial review gate, in-flight decision review, release config audit, write-time guardrail enforcement, artifact sync to team platform.",
   "owner": {
     "name": "TsCarpe"
   },
   "plugins": [
     {
       "name": "claude-sdlc-skills",
-      "description": "Six battle-tested SDLC skills: sdlc-intent (PRD digest + six-layer audit), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-gate (fresh-context review gate with 4 adversarial subagents), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan).",
+      "description": "Seven battle-tested SDLC skills: sdlc-intent (PRD digest + six-layer audit), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-gate (fresh-context review gate with 4 adversarial subagents), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform: push/pull/publish/cases).",
       "author": {
         "name": "TsCarpe"
       },
@@ -22,7 +22,8 @@
         "./skills/sdlc-gate",
         "./skills/sdlc-doubt",
         "./skills/sdlc-config-review",
-        "./skills/sdlc-guardrails"
+        "./skills/sdlc-guardrails",
+        "./skills/sdlc-sync"
       ]
     }
   ]
