@@ -1,8 +1,22 @@
-# sdlc-sync payload 契约（v1.1）
+# sdlc-sync payload 契约（v1.2）
 
-> v1.1 变更（全程可追溯，REQ/DESIGN 见 sdlc-platform 仓 docs/）：push-artifacts 顶层新增 `snapshot`/`domains`；`fr_points[]` 增 `source/group/module`；`features[]` 增 `src`；`audit.items[]` 增 `group/quote`；澄清 `items[]` 增 `quote` 且 **`theme` 升为必填**；push-cases `items[]` 增 `verifyRefs/defectRefs`；publish 的 `standardMd` 语义变重写版（payload 形状不变）。除注明必填外全部可选，旧 v1 payload 中新字段缺省即为空。
+> v1.2 变更（原文预处理与块级引用）：push-artifacts 顶层新增可选 `doc`（原文块结构，由 sdlc-intent 的 parse_doc.py 产出）；`fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（飞书原生块 ID，非空时前端按 id 直达原文，缺省回退 needle 文本定位）；新增媒体上传端点 `POST /api/requirements/{id}/media?name=x&mediaId=m-xx`（raw bytes，头 `X-Media-Mime`；mediaId 须与 doc.media[].id 一致，需在推 doc 前完成上传）。v1.1 全部字段与红线不变，v1/v1.1 payload 依旧兼容（无 doc/anchor 即旧行为）。媒体上传端点与 `doc`/`anchor` 字段详见下文对应节。
 
 所有请求 `Content-Type: application/json`；写接口在平台启用 write-token 时需带头 `X-Token: <token>`。
+
+## 目录
+
+- POST /api/requirements —— 建卡
+- POST /api/requirements/{id}/artifacts —— 推质检产物
+- POST /api/requirements/{id}/media —— 媒体上传（v1.2）
+- GET /api/requirements/{id}/answers —— 拉答复
+- PUT /api/requirements/{id}/answers/{seq} —— 平台侧作答（前端用）
+- POST /api/requirements/{id}/publish —— 发布
+- POST /api/cases —— 用例批量 upsert
+- POST /api/cases/form —— 表单提交（非 skill 用户）
+- PATCH /api/cases/{reqId}/{caseId} —— 编辑表单用例（前端用）
+- GET 端点（读）
+- 历史变更
 
 ## POST /api/requirements —— 建卡
 
@@ -61,8 +75,16 @@
 - `domains[]` = 全局需求域顺序常量（平台级分组基准，体检/澄清共用）；缺省保留上次值
 - `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：质检与澄清的依据；发布后冻结）；缺省保留旧快照
 - `quote` 平台侧无长度限制，取完整冲突/依据原文，渲染为引用块并作快照定位锚
+- `doc`（v1.2 可选顶层）：`{blocks,media,source,generator}`，由 sdlc-intent 的 parse_doc.py 产出；推送前需先完成媒体上传（见下节）
+- `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）
 - 副作用：状态 → `clarifying`；重复推送 = 覆盖（version+1）；`published` 后拒绝（快照随之冻结）
-- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"snapshotUpdated":bool}`
+- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":["m-xx",…]}`
+
+## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
+
+- body = 文件 raw bytes；query `name=<文件名>`、`mediaId=<doc.media[].id>`
+- 头 `X-Media-Mime` 传 MIME 类型
+- mediaId 必须与 doc.media[].id 一致；**须在推 artifacts（带 doc）之前完成全部上传**，未上传成功的以 `missingMedia` 回传
 
 ## GET /api/requirements/{id}/answers —— 拉答复
 
@@ -130,3 +152,7 @@
 - `GET /api/fr-points?req_id=` 需求点编号集（表单软校验数据源）
 - `GET /api/cases?iter=&reqId=&status=&tool=&q=` 用例列表（含 verifyRefs/defectRefs 数组）
 - `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
+
+## 历史变更
+
+> v1.1 变更（全程可追溯，REQ/DESIGN 见 sdlc-platform 仓 docs/）：push-artifacts 顶层新增 `snapshot`/`domains`；`fr_points[]` 增 `source/group/module`；`features[]` 增 `src`；`audit.items[]` 增 `group/quote`；澄清 `items[]` 增 `quote` 且 **`theme` 升为必填**；push-cases `items[]` 增 `verifyRefs/defectRefs`；publish 的 `standardMd` 语义变重写版（payload 形状不变）。除注明必填外全部可选，旧 v1 payload 中新字段缺省即为空。

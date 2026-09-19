@@ -3,5 +3,14 @@
 .tmp-upload/
 .idea/
 .serena/
-.claude/settings.local.json
+.claude/
 __pycache__/
+
+# 本地工具产物
+.agents/
+.playwright-cli/
+.zcode/
+skills-lock.json
+
+# 本地演示项目（未随仓库发布）
+platform-demo/

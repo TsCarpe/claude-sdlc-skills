@@ -19,6 +19,7 @@ description: Digests and health-checks product requirement documents (PRD). Stag
 ## 输入读取
 
 - 飞书链接（feishu.cn / doubao.com 的 /docx/、/wiki/）：`lark-cli docs +fetch --doc "<URL>" --doc-format markdown`（权限不足时向用户说明，不要反复重试）
+- **原文预处理（v1.2，仅飞书输入；正文与评论读取后执行一次）**：拉取块级 XML（`lark-cli docs +fetch --doc "<URL>" --doc-format xml --detail with-ids`），运行 `scripts/parse_doc.py` 产出 `sdlc/<需求名>/intake/doc-<YYYYMMDD>.json` 与 media/ 目录（输入提取、命令行、块模型、条款级出处、锚点附加与失败回退详见 [references/doc-pipeline.md](references/doc-pipeline.md)）；doc.json 存在时，梳理/体检出处**尽量写到条款级**（「详述N·<小节名>」/「详述N·<序数>」）；解析失败不阻塞梳理（平台回退文本定位）
 - 飞书链接在读取正文后**必须**同步读取评论区：`lark-cli drive +list-comments --url "<URL>" --solved-status all --comment-scope all --need-relation --format json`（权限不足时同样只向用户说明一次、不重试，正文流程照常继续）
 - 评论区是正文的补充信息源，正文外的关键决策/变更说明/答疑常在评论区；评论结论与正文不一致时以最新评论为准。本地文件输入或评论数为 0 时记「无评论」，权限不足记「未读取（原因）」，均如实写入梳理文档头「评论区」字段
 - 本地 markdown/text 文件：直接 Read
