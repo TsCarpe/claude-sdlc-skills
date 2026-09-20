@@ -42,7 +42,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 Cases 进度：
 - [ ] 定位输入（sdlc/<需求名>/intake/ 三件套优先，退回原始 PRD）
 - [ ] 信息摄入（梳理文档/YApi/CodeGraph/MySQL 只读）
-- [ ] 按六种设计技术生成用例并标注技术
+- [ ] 按七种设计技术生成用例并标注技术
 - [ ] 填双向追踪表，未覆盖条目显式列出
 - [ ] 写 sdlc/<需求名>/test/cases.md（模板：references/cases/case-template.md）
 - [ ] 🔒 关卡1：暂停等人审核
