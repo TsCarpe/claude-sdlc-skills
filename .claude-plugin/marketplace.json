@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "claude-sdlc-skills",
-      "description": "Seven battle-tested SDLC skills: sdlc-intent (PRD digest + six-layer audit), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-gate (fresh-context review gate with 4 adversarial subagents), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform: push/pull/publish/cases).",
+      "description": "Seven battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or main-session self-check by risk tier), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform: push/pull/publish/cases).",
       "author": {
         "name": "TsCarpe"
       },

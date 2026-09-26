@@ -1,6 +1,6 @@
 ---
 name: sdlc-intent
-description: Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a six-layer defect taxonomy and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、sdlc-intake、PRD digest、requirement audit.
+description: Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a seven-layer defect taxonomy (six in-document consistency layers plus an external-reference layer for missing-content defects) and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、sdlc-intake、PRD digest、requirement audit.
 ---
 
 # 需求接收助手（sdlc-intent）
@@ -36,7 +36,7 @@ description: Digests and health-checks product requirement documents (PRD). Stag
 - [ ] Step 1: 通读原文，提取角色与术语
 - [ ] Step 2: 按 references/digest-template.md 生成 8 区块梳理文档
 - [ ] Step 3: 落盘 sdlc/<需求名>/intake/digest-<YYYYMMDD>.md
-- [ ] Step 4: 终端展示摘要 + 暂停等待用户确认
+- [ ] Step 4: 终端展示摘要（含风险分级提议）+ 暂停等待用户确认与分级拍板
 ```
 
 **Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + mermaid）。
@@ -49,35 +49,44 @@ description: Digests and health-checks product requirement documents (PRD). Stag
 
 **Step 3** 落盘路径：当前项目 `sdlc/<需求名>/intake/` 目录（不存在则创建），文件名 `digest-<YYYYMMDD>.md`。
 
-**Step 4** 暂停：展示各区块摘要（尤其 ❓ 集中处和假设清单），明确说「请确认或补充业务理解，完成后说“继续体检”」，然后**停止等待**。
+**Step 4** 暂停：展示各区块摘要（尤其 ❓ 集中处和假设清单）与**风险分级提议**——按 [references/risk-tiering.md](references/risk-tiering.md) 评分卡给出 A/B/C 提议+影响面命中依据（拿不准从高，降级需附可核对证据），明确说「请确认或补充业务理解，并对风险分级拍板，完成后说“继续体检”」；拍板后将 digest 头「风险分级」的确认改为日期，然后**停止等待**。
 
 ## 第二段：需求体检
+
+**分级路由（Step 1 时判读）**：读 digest 头「风险分级」字段——**A 级**全阶段跑（阶段0+阶段1+七层）；**B/C 级**跳过阶段1（视角推导），主会话顺序跑。无该字段（存量文档）= 未分级 = 按 A 级处理并提示补标。判定结果写入体检报告执行摘要首句。分级判定与回写规则见 [references/risk-tiering.md](references/risk-tiering.md)。
 
 复制此 checklist 跟踪进度：
 
 ```
 体检进度：
-- [ ] Step 1: 准备输入（原文 + 梳理文档，含用户补充）
-- [ ] Step 2: 按 references/dimensions.md 六层维度逐层检查
-- [ ] Step 3: 按 references/report-template.md 产出体检报告 + PM 确认清单
-- [ ] Step 4: 终端摘要（各级问题数 + 阻断项列表）
-- [ ] Step 5: 交互收尾（用户逐条回应后回写梳理文档）
+- [ ] Step 1: 准备输入（原文 + 梳理文档，含用户补充）+ 分级路由（读 digest 头风险分级，缺失按 A 级）
+- [ ] Step 2: 阶段0 参照系构造——按 references/ref-tables.md 产 refs-<日期>.md（可先跑 scripts/scan_refs.py --mode seeds 供料，构表后 --mode verify 校验）
+- [ ] Step 3: 阶段1 视角推导（仅 A 级）——按 references/perspectives.md 扇出实现者/测试者推导，产出 D2 候选
+- [ ] Step 4: 按 references/dimensions.md 七层维度逐层检查（第 7 层汇流 D1/D2/D3 候选做语义判定）
+- [ ] Step 5: 按 references/report-template.md 产出体检报告 + PM 确认清单（命中带来源标注）
+- [ ] Step 6: 终端摘要（各级问题数 + 阻断项列表）
+- [ ] Step 7: 交互收尾（用户逐条回应后回写梳理文档）
 ```
 
-**Step 2** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），文档质量层最后。该文件定义了每个检查项的命中标准与严重度。
+**Step 2（阶段0·参照系）** 读取 [references/ref-tables.md](references/ref-tables.md)：从梳理产物构造四张参照表（数据字典/指标字典/平行结构矩阵/引用图，按触发特征裁剪），落盘 `sdlc/<需求名>/intake/refs-<YYYYMMDD>.md`。表中空格、断链、⚠️冲突格即缺失类候选，交给 Step 4 做语义判定；某张表构造不出来本身也是信号，如实记录。可选机械辅助：`python3 scripts/scan_refs.py --mode seeds --doc <原文|doc.json>`（构表前产断链/并列章节 seed）、`--mode verify --doc <原文> --refs <refs.md>`（构表后产字段出现位置清单——有录无消的证据义务、机械候选与计数核对）；脚本不可用或输入不含时跳过，不阻塞。
+
+**Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
+
+**Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——汇流阶段0 候选（D1）、阶段1 候选（D2）与本层推导（D3）做语义判定与统一分级。该文件定义了每个检查项的命中标准与严重度。
 
 **体检纪律**：
-- 每条命中必须附**原文定位**（章节名 + 关键引文片段），禁止脱离原文泛泛而谈
-- 六层维度是启发式锚点而非封闭清单：发现维度外的问题也应记录，标注维度为「补充」
-- 严重度从严不从宽：拿不准阻断还是严重时，标高一级并在描述中说明
+- 每条命中必须附**原文定位**（章节名 + 关键引文片段），禁止脱离原文泛泛而谈；缺失类无引文可引时按「全文未见 X」问式（见 report-template 撰写规则）
+- 七层维度是启发式锚点而非封闭清单：发现维度外的问题也应记录，标注维度为「补充」
+- 严重度从严不从宽：拿不准阻断还是严重时，标高一级并在描述中说明（第 7 层例外见 dimensions.md）
+- **冲突不裁决**：构表或层间检查撞到的口径冲突一律记命中交 PM 裁决，禁止静默择一
 
-**Step 3** 读取 [references/report-template.md](references/report-template.md)，产出两个文件到 `sdlc/<需求名>/intake/`：
+**Step 5** 读取 [references/report-template.md](references/report-template.md)，产出两个文件到 `sdlc/<需求名>/intake/`：
 - `audit-<YYYYMMDD>.md`（五章结构：执行摘要/阻断速览/分层明细/主题关联/状态汇总——唯一的成段文字在执行摘要，其余表格化）
 - `pm-checklist-<YYYYMMDD>.md`（可直接整篇复制发给产品经理的确认清单）
 
-两个文件产出后，**必须**按 report-template.md 的「终检」清单核对（统计表重数 / 跨文件计数一致 / 主题组关联核对），通过后才进入 Step 4。
+两个文件产出后，**必须**按 report-template.md 的「终检」清单核对（统计表重数 / 跨文件计数一致 / 主题组关联核对），通过后才进入 Step 6。
 
-**Step 5** 交互收尾：引导用户对每条问题回应「问 PM」/「按假设 X 处理」/「忽略」；有结论后将其回写至梳理文档的假设清单，形成共识版。用户不想逐条过时直接结束，不强制。
+**Step 7** 交互收尾：引导用户对每条问题回应「问 PM」/「按假设 X 处理」/「忽略」；有结论后将其回写至梳理文档的假设清单，形成共识版。用户不想逐条过时直接结束，不强制。
 
 ## 边界
 

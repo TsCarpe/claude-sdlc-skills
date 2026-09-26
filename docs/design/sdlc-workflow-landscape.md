@@ -22,7 +22,7 @@
 │ 可移植层（claude-sdlc-skills 仓，即本仓库）                         │
 │                                                                   │
 │ 📚 知识层（怎么判断）                                               │
-│    sdlc-intent    需求梳理 + 六层体检（digest / audit / Q表）        │
+│    sdlc-intent    需求梳理 + 七层体检（digest / audit / Q表）        │
 │    sdlc-gate      评审关口（4 角色扇出 + RECONCILE + 人工裁决）      │
 │    sdlc-test      测试四阶段（cases / static / exec / report）      │
 │    sdlc-doubt     决策对抗复查                                      │
@@ -68,7 +68,22 @@
 
 ## 二、需求生命周期：一条主线看资产怎么接力
 
-### 轻量任务（≤2 层且 ≤3 文件）
+### 需求分级路由（A/B/C）
+
+梳理 Step 4 按 sdlc-intent 评分卡（`skills/sdlc-intent/references/risk-tiering.md`）提议 A/B/C 并附影响面命中依据，人工拍板后写入 digest 头；分级随产物头部字段流动（digest → cases → issues）。设计期发现影响面证据（公共组件/对外契约/并发一致性——digest 阶段结构性评不出的代码级事实）→ tier **只升不降**回写。无字段（存量）按 A 级保守处理。
+
+| 环节 | A 级 | B 级 | C 级 |
+|---|---|---|---|
+| 体检路由 | 全阶段（阶段0+1+七层） | 跳过阶段1（视角推导） | 跳过阶段1 |
+| sdlc-doubt | 触发条件命中即强制 | 可选 | 跳过 |
+| 评审关口 | 4 子代理 | 2 子代理（数据模型+交叉） | 主会话自查（仍走裁决+放行，保互认链） |
+| 用例生成（按 FR 级） | 全技术 + P0/P1/P2 | P0+P1+闭环不变量 | P0+闭环不变量 |
+| spec 资产化 | 强制 | 默认做 | 跳过 |
+| **不分级项** | guardrails / config-review / 人工关卡 / check 脚本——任何级全量 | 同左 | 同左 |
+
+分级落库（sdlc-sync v1.3 `risk_tier`）后，按级统计泄漏率即可校准评分卡边界——分级与度量互为配套。
+
+### 轻量任务（风险分级 B/C 级，≤2 层且 ≤3 文件）
 
 ```
 需求
@@ -78,7 +93,7 @@
  → git commit ········ 🔒 pre-commit 兜底（不经 cc 的提交也拦）
 ```
 
-### 大需求（三段式 + 测试全链）
+### 大需求（风险分级 A 级，三段式 + 测试全链）
 
 ```
 ① 需求全貌
@@ -88,7 +103,7 @@
 ② 技术骨架 ∥ 测试用例（并行独立产出）
    技术骨架：接口契约读写分级 / 公共资产清单六类 / D 表八类别
    sdlc-test cases：红线禁读设计（保交叉独立性）
-   → sdlc-gate：4 个 fresh-context 子代理扇出
+   → sdlc-gate：按风险分级分档扇出（A=4 fresh-context 子代理 / B=2 / C=主会话自查）
       → RECONCILE 四分类 → 人工逐条裁决 → 放行
    → ⏸ 确认点②③
 

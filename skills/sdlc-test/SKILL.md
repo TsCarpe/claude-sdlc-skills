@@ -18,7 +18,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 | `cases <需求名或文档路径>` | 1 用例生成 | `sdlc/<需求名>/test/cases.md` | 无 |
 | `static <需求名>` | 2 静态代码检测 | `sdlc/<需求名>/test/reports/<日期>-r<N>/static.md` + 用例文件重点验证项 | 关卡1 已过 |
 | `exec <需求名> [--from TC-xx \| --all]` | 3 前端功能测试 | 同轮目录 `exec-log.md` + 用例回填/缺陷跟踪 + 截图 | 关卡1 已过 |
-| `spec <需求名>` | 3.5 spec 资产化 | `sdlc/<需求名>/test/specs/*.spec.ts` | 关卡1 已过；目标用例已通过且口径拍板 |
+| `spec <需求名>` | 3.5 spec 资产化 | `sdlc/<需求名>/test/specs/*.spec.ts` | 关卡1 已过；目标用例已通过且口径拍板；风险分级 A 级强制 / B 级默认 / C 级跳过 |
 | `report <需求名>` | 4 报告生成 | 同轮目录 `report.md` | 阶段3 有结果 |
 
 未带子命令时询问用户执行哪个阶段；无 `sdlc/<需求名>/test/cases.md` 时引导从 `cases` 开始。
@@ -42,7 +42,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 Cases 进度：
 - [ ] 定位输入（sdlc/<需求名>/intake/ 三件套优先，退回原始 PRD）
 - [ ] 信息摄入（梳理文档/YApi/CodeGraph/MySQL 只读）
-- [ ] 按七种设计技术生成用例并标注技术
+- [ ] 按七种设计技术生成用例并标注技术（生成范围按 FR 级裁剪，见 design-techniques.md「分级生成范围」）
 - [ ] 填双向追踪表，未覆盖条目显式列出
 - [ ] 写 sdlc/<需求名>/test/cases.md（模板：references/cases/case-template.md）
 - [ ] 🔒 关卡1：暂停等人审核
@@ -50,7 +50,7 @@ Cases 进度：
 
 - 输入优先级：`sdlc/<需求名>/intake/digest-*.md` 三件套 > 原始需求文档。梳理文档的角色权限矩阵、状态机图、流程图、规则口径清单是设计直接输入；体检报告疑似问题转重点用例；PM 清单已澄清口径回填预期
 - **独立性纪律（红线）**：生成过程禁止读技术设计文档（`sdlc/<需求名>/design.md`、任务系统/协作工具中的设计文档等）——用例必须与设计从 intake 三件套独立推导，sdlc-gate 交叉审查才有价值。用户坚持要读时先说明后果并征得明确确认，且在 cases.md 头部注明「已读设计，交叉独立性破坏」
-- 设计技术清单与生成规则见 `references/cases/design-techniques.md`，必须先读
+- 设计技术清单、优先级口径与分级生成范围见 `references/cases/design-techniques.md`，必须先读；用例文件头部「风险分级」取自 digest 头（缺失按 A 级），生成范围按 §7 规则表 FR 级逐条裁剪
 - 关卡1 措辞：「用例已生成于 <路径>，请审核；确认后我继续，需修改请直接说」。迭代直至用户确认，然后把头部 `审核状态` 改为 `已确认（日期）`
 
 ## 阶段2 static：静态代码检测（前后端）
@@ -100,6 +100,7 @@ Exec 进度：
 ## 阶段 3.5 spec：资产化（回归档）
 
 > 通过且口径拍板的用例 → Playwright spec；此后回归轮该部分由 runner 执行（零 agent token），agent 只诊断红色项。完整规则（粒度/前置复用/选择器/证据映射/失败三向/生命周期）见 `references/spec/spec-guide.md`，必须先读。
+> **分级控制**：风险分级 A 级强制资产化 / B 级默认做 / C 级跳过（不产 spec，回归轮全量走 agent 执行）。
 > **前置（首次）**：runner 基础设施（`sdlc/` 根两件 + `env/runner/` 三件）缺失时，按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建——复制模板 → 替换占位符 → sdlc/ 根 npm install → spike 全绿即就绪。
 
 1. 准入：默认范围 = BUG 关联用例 + P0/P1 稳定流；用例条目手标可扩围

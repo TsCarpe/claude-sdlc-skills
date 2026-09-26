@@ -6,7 +6,7 @@
 
 输入：通过且口径拍板的用例（含 BUG 关联）
 
-- [ ] 准入过滤：未通过/口径未拍板的用例不资产化，明确列出排除项
+- [ ] 准入过滤：未通过/口径未拍板的用例不资产化，明确列出排除项；风险分级 A 级强制 / B 级默认做 / C 级整体跳过 spec 资产化（回归全量走 agent 执行）
 - [ ] 每条 spec 的 test 标题带 TC 编号，文件按 G-xx 组/模块归档
 - [ ] 前置复用选型正确：API 直调优先（鉴权头取自 ui-recipe），UI flows/ 仅 ≥2 用例共用的流才抽；无 beforeAll 共享一场提交
 - [ ] 选择器为语义型（getByRole/getByLabel/文本），无 XPath，无 MCP evaluate_script hack 搬运

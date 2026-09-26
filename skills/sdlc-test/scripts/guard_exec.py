@@ -12,6 +12,9 @@
   1. sdlc/<需求名>/test/cases.md 存在
   2. 关卡1：cases.md 头部「审核状态」以「已确认」开头；
      或 sdlc/<需求名>/review/*.md 的「评审状态」= 已放行（sdlc-gate 关卡互认）
+  2.5 风险分级三口径：整行缺失 → 提示「按 A 级继续」不拦（存量兼容）；
+     存在但空/坏值/非 A|B|C → 拦；digest 头与 cases 头均有值且不一致 → 拦（tier 只升不降，
+     升级后须同步 cases/issues 头）
   3. 轮次目录命名：reports/ 下目录须为 YYYYMMDD-r<N>（小写 r）
   4. spec 一致性（防 R3 型丢失）：cases.md 中标注 spec ✓ 的用例条目存在时，
      test/specs/*.spec.ts 必须非空——标注在而资产丢，回归轮两步会静默跳过这些用例
@@ -65,6 +68,28 @@ def main() -> int:
         else:
             msgs.append(f"关卡1 未过：cases.md 头部「审核状态」= {m.group(1).strip() if m else '（字段缺失）'}"
                         f"，且 review/ 无「评审状态=已放行」")
+
+    # 2.5 风险分级（三口径：整行缺失→提示不拦；空/坏值→拦；与 digest 头不一致→拦）
+    m_tier = re.search(r"风险分级[：:]\s*([^\n（(]{1,20})", text)
+    if not m_tier:
+        print(f"{OK} 未标注风险分级——按 A 级继续（存量兼容；建议在 cases.md 头部补标）")
+    else:
+        raw_tier = m_tier.group(1).strip().lstrip("<").strip()
+        tier_cases = raw_tier[:1]
+        if tier_cases not in ("A", "B", "C"):
+            msgs.append(f"cases.md 头部「风险分级」值非法：{m_tier.group(1).strip()!r}"
+                        f"（合法：A | B | C，单值）")
+        else:
+            intake_dir = root / "sdlc" / req / "intake"
+            digests = sorted(intake_dir.glob("digest-*.md")) if intake_dir.is_dir() else []
+            if digests:
+                dtext = digests[-1].read_text(encoding="utf-8", errors="replace")
+                m_dtier = re.search(r"风险分级[：:]\s*([^\n（(]{1,20})", dtext)
+                if m_dtier:
+                    tier_digest = m_dtier.group(1).strip().lstrip("<").strip()[:1]
+                    if tier_digest in ("A", "B", "C") and tier_digest != tier_cases:
+                        msgs.append(f"digest 头「风险分级」= {tier_digest} 与 cases 头 = {tier_cases} 不一致"
+                                    f"——tier 只升不降，升级后须同步 cases/issues 头（以 digest 为准修正后重跑）")
 
     # 3. 轮次目录命名（exec 与 static 同口径）
     reports = test_dir / "reports"

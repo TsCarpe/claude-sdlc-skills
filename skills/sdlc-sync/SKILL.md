@@ -7,6 +7,8 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 本地 markdown 是**工作权威**（六个 sdlc skill 的消费链不经过平台），平台是**共享权威与交互面**。本 skill 是两者之间唯一的桥：只做搬运与回写，不做任何质检/生成决策。
 
+> **平台 v2.0 起的定位变化（2026-09-20）**：平台已上线「任务队列 + Runner」全流程线上化——质检生成、澄清答复、标准文档发布、用例登记在平台完成（AI 产物走草稿人审两态，`pushArtifacts`/`publish` 守卫自动继承）。本 skill 的 `push-artifacts` / `pull-answers` / `publish` / `push-cases` 降级为**平台不可用时的本地兜底通道**（降级 = v1 全流程可用），`submit` 建卡仍可日常使用。
+
 ## 前置
 
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8080`
@@ -33,10 +35,10 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 `POST /api/requirements`：
 
 ```json
-{"name":"<需求名>","iter":"<迭代>","sourceType":"feishu","sourceUrl":"<飞书链接>","submittedBy":"<提交人>"}
+{"name":"<需求名>","iter":"<迭代>","sourceType":"feishu","sourceUrl":"<飞书链接>","submittedBy":"<提交人>","risk_tier":"<A|B|C 可选>"}
 ```
 
-`sourceType=text` 时用 `sourceText` 代替 `sourceUrl`。返回的 `reqId` 写入 `sdlc/<需求名>/.platform`。
+`sourceType=text` 时用 `sourceText` 代替 `sourceUrl`。梳理文档头有「风险分级」时建卡带上 `risk_tier`；建卡早于定级时由 push-artifacts 的 `digest.risk_tier` 后到覆盖（契约见 payload-schema v1.3）。返回的 `reqId` 写入 `sdlc/<需求名>/.platform`。
 
 ### 2. push-artifacts —— 推质检三件套（需求进入待澄清）
 
@@ -63,6 +65,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 1. `intake/pm-checklist-<日期>.md`：答复写入对应问题的「答复」列，新答复标 `(平台 <answeredAt>)`。
 2. `intake/audit-<日期>.md`：对应问题处理状态更新（如 `[ ✅已确认：<结论> ]`）。
 3. 完成后**提示用户重跑 sdlc-intent** 更新 digest——平台不替代 digest 重算。
+4. **漏检比对（可选，用户同意后做）**：把 PM 答复揭示的问题与体检命中清单对照——答复里出现"体检本该查出而没查出"的口径/缺口时，按 `../sdlc-intent/references/missed-patterns.md` 的条目格式归因记录一条漏检模式（该文件单独安装 sdlc-sync 时不存在，仅作来源说明，跳过即可）。只记模式不记个案，含真实业务词的内容不入库。
 
 **红线**：只回写答复与状态，不改问题原文、不删问题。
 

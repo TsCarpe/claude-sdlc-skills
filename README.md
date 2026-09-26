@@ -47,7 +47,7 @@ flowchart LR
 
 | skill | 阶段 | 触发示例 | 产物 | 依赖 |
 |---|---|---|---|---|
-| [sdlc-intent](skills/sdlc-intent/SKILL.md) | 需求进来时 | 「帮我梳理这个需求文档，完成后继续体检」 | `intake/` 三件套：digest（结构化共识）/ audit（六层缺陷体检）/ pm-checklist | 无必需 |
+| [sdlc-intent](skills/sdlc-intent/SKILL.md) | 需求进来时 | 「帮我梳理这个需求文档，完成后继续体检」 | `intake/` 三件套：digest（结构化共识）/ audit（七层缺陷体检）/ pm-checklist | 无必需 |
 | [sdlc-test](skills/sdlc-test/SKILL.md) | 用例与测试期 | `/sdlc-test cases\|static\|exec\|spec\|report <需求名>` | cases.md（用例+缺陷权威文件）+ 各轮 reports；通过用例可资产化为 Playwright spec | chrome-devtools / mysql / codegraph MCP（均带降级） |
 | [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计+用例定稿后 | `/sdlc-gate <需求名>` | issues 宽表（原文摘引+裁决列），放行后解锁开发与测试执行 | 无硬依赖 |
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 「这个判断我不放心，帮我质疑一下」 | 会话内五步闭环（CLAIM→EXTRACT→DOUBT→RECONCILE→STOP） | 无 |
@@ -55,7 +55,7 @@ flowchart LR
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | 「给这个项目接红线拦截」 | hook 拦截（guardrails.yaml 四类规则）+ pre-commit 兜底 + `--check` 基线报告 | python3 |
 | [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 「把三件套推上平台 / 拉一下 PM 的答复 / 用例上平台」 | 平台需求卡 + 澄清答复闭环 + 标准需求文档 + 用例登记表（平台本体：独立仓 sdlc-platform） | 平台服务运行中 + curl |
 
-关键机制：**关卡互认**（sdlc-gate 放行视同 sdlc-test 关卡1 通过）、**用例独立性红线**（cases 禁止读设计——交叉审查的价值前提）、**降级不炸**（任一 MCP 缺失都有声明过的降级路径，见 [faq](docs/faq.md)）。
+关键机制：**需求分级路由**（A/B/C——intent 评分卡定级、gate/test 按级裁剪，分级只裁机器工作量不裁人工关卡）、**关卡互认**（sdlc-gate 放行视同 sdlc-test 关卡1 通过）、**用例独立性红线**（cases 禁止读设计——交叉审查的价值前提）、**降级不炸**（任一 MCP 缺失都有声明过的降级路径，见 [faq](docs/faq.md)）。
 
 ## 快速开始
 
@@ -95,7 +95,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 
 ## 大需求三段式拆分
 
-功能点 ≥5 / 涉及表结构变更 / 跨业务域的大需求不整块开发：**第一段业务全貌**（角色×状态×功能点主线串联）→ **第二段技术骨架**（接口契约分级 / D 表八类别 / 公共资产六类）→ **第三段骨架 child 先行、逐功能点切片**——三次小确认替代一次看不完的大确认。
+功能点 ≥5 / 涉及表结构变更 / 跨业务域的大需求不整块开发：**第一段业务全貌**（角色×状态×功能点主线串联）→ **第二段技术骨架**（接口契约分级 / D 表八类别 / 公共资产六类）→ **第三段骨架 child 先行、逐功能点切片**——三次小确认替代一次看不完的大确认（命中任一 ≈ 需求风险分级 A 级；分级全貌见 [sdlc-workflow-landscape](docs/design/sdlc-workflow-landscape.md)）。
 
 - 方法论全文：[docs/large-req-playbook.md](docs/large-req-playbook.md)（框架无关，任意任务框架可复刻）+ 三份 [产物模板](templates/)
 - 全流程叙述：[docs/workflow.md](docs/workflow.md) · 理论依据：[docs/ai-native-sdlc-guide.md](docs/ai-native-sdlc-guide.md)

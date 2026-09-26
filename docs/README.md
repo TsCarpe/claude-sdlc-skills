@@ -15,6 +15,7 @@
 | [sdlc-test-design.md](sdlc-test-design.md) | 决策记录 | sdlc-test 设计决策 D1-D21（四阶段编排 + 回归档） | 要改 sdlc-test 的行为前，先看当时为什么这样定 |
 | [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md) | 决策记录 | 「点击员→脚本作者」演进：流派研究 + 改进计划（已实施） | 想理解 spec 资产化与 runner 回归的来龙去脉 |
 | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) | 决策记录 | 跨产物 ID 体系（命名空间.编号）与交界衔接机制（已实施） | 产物互引断链 / 要新增产物类型时 |
+| [intent-audit-v2.md](intent-audit-v2.md) | 决策记录 | sdlc-intent 体检 v2.0：六层→七层与三引擎架构——缺失类缺陷的 oracle 在文档外（批1 已实施，批2/3 路线图） | 要改体检维度、检查项或引擎前 |
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
 | [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
