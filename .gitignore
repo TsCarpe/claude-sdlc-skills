@@ -14,3 +14,7 @@ skills-lock.json
 
 # 本地演示项目（未随仓库发布）
 platform-demo/
+
+# jev-ultrafast PoC 本地产物（评估期）
+poc/jev-ultrafast/tasks_local.py
+poc/jev-ultrafast/artifacts/
