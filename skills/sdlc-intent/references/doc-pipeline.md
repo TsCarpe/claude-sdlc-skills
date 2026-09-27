@@ -91,7 +91,7 @@ python3 scripts/list_clauses.py --doc <doc.json> --row 6        # 只列 详述6
 python3 scripts/list_clauses.py --doc <doc.json> --depth 2      # 限制层级
 ```
 
-- 适用字段：digest 各表「出处」列、体检「原文定位」(where)、payload 的 `fr_points[].source` / `features[].src` / `audit.items[].where` / 澄清 `items[].ctx`。
+- 适用字段：digest 各表「出处」列（含 §6 流转边表）、体检「原文定位」(where)、payload 的 `fr_points[].source` / `features[].src` / `flows[].src` / `states[].src` / `audit.items[].where` / 澄清 `items[].ctx`。
 - 定位不到条款级时回退章节名出处；**禁止编造条款号/序数**。
 - 梳理/体检正文仍写人读出处（上述格式）；块 ID 不进人读文档，由 §6 脚本附加。
 
@@ -105,7 +105,7 @@ python3 scripts/resolve_anchors.py --doc <doc.json> \
 
 - **`--comments` 优先**：传工作流已拉取的 list-comments JSON——评论全量、顺序即「评论区#N」的 N；`--refmap` 为回退（按 cN 自然序映射，且 fetch 评论可能截断）。
 - 解析策略（确定性，按序尝试）：① 出处含「详述N」→ 定位表行，带「·小节名/序数」时精确到条款块；② 「评论区#N」→ 映射到第 N 条评论的 comment 块；③ quote「」摘引 ≥6 字子串匹配；④ 全部失败 → 不加 anchor（平台回退 needle 文本定位，行为同 v1.1）。
-- 产物 payload-anchored.json 直接作为 sdlc-sync push-artifacts 的请求体；控制台 `anchors: {…}` 给出四类命中数与 miss 数，miss 偏高时复查出处写法。
+- 产物 payload-anchored.json 直接作为 sdlc-sync push-artifacts 的请求体；控制台 `anchors: {…}` 给出六类命中数与 miss 数（v1.4 起含 flows/states），miss 偏高时复查出处写法。
 - doc.media 的上传顺序与 `doc`/`anchor` 字段规范见 sdlc-sync 的 payload 契约（此处仅衔接说明）。
 
 ## 7. 失败回退与边界

@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.11.0 (2026-09-27)
+
+digest 产物图例与图题落地 + 流程/状态机结构化上平台（payload v1.4）：让产物脱离模板自描述（符号体系集中图例、每图有题），补平台「需求摘要」缺流程/状态机视图的澄清期缺口（摘要区外移表、含断点行，折叠区原文不动），标准文档维持逻辑文本化仅显式化 ❓ 断点取材。依据：C4「每图须有 key/legend + title」、Moody《Physics of Notations》Dual Coding / Semantic Transparency；AI spec 工具对照（GitHub spec-kit 内嵌 mermaid、AWS Kiro）。已过全新上下文对抗式审核（1 阻断：resolve_anchors 同步扩展；10 建议全吸收，含图例第三措辞坑、render 时序、组名撞名）。
+
+- **sdlc-intent（digest-template）**：产物骨架增「符号图例」小节——无编号、不进产物目录（下游 §5/§6/§7/§8 引用不漂移）；措辞红线三条（禁 FR/A 数字实例、禁「风险分级：」冒号取值——check_trace.py 行首正则与 guard_exec.py 全文首命中双坑规避）；§5/§6 每图加图题行，§6 固定「图 N：<对象名> 状态机」（对象名是 states.obj 提取唯一载体，双通道 agent 共守）；§6 图后附表由状态表升级为**流转边表**（从/触发/至/出处，? 行=断点）——平台状态机数据以表直投不从图提取，且直接对应 sdlc-test「S2→S3 边」用例引用
+- **sdlc-intent（scripts/doc-pipeline）**：resolve_anchors.py 锚点附加扩至六类条目（+digest.flows/digest.states，阻断项）；doc-pipeline 条款级出处适用字段与控制台计数同步
+- **eval-1**：增 3 条断言（符号图例小节/图题格式/边表形态与 ? 行），状态机 ❓ 清单措辞对齐边表口径
+- **sdlc-sync**：payload 契约升 **v1.4**——digest 增可选 `flows[]`（§5 步骤表）与 `states[]`（§6 边表直投）：`gap:true` = 原文断点行、next/to 填 `"?"`，行级 src + 可选 anchor（resolve_anchors.py 同源附加）；GET 详情返回描述同步；v1.3 说明下移历史变更节
+- **standard-doc-spec**：消化规则 3/4 与自查清单显式覆盖 §5 图节点 ❓ 与 §6 边表 ? 行——澄清后仍未定案的断点进遗留假设，图上标记在文本化定稿中不再丢失
+- 平台侧（sdlc-platform 仓 DESIGN-v2.3，另一 commit）：后端 digestDigestView 白名单加两字段组、Runner 速查卡同步（顺手补 v1.3 risk_tier 既有缺口）、摘要 tab 两表（gap 高亮/anchor 跳转/组名前缀防共享 Set 撞名）、前端引入 mermaid（MutationObserver + 惰性 import，render 时序与红线豁免两处登记）
+
 ## v0.10.0 (2026-09-26)
 
 需求风险分级（A/B/C risk tiering）全链路落地：把散落的隐式分级（sdlc-intent 轻重路由二分、doubt 触发条件、gate 批量裁决）显式化为贯穿管线的三级分级——轻需求负担得起全流程，重需求保持全量，分级落库后支撑分层泄漏率校准。依据：DO-178C DAL / IEC 62304 Class / ISTQB risk-based testing；AI 提议+人工拍板（Hall et al. 2012：自动分级不可靠）。已过对抗式评审（12 处修正，核心为设计期影响面事实的 tier 只升不降回写通道）与官方 best-practices 对齐（评估先行/查表低自由度/术语统一「风险分级」与「A·B·C 级」）。

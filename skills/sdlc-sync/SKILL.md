@@ -46,7 +46,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 - `snapshot`：**经 lark-cli 拉取飞书需求原文全文**放入 `{md}`（原文快照 = 质检与澄清的依据版本，平台据此实现出处定位；推送前报告快照字节数）
 - `domains`：全局需求域顺序数组（本轮质检的需求域聚类，如 修改比赛/状态机与流转/…；体检与澄清分组同源同序）
-- `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）
+- `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）、流程步骤表 flows（§5 主流程，`{role,step,next,gap,src}`）与状态机流转边表 states（§6 边表直投，`{obj,from,on,to,gap,src}`；两表 `gap:true` 为原文断点行、next/to 填 `?`，可选 anchor 同 features）
 - `audit`：分级计数 + 问题明细（`{id:"体检.P01", level, title, where, go, group:"<需求域>", quote:"「完整冲突原文」"}`，go = 处理状态/去向）
 - `items`：澄清清单，**seq 必须用原始编号**（如 `P19`），`theme` 必填（需求域，与 audit group 同体系），`quote` 带原文摘引（可空），`answer` 带上本地已有的答复内容
 - v1.2（可选，本地存在 `sdlc/<需求名>/intake/doc-*.json` 时推送）：先把 doc.media 逐个上传 `POST /api/requirements/<reqId>/media?name=…&mediaId=…`（raw bytes），再在 payload 顶层带 `doc:{blocks,media,source,generator}` 与各条目 `anchor`（由 `../sdlc-intent/scripts/resolve_anchors.py` 批量附加——脚本与 doc.json 均随 sdlc-intent 分发，单独安装 sdlc-sync 时该路径仅作来源说明、本条不生效）；上传/推送返回含 `docUpdated/missingMedia`

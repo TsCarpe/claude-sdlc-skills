@@ -1,6 +1,6 @@
-# sdlc-sync payload 契约（v1.3）
+# sdlc-sync payload 契约（v1.4）
 
-> v1.3 变更（需求风险分级上平台）：建卡与 push-artifacts 的 `digest` 增可选 `risk_tier`（`"A"|"B"|"C"`，来源梳理文档头「风险分级」；命名避开已占用的问题严重度 `level`）；仅需求级，FR 级不上平台。建卡早于定级时以 push-artifacts 携带值为准（后到覆盖，同 `domains[]` 缺省保留语义）。详情返回 `card.riskTier`（平台 v2.1 起）。v1.2 及以前全部字段与红线不变，无 `risk_tier` 即旧行为。
+> v1.4 变更（流程/状态机结构化上平台）：push-artifacts 的 `digest` 增可选 `flows[]`（§5 主流程步骤表）与 `states[]`（§6 状态机流转边表直投）——`gap:true` 行为原文断点（❓），`flows[].next` / `states[].to` 填 `"?"`；行级 `src` 出处 + 可选 `anchor`（resolve_anchors.py 附加，同 features）。平台摘要 tab 新增两表展示（平台 v2.3 起）。v1.3 及以前全部字段与红线不变，无该字段即旧行为。
 
 所有请求 `Content-Type: application/json`；写接口在平台启用 write-token 时需带头 `X-Token: <token>`。
 
@@ -53,6 +53,18 @@
       {"id": "需求.FR-01", "name": "向导结构：五步固定、逐级校验",
        "source": "详述6.2.1/3", "group": "§7.1 创建比赛（五步向导）", "module": "比赛管理（列表）"}
     ],
+    "flows": [
+      {"role": "区域管理员", "step": "创建比赛（五步向导）", "next": "提交审核",
+       "gap": false, "src": "详述6.2", "anchor": "（可选）"},
+      {"role": "区域管理员", "step": "提交审核", "next": "?",
+       "gap": true, "src": "详述6.2", "anchor": "（可选）"}
+    ],
+    "states": [
+      {"obj": "比赛", "from": "草稿", "to": "报名中", "on": "发布",
+       "src": "详述6.3", "gap": false, "anchor": "（可选）"},
+      {"obj": "比赛", "from": "报名中", "to": "?", "on": "报名截止",
+       "src": "详述6.3", "gap": true, "anchor": "（可选）"}
+    ],
     "md": "（可选）digest 原文 markdown，用于平台折叠展示（含假设清单，是「需求.Axx」引用的定位落点）"
   },
   "audit": {
@@ -77,6 +89,7 @@
 - `fr_points[].group` = 出处分组组头（注册表分组），`source` = 行级出处，`module` = 归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）
 - `domains[]` = 全局需求域顺序常量（平台级分组基准，体检/澄清共用）；缺省保留上次值
 - `digest.risk_tier`（v1.3 可选）：需求级风险分级 `"A"|"B"|"C"`，非空时覆盖建卡值（后到为准——建卡早于定级的时序兜底）；FR 级分级不上平台
+- `digest.flows[]` / `digest.states[]`（v1.4 可选）：§5 主流程步骤表 `{role,step,next,gap,src,anchor}` 与 §6 流转边表直投 `{obj,from,on,to,gap,src,anchor}`；`gap:true` = 原文断点行（`next`/`to` 填 `"?"`）；`states[].obj` 取自 §6 图题「图 N：<对象名> 状态机」的对象名；anchor 均可由 sdlc-intent 的 resolve_anchors.py 附加（同 features）
 - `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：质检与澄清的依据；发布后冻结）；缺省保留旧快照
 - `quote` 平台侧无长度限制，取完整冲突/依据原文，渲染为引用块并作快照定位锚
 - `doc`（v1.2 可选顶层）：`{blocks,media,source,generator}`，由 sdlc-intent 的 parse_doc.py 产出；推送前需先完成媒体上传（见下节）
@@ -153,12 +166,14 @@
 ## GET 端点（读）
 
 - `GET /api/requirements?iter=&status=` 需求列表（含 totalQ/answeredQ/caseCount 聚合）
-- `GET /api/requirements/{id}` 详情：card（v2.1 起含 riskTier）、items（含 quote）、digest（features 含 src）、audit（items 含 group/quote/relatedCases）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、standard
+- `GET /api/requirements/{id}` 详情：card（v2.1 起含 riskTier）、items（含 quote）、digest（features 含 src；v1.4 起 flows/states 含 src/anchor/gap）、audit（items 含 group/quote/relatedCases）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、standard
 - `GET /api/fr-points?req_id=` 需求点编号集（表单软校验数据源）
 - `GET /api/cases?iter=&reqId=&status=&tool=&q=` 用例列表（含 verifyRefs/defectRefs 数组）
 - `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
 
 ## 历史变更
+
+> v1.3 变更（需求风险分级上平台）：建卡与 push-artifacts 的 `digest` 增可选 `risk_tier`（`"A"|"B"|"C"`，来源梳理文档头「风险分级」；命名避开已占用的问题严重度 `level`）；仅需求级，FR 级不上平台。建卡早于定级时以 push-artifacts 携带值为准（后到覆盖，同 `domains[]` 缺省保留语义）。详情返回 `card.riskTier`（平台 v2.1 起）。v1.2 及以前全部字段与红线不变，无 `risk_tier` 即旧行为。
 
 > v1.2 变更（原文预处理与块级引用）：push-artifacts 顶层新增可选 `doc`（原文块结构，由 sdlc-intent 的 parse_doc.py 产出）；`fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（飞书原生块 ID，非空时前端按 id 直达原文，缺省回退 needle 文本定位）；新增媒体上传端点 `POST /api/requirements/{id}/media?name=x&mediaId=m-xx`（raw bytes，头 `X-Media-Mime`；mediaId 须与 doc.media[].id 一致，需在推 doc 前完成上传）。v1.1 全部字段与红线不变，v1/v1.1 payload 依旧兼容（无 doc/anchor 即旧行为）。
 

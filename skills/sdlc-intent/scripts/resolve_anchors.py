@@ -9,7 +9,7 @@
 
 用法：
   resolve_anchors.py --doc doc.json [--comments comments.json] --payload payload.json --out payload-anchored.json
-payload 需含 digest.fr_points / digest.features / audit.items / items 四类条目。
+payload 需含 digest.fr_points / digest.features / digest.flows / digest.states / audit.items / items 六类条目。
 """
 import argparse
 import json
@@ -128,7 +128,7 @@ def main():
             mm = re.search(r'comment-id=\\"(\d+)\\"', v.get("data", "")) or re.search(r'comment-id="(\d+)"', v.get("data", ""))
             comments_index.setdefault(i, mm.group(1) if mm else "")
 
-    stats = {"fr": 0, "feature": 0, "audit": 0, "item": 0, "miss": 0}
+    stats = {"fr": 0, "feature": 0, "flow": 0, "state": 0, "audit": 0, "item": 0, "miss": 0}
 
     def attach(entry, source_text, quote_text, kind):
         blk = resolve_source(source_text, lookups, comments_index)
@@ -144,6 +144,10 @@ def main():
         attach(f, f.get("source", ""), f.get("name", ""), "fr")
     for f in (payload.get("digest", {}).get("features") or []):
         attach(f, f.get("src", ""), f.get("func", ""), "feature")
+    for f in (payload.get("digest", {}).get("flows") or []):
+        attach(f, f.get("src", ""), f.get("step", ""), "flow")
+    for f in (payload.get("digest", {}).get("states") or []):
+        attach(f, f.get("src", ""), f"{f.get('from', '')}→{f.get('to', '')}", "state")
     for it in (payload.get("audit", {}).get("items") or []):
         attach(it, it.get("where", ""), it.get("quote", ""), "audit")
     for it in (payload.get("items") or []):
