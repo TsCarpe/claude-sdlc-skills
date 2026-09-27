@@ -18,3 +18,6 @@ platform-demo/
 # jev-ultrafast PoC 本地产物（评估期）
 poc/jev-ultrafast/tasks_local.py
 poc/jev-ultrafast/artifacts/
+
+# 外部手册 PDF（26MB，来源见 docs/ai-native-alibaba-handbook.md，不入库）
+poc/ai-native-handbook.pdf

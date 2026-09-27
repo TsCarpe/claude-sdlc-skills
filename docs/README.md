@@ -12,10 +12,11 @@
 | [ai-native-sdlc-guide.md](ai-native-sdlc-guide.md) | 理论 | Google/Anthropic/OpenAI 三篇 AI 原生 SDLC 文章的融合提炼 | 想知道这套流程的理论依据与业界共识 |
 | [design/agent-stack-mental-model.md](design/agent-stack-mental-model.md) | 理论 | Agent Stack 心智模型：两个桶 + 载体路由（什么该进 skill、什么该下沉 harness） | 遇到 AI 开发栈新概念要归层，或调整自己的工作流时 |
 | [design/sdlc-workflow-landscape.md](design/sdlc-workflow-landscape.md) | 理论 | 工作流资产全貌快照：可移植层（本仓库）vs 项目层各有什么 | 想知道「装完 skill 后项目侧还要自建什么」 |
-| [sdlc-test-design.md](sdlc-test-design.md) | 决策记录 | sdlc-test 设计决策 D1-D21（四阶段编排 + 回归档） | 要改 sdlc-test 的行为前，先看当时为什么这样定 |
+| [sdlc-test-design.md](sdlc-test-design.md) | 决策记录 | sdlc-test 设计决策 D1-D22（四阶段编排 + 回归档） | 要改 sdlc-test 的行为前，先看当时为什么这样定 |
 | [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md) | 决策记录 | 「点击员→脚本作者」演进：流派研究 + 改进计划（已实施） | 想理解 spec 资产化与 runner 回归的来龙去脉 |
 | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) | 决策记录 | 跨产物 ID 体系（命名空间.编号）与交界衔接机制（已实施） | 产物互引断链 / 要新增产物类型时 |
-| [intent-audit-v2.md](intent-audit-v2.md) | 决策记录 | sdlc-intent 体检 v2.0：六层→七层与三引擎架构——缺失类缺陷的 oracle 在文档外（批1 已实施，批2/3 路线图） | 要改体检维度、检查项或引擎前 |
+| [intent-audit-v2.md](intent-audit-v2.md) | 决策记录 | sdlc-intent 体检 v2.0：六层→七层与三引擎架构——缺失类缺陷的 oracle 在文档外（批0-3 已全部实施，三引擎齐备） | 要改体检维度、检查项或引擎前 |
+| [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) | 决策记录 | 阿里《AI Native 研发范式实践手册》对照分析：一线案例数据 + 四个优化点落地记录（C/H 决策类型、L/M/H 反馈层级、证据索引）+ 平台 roadmap | 想用一线大厂案例校准方向 / 要改 C/H 或反馈层级机制前 |
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
 | [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
@@ -58,3 +59,5 @@
 | 怎么给自己的项目配红线拦截？ | [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md) + [sdlc-guardrails/references/guardrails.example.yaml](../skills/sdlc-guardrails/references/guardrails.example.yaml) |
 | 产物间怎么互相引用？ | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) §2 命名空间注册表 |
 | 装完 skill 后项目侧还要配什么？ | [project-setup.md](project-setup.md) |
+| C 约束/H 假设、反馈层级标注怎么定的？ | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §4 |
+| sdlc-platform 平台下一步往哪走？ | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §6 |

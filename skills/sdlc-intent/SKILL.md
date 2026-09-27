@@ -72,7 +72,7 @@ description: Digests and health-checks product requirement documents (PRD). Stag
 
 **Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
 
-**Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——汇流阶段0 候选（D1）、阶段1 候选（D2）与本层推导（D3）做语义判定与统一分级。该文件定义了每个检查项的命中标准与严重度。
+**Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——汇流阶段0 候选（D1）、阶段1 候选（D2）与本层推导（D3）做语义判定与统一分级。该文件定义了每个检查项的命中标准与严重度；规则类/决策类命中按其「决策类型标注」规则在报告类型列标 C 约束 / H 假设（初判带问号）。
 
 **体检纪律**：
 - 每条命中必须附**原文定位**（章节名 + 关键引文片段），禁止脱离原文泛泛而谈；缺失类无引文可引时按「全文未见 X」问式（见 report-template 撰写规则）
