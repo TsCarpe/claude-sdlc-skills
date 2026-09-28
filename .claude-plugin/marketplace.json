@@ -1,23 +1,24 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claude-sdlc-skills",
-  "description": "AI-native SDLC skills for Claude Code and other coding agents: requirement intake & audit, AI test orchestration, adversarial review gate, in-flight decision review, release config audit, write-time guardrail enforcement, artifact sync to team platform.",
+  "description": "AI-native SDLC skills for Claude Code and other coding agents: requirement intake & audit, technical design, AI test orchestration, adversarial review gate, in-flight decision review, release config audit, write-time guardrail enforcement, artifact sync to team platform.",
   "owner": {
     "name": "TsCarpe"
   },
   "plugins": [
     {
       "name": "claude-sdlc-skills",
-      "description": "Seven battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-test (cases/static/exec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or main-session self-check by risk tier), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform: push/pull/publish/cases).",
+      "description": "Eight battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-design (technical design doc: alternatives, tiered interface contracts, shared-asset ownership, C/H decision table, slicing constraints handed to task frameworks), sdlc-test (cases/dev/static/exec/spec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or main-session self-check by risk tier, plus guard_dev dev-release guard), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-config-review (release config key scanner for Apollo/Nacos), sdlc-guardrails (deterministic write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform: submit/push-artifacts/pull-answers/publish/push-cases).",
       "author": {
         "name": "TsCarpe"
       },
       "category": "development",
-      "keywords": ["sdlc", "code-review", "testing", "requirement", "agent-skills"],
+      "keywords": ["sdlc", "requirement", "testing", "regression", "design-doc", "adversarial-review", "guardrails", "release-audit", "playwright", "e2e", "code-review", "agent-skills"],
       "source": "./",
       "strict": false,
       "skills": [
         "./skills/sdlc-intent",
+        "./skills/sdlc-design",
         "./skills/sdlc-test",
         "./skills/sdlc-gate",
         "./skills/sdlc-doubt",

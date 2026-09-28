@@ -2,6 +2,7 @@
 
 > **用途**：大需求三段式规划第三段逐功能点建 child 时的 prd 骨架。复制到 child 任务目录逐节填充。
 > **规则源**：`docs/large-req-playbook.md`「第三段」——本文只是模板，条款冲突以 playbook 为准。
+> **确认点③核对清单**：本段「child prd 评审通过且 gate 已放行后才开发」的四条件清单（契约符合度 / 内联注入完整性 / AC 可测性 / gate 已放行）已映射进 `skills/sdlc-design/references/trellis-handoff.md`（任务框架 subtask prd 评审用）。
 > **核心原则**：内联瘦身——prd 只内联**本功能点特有的裁剪/组合结论**；通用上游结论（接口契约/公共资产/关键业务规则/ER 字段）不复制，由任务上下文清单登记上游文件注入（任务框架支持自动注入则用之，如 Trellis 的 jsonl+hook；否则在下方「上游注入清单」列文件路径，执行前先读）——注入替代复制，防内联副本漂移。
 
 ---
@@ -34,8 +35,13 @@
 
 ## 验证命令
 
+开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟/回归按风险分级，命令承载于 `sdlc/env/dev.md`）：
+
+- C 级：compile + boot
+- A/B 级：+ 冒烟（smoke.md 核心链路）+ 回归
+
 ```bash
-<示例：mvn clean compile -pl <module> -am -DskipTests>
+<单模块快速自检示例：mvn clean compile -pl <module> -am -DskipTests>
 ```
 
 ---

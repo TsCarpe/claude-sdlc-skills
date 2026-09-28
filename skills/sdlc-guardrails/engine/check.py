@@ -75,6 +75,21 @@ def load_rules(rules_path: Path):
     return rules
 
 
+def load_rules_safe(rules_path: Path) -> tuple[list | None, str]:
+    """加载规则文件；失败返回 (None, 可读错误说明)——坏规则文件不得在 check 模式裸 traceback。"""
+    try:
+        return load_rules(rules_path), ""
+    except ImportError:
+        return None, f"规则文件 {rules_path} 需要 pyyaml 才能加载（pip install pyyaml）"
+    except KeyError as e:
+        return None, (f"规则文件 {rules_path} 有规则缺必填字段 {e}"
+                      "（forbid/require 须含 pattern；require_if 须含 when；count_ge 须含 anchor）")
+    except re.error as e:
+        return None, f"规则文件 {rules_path} 含坏正则：{e}"
+    except Exception as e:  # yaml 语法错（YAMLError）等
+        return None, f"规则文件 {rules_path} 解析失败：{e}"
+
+
 def check_content(rules, path_str: str, content: str, kinds=None) -> list[str]:
     """返回违规描述列表（空=通过）。kinds 限定规则类型（Edit 增量模式只跑 forbid）。"""
     violations = []
@@ -134,7 +149,16 @@ def run_hook_mode() -> int:
         rules_path = find_rules_file(target)
         if rules_path is None:
             return 0
-        rules = load_rules(rules_path)
+        rules, err = load_rules_safe(rules_path)
+        if rules is None:
+            # 保持不打断 agent 循环（exit 0 放行），但坏规则文件 = 整项目红线失效，
+            # stderr 给足可操作提示，避免静默空转无人知晓
+            print(f"guardrails 规则文件不可用（本次未拦截，红线未生效，请尽快修复）：{err}\n"
+                  f"修复指引：核对 {rules_path} 的 yaml 语法与规则字段"
+                  f"（type/pattern/anchor/when），改好后可跑"
+                  f" `python3 check.py --check <任意被管文件>` 验证规则能加载。",
+                  file=sys.stderr)
+            return 0
         if "new_string" in ti:
             # Edit 增量模式：只对本次新增文本跑 forbid——
             # 存量旧账（如缺 @Validate）不阻塞编辑者，进基线报告处理
@@ -164,7 +188,12 @@ def run_check_mode(files: list[str]) -> int:
         if rules_path is None:
             print(f"{f}: 无 {RULES_FILENAME}，跳过")
             continue
-        rules = load_rules(rules_path)
+        rules, err = load_rules_safe(rules_path)
+        if rules is None:
+            # check 模式面向人类：坏规则文件必须显式失败（exit 2），
+            # 静默跳过会让基线扫描给出假干净
+            print(f"{f}: 🔴 {err}")
+            return 2
         for v in check_file(rules, f):
             print(f"{f}: {v}")
             failed = True

@@ -7,6 +7,8 @@
 - [sdlc/env/test.md（入库）](#sdlcenvtestmd入库)
 - [sdlc/env/accounts.local.md（gitignore，本机供给）](#sdlcenvaccountslocalmdgitignore本机供给)
 - [sdlc/env/repos.local.md（gitignore，本机供给）](#sdlcenvreposlocalmdgitignore本机供给)
+- [sdlc/env/dev.md（开发验证档，入库）](#开发验证档sdlcenvdevmd入库)
+- [sdlc/env/dev-auth.local.md（gitignore，本机供给）](#sdlcenvdev-authlocalmdgitignore本机供给)
 - [回归档 Playwright runner 接入](#回归档-playwright-runner接入--标准布局-2026-09-14-试点定型)
 - [sdlc/env/ui-recipe.md（环境配方）](#sdlcenvui-recipemd环境配方入库口径同-testmd)
 
@@ -58,6 +60,55 @@
 | backend | /path/to/<backend-repo> | codegraph ✅ |
 | frontend | /path/to/<frontend-repo> | codegraph ✅／无（降级 grep+读文件） |
 ```
+
+## 开发验证档（sdlc/env/dev.md，入库）
+
+开发完成验证（`/sdlc-test dev` → `scripts/verify_dev.py`）的项目级配置——五节结构固定，键名勿改（脚本按「节/键」解析）。
+
+```markdown
+# 开发验证环境配置
+
+## 模式
+- 启动模式: local
+
+## 构建
+- 命令: mvn clean package -DskipTests
+- 超时秒: 600
+
+## 启动
+- 命令: java -jar <module>/target/app.jar --spring.profiles.active=dev
+- 健康探测: http://127.0.0.1:8080/actuator/health
+- 最大等待秒: 120
+
+## 冒烟
+- base URL: http://127.0.0.1:8080
+- 鉴权: 免鉴权
+
+## 回归
+- 命令: mvn test -pl <module>
+- 超时秒: 600
+```
+
+| 项 | 说明 |
+|---|---|
+| 启动模式 | `local`＝验证器本地起服务并负责停止（启动命令勿自行 nohup/disown 后台化）；`unmanaged`＝服务由外部供给（用户手起/IDE/远程 dev 环境），验证器跳过起停、只做健康探测+冒烟+回归——本地起不了服务时的一等公民路径，仍是机器验证而非人工声明 |
+| 构建命令 | 前后端双仓写单条复合命令（`cd <前端仓库> && npm run build && cd <后端仓库> && mvn package`） |
+| 健康探测 | 就绪判据 = HTTP 2xx；单次 5s 超时、间隔 2s 轮询至「最大等待秒」 |
+| 回归命令 | A/B 级必填，**须为真实测试套件入口**（单测 / 既有 runner）；占位命令（如 echo）＝空转，判负 |
+| 冒烟鉴权 | `免鉴权` 或 `dev-auth.local.md`（需鉴权时头值从该文件读取，真值不入库） |
+| 超时覆盖 | 默认构建/回归 600s、启动等待 120s，可在对应节用「超时秒 / 最大等待秒」覆盖 |
+
+## sdlc/env/dev-auth.local.md（gitignore，本机供给）
+
+冒烟需鉴权时（dev.md「冒烟/鉴权」= dev-auth.local.md）的本机头值供给，逐行「头名: 值」：
+
+```markdown
+# 冒烟鉴权头（不入库）
+authorization: Bearer <本机供给>
+<x-app>-token: <本机供给>
+```
+
+依赖项目 `.gitignore` 含 `sdlc/env/*.local.md`（与 accounts/repos.local 同一条，缺失先补）。
 
 ## 回归档 Playwright runner（接入 + 标准布局 2026-09-14 试点定型）
 
@@ -123,5 +174,7 @@ sdlc/
 ## 纪律
 
 - `accounts.local.md`、`repos.local.md` 必须加入 `.gitignore`（含 `sdlc/env/*.local.md`）；`runner/browser-state.json` 含会话凭据同样必须 gitignore
+- 冒烟鉴权真值只进 `dev-auth.local.md`——`dev.md` 与冒烟清单 `smoke.md` 禁写鉴权真值与内网域名
+- 开发完成验证留档（`dev/verify-*.md`）正文含命令输出尾部与响应片段，对外分享前脱敏（去手机号/token 类字段）
 - 前置数据：探索档通过前端页面构造；spec 档允许 API 直调（走后端完整校验）；**任何档禁止直接改库**
 - ui-recipe.md 只记项目特有内容，通用姿势回写交互姿势手册，不放本文件

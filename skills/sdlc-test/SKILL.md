@@ -1,6 +1,6 @@
 ---
 name: sdlc-test
-description: "AI 测试智能体编排：用例生成 → 静态代码一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/static/exec/spec/report）独立可重跑，两道人工关卡（用例审核、报告复验）；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|static|exec|spec|report <需求名>"
+description: "AI 测试智能体编排：开发完成验证（compile/boot/冒烟/回归）→ 用例生成 → 静态代码一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡（用例审核、报告复验）；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report <需求名>"
 ---
 
 # AI 测试智能体
@@ -16,6 +16,7 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 | 子命令 | 阶段 | 产物 | 前置条件 |
 |---|---|---|---|
 | `cases <需求名或文档路径>` | 1 用例生成 | `sdlc/<需求名>/test/cases.md` | 无 |
+| `dev <需求名>` | 1.5 开发完成验证 | `sdlc/<需求名>/dev/smoke.md` + `verify-<日期>-r<N>.md`（脚本生成） | 开发已完成；A/B 级须 env/dev.md 与 smoke.md 就绪 |
 | `static <需求名>` | 2 静态代码检测 | `sdlc/<需求名>/test/reports/<日期>-r<N>/static.md` + 用例文件重点验证项 | 关卡1 已过 |
 | `exec <需求名> [--from TC-xx \| --all]` | 3 前端功能测试 | 同轮目录 `exec-log.md` + 用例回填/缺陷跟踪 + 截图 | 关卡1 已过 |
 | `spec <需求名>` | 3.5 spec 资产化 | `sdlc/<需求名>/test/specs/*.spec.ts` | 关卡1 已过；目标用例已通过且口径拍板；风险分级 A 级强制 / B 级默认 / C 级跳过 |
@@ -25,16 +26,14 @@ description: "AI 测试智能体编排：用例生成 → 静态代码一致性�
 
 ## 轮次（round）规则
 
-- **轮次目录**：`sdlc/<需求名>/test/reports/<日期>-r<N>/`，同轮 static / exec-log / report / screenshots 聚合一处。N = 该需求已有最大轮次 +1，不存在时从 r1 起。**大小写约定**：轮次目录名用小写 `r<N>`，用例结果/缺陷状态/修复轮次用大写 `R<N>`
-- **轮次含义**：一次「检测→执行→报告」周期为一轮。需求和用例稳定的前提下，多轮 bug 修复 → 多轮回归，每轮独立留档，内容随缺陷收敛递减
-- **回归轮（r2+）默认范围**：
-  - static：只复检上轮 ⚠️ 疑似偏差与 ❓ 未确认项（代码已变），增量留档；`--all` 全量重比
-  - exec：只重跑上轮失败/疑似/阻塞用例 + 缺陷跟踪表未闭环项（状态≠已修复验证）关联用例；`--all` 全量重跑。存在 specs/ 时回归轮分两步（见阶段3「回归轮两步」）：已资产化用例先跑 runner，其余走 agent 执行
-- **用例文件是当前状态快照**：「结果」字段（新格式=用例总览结果列；存量表格文件=结果列）只反映最新轮次，格式 `通过（R2）`；历史判定在各轮 exec-log 留档
-- **缺陷生命周期只在用例文件「缺陷跟踪」表维护**：新失败登记 BUG-xx，回归通过后更新状态/修复轮次；各轮 report 的缺陷清单摘引该表当轮切片
+- **轮次目录**：`sdlc/<需求名>/test/reports/<日期>-r<N>/`，同轮 static / exec-log / report / screenshots 聚合一处；目录名用小写 `r<N>`，用例结果/缺陷状态/修复轮次用大写 `R<N>`，N = 已有最大轮次 +1（不存在从 r1 起）
+- **回归轮（r2+）默认只复检上轮问题项**：static 只复检 ⚠️ 疑似偏差与 ❓ 未确认项，exec 只重跑失败/疑似/阻塞 + 缺陷未闭环关联用例（存在 specs/ 时回归轮两步，见阶段3）；`--all` 全量重比/重跑
+- **用例文件是当前状态快照**（结果字段只反映最新轮次，历史判定在各轮 exec-log 留档）；**缺陷生命周期只在用例文件「缺陷跟踪」表维护**，各轮 report 摘引该表当轮子集
+
+轮次含义与回归范围细则见 [references/round-rules.md](references/round-rules.md)。
 
 **关卡强制**：执行 `static`/`exec` 前读用例文件头部，`审核状态 ≠ 已确认` 时拒绝并提示用户先完成关卡1（人工审核用例后，将头部状态改为 `已确认（日期）`，或让用户口头确认后代改）。若 `sdlc/<需求名>/review/` 存在，关卡1 以 sdlc-gate 状态为准：`评审状态 = 已放行` 视同关卡1 通过（代改时引用 issues 文件），`≠ 已放行` 时拒绝并提示先完成 sdlc-gate 裁决；review 目录不存在则维持本条原行为。
-**本条已机械化**（2026-09-15）：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认）、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
+**本条已机械化**（2026-09-15，2026-09-28 增检查5）：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认，v0.12.0 起锚定最新一份 issues）、风险分级三口径、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）、**开发完成验证留档反查与交叉校验**（一律拦，老需求补跑一次即过）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
 
 ## 阶段1 cases：用例生成
 
@@ -52,6 +51,22 @@ Cases 进度：
 - **独立性纪律（红线）**：生成过程禁止读技术设计文档（`sdlc/<需求名>/design.md`、任务系统/协作工具中的设计文档等）——用例必须与设计从 intake 三件套独立推导，sdlc-gate 交叉审查才有价值。用户坚持要读时先说明后果并征得明确确认，且在 cases.md 头部注明「已读设计，交叉独立性破坏」
 - 设计技术清单、优先级口径与分级生成范围见 `references/cases/design-techniques.md`，必须先读；用例文件头部「风险分级」取自 digest 头（缺失按 A 级），生成范围按 §7 规则表 FR 级逐条裁剪
 - 关卡1 措辞：「用例已生成于 <路径>，请审核；确认后我继续，需修改请直接说」。迭代直至用户确认，然后把头部 `审核状态` 改为 `已确认（日期）`
+
+## 阶段 1.5 dev：开发完成验证
+
+> 开发阶段验「能不能跑」，测试阶段验「跑得对不对」——compile/boot/冒烟/回归是开发的完成定义（DoD），后置到 exec 才发现则修复要换上下文重来。冒烟清单是「计划-验证-执行」的中间产物：agent 推导落盘，脚本确定性校验并执行；复杂业务断言（落库/权限）留 exec 四类证据。
+
+```text
+Dev 进度：
+- [ ] 读 cases.md 筛 P0/核心链路用例；smoke.md 缺失或口径过期 → 按 [smoke-template.md](references/dev/smoke-template.md) 生成/更新落盘
+- [ ] 运行 `python3 <skill 目录>/scripts/verify_dev.py <项目根> <需求名>`（环境配置按 [env-template.md](references/env-template.md)「开发验证档」）
+- [ ] 失败 → 按留档失败步定向修复，同上下文重跑（新轮次留档）
+```
+
+- **smoke.md 重生成口径**：P0/核心用例集合变化，或可适用集合变化（child（任务框架的子任务/切片）交付让「不适用」变可适用）才重生成；用例结果回填不算。清单缺失/断言语法非法/来源引用不在 cases.md → 脚本前置拒（构建前快失败）
+- **分级**：读 cases 头「风险分级」——C 级 compile+boot；A/B 级全量（+冒烟+回归）。启动模式 local | unmanaged（本地起不了服务时 unmanaged 仍是机器验证，非人工声明）
+- **留档反查**：最新留档头部「验证状态」= 通过才可进 static/exec（guard_exec 检查5，含 HEAD 比对/boot 日志/冒烟条数交叉校验，防伪造留档）；「通过(人工降级,日期)」形态会被显式 ⚠️ 警示
+- **降级边界**：脚本不可得（无 python3）时人工跑四件套，留档头部手写「验证状态：通过(人工降级,日期)」——guard_exec 会警示降级形态
 
 ## 阶段2 static：静态代码检测（前后端）
 
@@ -79,22 +94,12 @@ Exec 进度：
 
 - **派发执行**：主 agent 不在自身上下文逐用例操作浏览器；按 exec-dispatch.md 组装自包含 prompt（批内用例条目原文 + 红线原文 + 最小挂载姿势），子 agent 完成侦察/执行/四类证据/截图查看/exec-log 留档，只回传每用例一行压缩结论。本节全部纪律与反合理化表**对子 agent 同样强制**，回传里禁止出现截图/报文/快照原文
 - **回归轮两步（存在 specs/ 时）**：① 以绝对路径形态跑 runner：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`（禁 `cd`+`npx` 形态，cwd 无关——详见 spec-guide「runner 执行纪律」）——绿色项直接回填 cases.md，红色项按 `references/spec/spec-guide.md`「失败三向」诊断（trace/截图在 runner test-results/）；② 其余范围（新用例/失败现场/无 spec 用例）照常按 exec-dispatch 派发。登录态重采（capture-login.mjs）、DB 抽查衔接见 spec-guide；runner 基础设施缺失时先按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建
-- 登录：test 环境账号密码直登（账号在 `sdlc/env/accounts.local.md`，gitignored）
 - **交互姿势**：浏览器/数据库操作按 `references/exec/exec-interaction.md` 执行（浮层失明降级、日期键盘路径、evaluate 同步返回等）；新控件姿势 ≤3 次试错后回写该手册
 - **分组合并执行**：同 G-xx 组（见用例文件「执行分组」区块）拦截类用例在同一表单会话内连续验证（改字段→断言→复原），每条用例仍独立留档判定；涉及提交/落库的用例不合并
-- **落库断言前置**：表结构/列名以本轮 static.md 为准；bigint 主键按 exec-interaction 规范用业务键定位（JSON 往返舍入）
-- **等待稳定再取证**：操作后先等页面稳定（`chrome-devtools:wait_for` 目标文本/元素出现，或确认对应网络请求已完成）再采集证据——禁止轮询 take_snapshot 等稳定——防抢跑拿到 loading 骨架误判"功能缺失"；等待超时本身是证据，写入备注
-- 判定证据（缺一存疑就标"疑似"）：页面表现 + `chrome-devtools:get_network_request` 按 URL 定向获取接口响应（`list_network_requests` 仅在定位不到目标请求时使用）+ `mysql:mysql_query` 落库核验 + `chrome-devtools:list_console_messages` console 异常（补充；**error 级必查**——与失败相关的 error 作初判依据，无法解释的 error 标"疑似"不判通过；warning 记档不阻断）
-- **通过前视觉复核**：判"通过"前扫一眼全页截图——视觉异常（布局错乱/弹窗遮挡/错误提示/列表空白）即使接口与落库正确，也降为"疑似"并备注
-- **口径冲突三去向**：用例预期模型与实现不符（如时间链模型、快照口径）时，先以需求/拍板口径判定——实现偏离=登记 BUG-xx；需求未定=转 Q 待用户裁决；用例写错=修用例并在 exec-log 留档；仅确认实现正确后才按实际口径校正预期
-- 截图：`chrome-devtools:take_screenshot` 一律先落本轮目录 `screenshots/`；仅展示类断言或异常疑点时 Read 查看（查看发生在子 agent 上下文，主上下文不加载图片）
-- **疑似偶发失败 retry-once**：失败先按 exec-interaction 失败归因排查姿势/等待问题；疑似偶发/环境性失败单条重跑一次，两次一致才定论，不一致标 `flake疑似` 不登记 BUG（详见 exec-dispatch.md「anti-flake」）
-- **留档**：按 `references/exec/exec-log-template.md` 逐用例写 `exec-log.md`（判定+证据引用+备注），当日志而非汇总写——每用例一段，执行完立即追加；本轮开始先按范围预填「结果总览」表（结果列留空），执行期只更新对应行；证据按页面/接口/落库/console 四类分行；备注除偏差外，执行中任何让你停顿的观察（文案/交互/性能/意外行为）都记录，不预筛"是不是缺陷"
-- **缺陷跟踪**：新失败在用例文件「缺陷跟踪」表登记 BUG-xx（缺陷四要素详见 report-template）；回归轮重跑通过后更新「状态=已修复、修复轮次=R<N>」；不复现在备注说明
-- **P0 缺陷快报**：发现口径违背/数据污染风险级缺陷立即报告用户裁决，不等整批执行完
+- **执行红线摘要**（全量纪律随批由 exec-dispatch prompt 原文携带，对子 agent 同样强制；借口拦截见反合理化表）：四类证据（页面表现/接口响应/落库核验/console）缺一即标"疑似"，**error 级必查**（无法解释的 error 不判通过，warning 记档不阻断）；操作后等待稳定再取证（`chrome-devtools:wait_for` 或确认网络请求已完成，禁止轮询快照等稳定），等待超时本身是证据写入备注；口径冲突先以需求/拍板口径判定，三去向：实现偏离=BUG / 需求未定=转 Q / 用例写错=修用例留档，仅确认实现正确后才按实际口径校正预期；疑似偶发失败 retry-once 上限 1 次/用例/轮（详见 exec-dispatch.md「anti-flake」）
+- **取证细则**：接口响应按 URL 定向 `get_network_request`（`list_network_requests` 仅定位不到时用）；表结构/列名以本轮 static.md 为准，bigint 主键按 exec-interaction 规范用业务键定位（JSON 往返舍入）；判"通过"前视觉复核全页截图（视觉异常即使接口与落库正确也降"疑似"）；截图一律先落本轮 `screenshots/`、仅展示类断言或疑点时查看（在子 agent 上下文）；a11y 快照对 canvas/复杂自定义组件失明时降级截图+视觉判断，chrome-devtools MCP 失效时降级 Playwright skill——降级均注明证据降级
+- **留档与缺陷**：按 `references/exec/exec-log-template.md` 逐用例即时追加 exec-log（当日志而非汇总写；本轮开始先按范围预填「结果总览」表，执行期只更新对应行；备注记任何让你停顿的观察，不预筛"是不是缺陷"）；新失败在用例文件「缺陷跟踪」表登记 BUG-xx（四要素详见 report-template），回归通过后更新状态/修复轮次；P0 缺陷立即快报，不等整批执行完
 - **造数纪律：探索档允许通过前端页面操作（点击触发后端接口）生成前置数据；spec 档允许 API 直调造前置（走后端完整校验，鉴权头见 ui-recipe）；两档均禁止改库/任何 DB 直写**；MySQL MCP 只读仅做核验
-- a11y 快照对 canvas/复杂自定义组件失明时，降级截图 + 视觉判断，结果注明证据降级
-- chrome-devtools MCP 失效时降级 Playwright skill
 - **阻塞前穷尽解锁**：标阻塞前先依次确认 ui-recipe 路由清单、Playwright skill 降级、接口直调（鉴权头见 ui-recipe）三条路径均不可行
 
 ## 阶段 3.5 spec：资产化（回归档）
@@ -110,7 +115,7 @@ Exec 进度：
 
 ## 阶段4 report：报告生成
 
-1. 按 `references/report/report-template.md` 汇总产出本轮目录 `report.md`（回归轮为回归报告：重跑范围+缺陷闭环情况）；含 runner 执行时按模板「回归档」口径呈现 runner 切片与 DB 抽查结果
+1. 按 `references/report/report-template.md` 汇总产出本轮目录 `report.md`（回归轮为回归报告：重跑范围+缺陷闭环情况）；含 runner 执行时按模板「回归档」口径呈现 runner 执行子集与 DB 抽查结果
 2. 🔒 关卡2 措辞：「报告已生成于 <路径>，请复验缺陷真伪；确认后的缺陷由你转达开发」。缺陷不自动推送任何外部系统。用户复验确认后，勾选用例头部「🔒 关卡2 报告复验」并注明轮次（如 `已复验（R2，YYYY-MM-DD）`）——与关卡1 代改口径对称，多轮场景可从用例文件看出各轮报告复验状态
 
 ## 通用纪律
@@ -123,14 +128,8 @@ Exec 进度：
 
 ### 反合理化
 
-| 借口 | 现实 |
-|---|---|
-| "console 有 error 但页面表现正常，算通过" | error 是缺陷线索，必查；无法解释就标"疑似"，不判通过 |
-| "四类证据差一类，其余都对，直接下结论" | 缺一即标"疑似"，证据底线不因多数通过而放松 |
-| "直接改库造数更快" | 造数走前端页面操作（探索档）或 API 直调（spec 档），均经后端校验；改库绕过业务校验且污染回归基线 |
-| "DOM 快照失明/截图看不清，就当通过" | 降级视觉判断必须注明"证据降级"，不允许静默放行 |
-| "chrome-devtools 坏了，这条用例跳过" | 降级 Playwright skill 继续执行，工具故障不是跳过理由 |
-| "点击后立即检查，页面还在 loading，功能就是坏的" | 先等稳定（wait_for / 网络请求完成）再判定；抢跑误判是执行事故，不是缺陷 |
-| "控件姿势试错几轮是正常成本" | 按交互姿势手册执行；新姿势 3 次试错内沉淀回写手册，下个项目/会话不重付学费 |
-| "runner 全绿 = 四类证据全过" | runner 绿只覆盖页面/接口/console 三类；落库按 spec 头部 SQL 清单抽查，未抽查项在报告注明 |
-| "spec 红了，删掉改人工跑" | 先按失败三向诊断（实现坏=BUG / 页面变=修 spec / 环境=备注重跑）；删 spec 是放弃资产，仅限用例本身作废 |
+高频三条（全表 12 条见 [references/anti-rationalization.md](references/anti-rationalization.md)；exec 派发时全表随 prompt 原文携带）：
+
+- "console 有 error 但页面表现正常，算通过" → error 是缺陷线索，必查；无法解释就标"疑似"，不判通过
+- "四类证据差一类，其余都对，直接下结论" → 缺一即标"疑似"，证据底线不因多数通过而放松
+- "chrome-devtools 坏了，这条用例跳过" → 降级 Playwright skill 继续执行，工具故障不是跳过理由

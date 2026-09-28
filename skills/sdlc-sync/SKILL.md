@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, test cases) to a team-facing web platform and pulls PM clarification answers back into local markdown files. Bridges the single-developer local workflow with multi-role collaboration: push artifacts for sharing, pull answers to close the clarification loop, publish the clarified standard requirement document, register test cases for team traceability. Use when the user wants to 推送产物到平台 / 同步到平台 / 拉回答复 / 发布标准文档 / 用例上平台 / sdlc-sync. 触发词：同步平台、产物上平台、推送需求、拉回答复、用例登记、sdlc-sync."
+description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, test cases) to a team-facing web platform and pulls PM clarification answers back into local markdown files. Bridges the single-developer local workflow with multi-role collaboration: submit creates the requirement card for daily use; push-artifacts / pull-answers / publish / push-cases are local fallback channels for when the platform's online flow (task queue + runner, platform v2.0) is unavailable. Use when the user wants to 推送产物到平台 / 同步到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、推送需求、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|publish|push-cases <需求名>"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -49,7 +49,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 - `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）、流程步骤表 flows（§5 主流程，`{role,step,next,gap,src}`）与状态机流转边表 states（§6 边表直投，`{obj,from,on,to,gap,src}`；两表 `gap:true` 为原文断点行、next/to 填 `?`，可选 anchor 同 features）
 - `audit`：分级计数 + 问题明细（`{id:"体检.P01", level, title, where, go, group:"<需求域>", quote:"「完整冲突原文」"}`，go = 处理状态/去向）
 - `items`：澄清清单，**seq 必须用原始编号**（如 `P19`），`theme` 必填（需求域，与 audit group 同体系），`quote` 带原文摘引（可空），`answer` 带上本地已有的答复内容
-- v1.2（可选，本地存在 `sdlc/<需求名>/intake/doc-*.json` 时推送）：先把 doc.media 逐个上传 `POST /api/requirements/<reqId>/media?name=…&mediaId=…`（raw bytes），再在 payload 顶层带 `doc:{blocks,media,source,generator}` 与各条目 `anchor`（由 `../sdlc-intent/scripts/resolve_anchors.py` 批量附加——脚本与 doc.json 均随 sdlc-intent 分发，单独安装 sdlc-sync 时该路径仅作来源说明、本条不生效）；上传/推送返回含 `docUpdated/missingMedia`
+- v1.2（可选，本地存在 `sdlc/<需求名>/intake/doc-*.json` 时推送）：先把 doc.media 逐个上传 `POST /api/requirements/<reqId>/media?name=…&mediaId=…`（raw bytes），再在 payload 顶层带 `doc:{blocks,media,source,generator}` 与各条目 `anchor`（由 `../sdlc-intent/scripts/resolve_anchors.py` 批量附加——脚本与 doc.json 均随 sdlc-intent 分发，单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条不生效）；上传/推送返回含 `docUpdated/missingMedia`
 
 `POST /api/requirements/<reqId>/artifacts`。
 
@@ -65,7 +65,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 1. `intake/pm-checklist-<日期>.md`：答复写入对应问题的「答复」列，新答复标 `(平台 <answeredAt>)`。
 2. `intake/audit-<日期>.md`：对应问题处理状态更新（如 `[ ✅已确认：<结论> ]`）。
 3. 完成后**提示用户重跑 sdlc-intent** 更新 digest——平台不替代 digest 重算。
-4. **漏检比对（可选，用户同意后做）**：把 PM 答复揭示的问题与体检命中清单对照——答复里出现"体检本该查出而没查出"的口径/缺口时，按 `../sdlc-intent/references/missed-patterns.md` 的条目格式归因记录一条漏检模式（该文件单独安装 sdlc-sync 时不存在，仅作来源说明，跳过即可）。只记模式不记个案，含真实业务词的内容不入库。
+4. **漏检比对（可选，用户同意后做）**：把 PM 答复揭示的问题与体检命中清单对照——答复里出现"体检本该查出而没查出"的口径/缺口时，按 `../sdlc-intent/references/missed-patterns.md` 的条目格式归因记录一条漏检模式（单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条跳过即可）。只记模式不记个案，含真实业务词的内容不入库。
 
 **红线**：只回写答复与状态，不改问题原文、不删问题。
 

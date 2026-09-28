@@ -1,5 +1,44 @@
 # Changelog
 
+## v0.13.0 (2026-09-28)
+
+技术设计 skill（sdlc-design，第 8 个）落地：补上「需求评审 → **技术设计** → gate → 任务框架拆分执行 → 测试」链路中设计环节的空位——此前 design.md 靠主会话裸做或人工翻 playbook，gate 的评审对象有产无源。设计与拆分分工：skill 只产 design.md（契约/决策/公共资产/切分约束），任务编排归任务框架（如 Trellis），三段式理念由四层机制保住（design §7 切分约束文档 / `.trellis/spec/` 切分规范 / handoff 确认点③四条件清单 / guard_dev 机械拦截——后者 v0.12.0 已建）。依据：Google Design Docs（Alternatives considered、无 trade-offs 即 implementation manual）、AWS Kiro / GitHub Spec Kit / OpenSpec（requirements→design→tasks 结构对照）、官方 best-practices（评估先行 / 反馈循环 / 模板模式 / 集合命名一致）。方案已过全新上下文对抗式评估（3 阻断 + 7 建议全吸收：Q 表载体断链→sdlc-design 承接（复用 prd 优先、生成兜底，用户拍板）；确认点③与横切矩阵核验无落地载体→handoff 补四条件清单+核验补记时点；eval 红线与 playbook 硬阻塞语义相反→改「锁功能点不锁全局」）。
+
+- **sdlc-design（新增，8 文件）**：SKILL.md 精瘦主干——分级路由（C 级跳过引导轻量路径 / B 级 mini / digest 缺失先跑 intent）+ Q 表定位规则（stage1 prd Q 表复用优先，轻量链路由本 skill 在 design 头部生成维护：pm-checklist 未答复 + digest 假设清单「假设」类）+ 前置闸三道（Q 表硬阻塞=锁功能点不锁全局、被锁行标「锁定待拍板」；分级已拍板；tier 只升不降回写 digest/cases/issues 三头）+ 五步 checklist + 齐套自检六项（反馈循环）+ Step 5 关卡措辞（确认点② ack=定稿≠放行、cases 并行推导禁读设计不做后补降级档、gate 放行后才可开发）；MCP 完全限定名（codegraph:codegraph_explore / mysql:mysql_query）均声明降级
+- **design-template.md（references）**：A 级全量骨架自包含（头部字段含输入锚点/偏差回写单写/体检问题去向权威归属/Q 表 + §0 备选方案 + §1-§6 继承 stage2 + §7 实施切分约束（spec 降级声明置顶、切分建议表含四件套验证口径、横切矩阵核验补记时点=check 阶段）+ §8）+ B 级 mini 裁剪表（头部字段不裁）；纯声明性提及 playbook（防二层引用诱导读取）
+- **trellis-handoff.md（references）**：设计交付接入契约——落位规则（大需求 parent 任务目录/轻量 sdlc/）、prd.md 两区结构（brainstorm 退化为 scope 确认）、确认点映射与③四条件清单（契约符合度/内联注入完整性/AC 可测性/gate 已放行）、implement·check.jsonl 登记条目、`.trellis/spec/` 切分规范模板（一次落盘全员注入；skill 只提示不代写）、关卡接入行为约定（挂接方式以 playbook §7 为权威，声明性提及）；框架无关声明
+- **evals（6 场景 + README）**：评估先行——A 级全量齐套 / C 级跳过 / Q 表硬阻塞（锁功能点不锁全局）/ Trellis 衔接（含确认点③四条件）/ tier 升级三头同步 / 定稿语义与独立性（ack≠放行、禁用例后补）；纪律红线任一命中判负
+- **同步**：marketplace.json（数组 +1、Seven→Eight、根/plugin description 补 design + 顺带补 v0.12.0 的 dev/guard_dev 措辞）；README（中英简介、全景图 C1 标注、矩阵 7→8 + design 行、关键机制加「设计与拆分分工」、渐进阶梯插入第 4 级、三段式小节注机制化、Roadmap sdlc-flow/sdlc-doc 边界注记、版本 v0.13.0）；workflow.md（B3a 标注 + 阶段表 + 技能层行）；landscape（资产地图知识层 +1、② 技术骨架行标注、热力图六→八 skill）；faq（「6 个 skill」→8 落后两版一并修、MCP 降级表 + sdlc-design 行）；playbook 第二段头部机制化说明；stage1/2/3 模板头部对称指针（Q 表载体/机制化承载/确认点③清单映射）；sdlc-gate 前置输入表技术设计行补注产出方
+- **诚实声明**：单模型验证（多模型测试未做，沿用 v0.9.0 先例）；Trellis 运行时行为未验证（handoff 按其公开文档约定，brainstorm 退化顺畅度待首次真实需求走查）；example-walkthrough 为历史快照不动（其 stage1 prd+Q 表走查与新链路并存，Q 表复用优先规则兼容）；intent-audit-v2（「七 skill 全部可解析」验收口径）、sdlc-test-design（「四阶段编排」架构口径，dev 阶段见 v0.12.0）与 sdlc-test-spec-evolution（「两档分层」执行模型口径，spec 资产化已并入 dev/static/exec 全链路）同为决策记录快照不动，历史表述以当时为准；design 产物上 sdlc-sync 平台另议（payload v1.5 候选）
+- **提交前 CR 修复（跨 v0.12.0/v0.13.0，多维评审 34 项全数落地）**：守卫「评审状态」识别三处统一头部限定（guard_dev / guard_exec 检查5 / 关卡1 互认——正文插行不再构成放行，eval-6 补对应伪造判负红线）；tier 三口径补 issues 头第三头 + 值全串校验（拒「AB」类坏值；「未分级（按 A）」按 issue-template 允许记 note）；smoke 计数正则两侧下沉 _shared 同源（裸标题分叉致「verify 通过 vs guard 拦截」矛盾态消除）；boot 日志名经留档头部字段显式化（缺失降级旧推导，兼容存量留档）；verify_dev 健壮性批修（boot 后 try/finally 停服务防进程泄漏、code= 数字字符串归一、超时/健康 URL/变量闭包/数组下标步 0 快失败、鉴权真值 git check-ignore 机械核查（非 git 环境降级 note）、留档围栏四反引号、P0 覆盖核对（SM 条目 ∪ 不适用清单，防静默缩面）、gate 三态标签消除「未过(exit=0)」矛盾文案、parse_auth 兼容无前缀 KV 形态（存量 bug，修复后 gitignore 核查方可达））；stage2 模板与 design-template 节号对齐（§0-§8：§7 实施切分约束/§8 风险与边界，L3 指令改机制化优先，三项已知差异点名；trellis-handoff verify 行补「最新一份=通过」判定口径；B 级括注与 playbook 轻量公式双向消歧）；sdlc-design 触发词补「详细设计、概要设计」、锚点比对扩 digest/audit/pm-checklist 三文件、新增 eval-7 锚点过期场景；文档口径批修（CLAUDE.md/README/faq 计数 7→8 与算术修正、分档措辞三处漏网、sdlc-design MCP 依赖表述、landscape B 档「全量（同 A）」消歧、workflow 产物层补 dev、D1-D22 三处、marketplace 子命令串补 spec）；.playwright-mcp/ 入 .gitignore + 敏感词扫描补 --hidden（隐藏目录盲区，CI 与 CLAUDE.md 命令同步）；`poc/ai-native-handbook.pdf` 移出跟踪（0ef67d4 误入库的 26MB blob，git rm --cached——同一提交内 ignore 对已 add 文件无效；历史提交仍在，完整 clone 仍含，来源声明见 docs/ai-native-alibaba-handbook.md 头注与 .gitignore 注释）
+
+## v0.12.0 (2026-09-28)
+
+开发阶段双关卡落地：① **开发放行守卫**（guard_dev.py）——把「任务框架/协作文档的人工 ack ≠ 质量放行」机械化，ack 是流程性定稿信号，放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」；② **开发完成验证**（verify_dev.py，`/sdlc-test dev`）——compile/boot/冒烟/回归按风险分级前置到开发收尾（DoD「code compiles」+ 冒烟是测试准入而非替代；agent 无执行反馈即开环盲写，同上下文自愈最便宜），留档反查挂进 static/exec 入口形成倒逼。依据：Google Design Docs（实现前同行评审）、GitHub Spec Kit / AWS Kiro（阶段间门）、Scrum DoD 与 smoke test 语义、IBM 缺陷成本曲线（设计 1→实现 6.5→测试 15→生产 100）、官方 best-practices（计划-验证-执行 / 一致术语 / 一层引用 / 评估驱动 / 防巫术常量）。已过全新上下对抗式方案审查（15 条 issue 全裁决吸收，3 条高危：本地 boot 可行性→unmanaged 一等公民模式、留档可伪造→四项交叉校验、大需求 verify 过期→HEAD 比对）+ 官方 best-practices 校准。
+
+**行为变化（置顶注意）**：guard_exec 检查5 上线即拦所有在途需求的 static/exec——补跑一次 `/sdlc-test dev` 即过（C 级最轻：env/dev.md 仅「构建」「启动」两节）；关卡1 互认由「任一份 review 含已放行」改锚**最新一份**（修 r1 已放行+r2 待裁决误放行 bug；受影响存量 = 开过 r2 的需求——完成 r2 裁决，或确认误开后移出 review/）。known boundary：前端-only child 仍全量 boot（按端路由不做）、unmanaged 依赖外部供给的服务正确性、Windows 未验证（mac/Linux 载体）。
+
+- **sdlc-gate（guard_dev.py 新增，~80 行）**：开发入口守卫——review 目录空 / 最新份缺「评审状态」字段 / 非已放行三态拒，拒绝文案点明「ack（确认点③/协作文档确认）只是定稿信号」；latest_by_name 与 check_trace 同口径（跨 skill 复刻，两处 docstring 互相点名）
+- **sdlc-test（verify_dev.py 新增 ~330 行 + _shared.py ~60 行）**：四件套确定性编排——构建 / 起服务（进程组 SIGTERM→10s→SIGKILL，启动命令勿自行后台化）/ 健康探测（单次 5s 超时、间隔 2s 轮询）/ 冒烟（按文件序前条数据后条可用，`{{变量}}` 插值链）/ 回归；启动模式 **local | unmanaged**（本地起不了服务时 unmanaged 跳起停、探测+冒烟+回归照常——仍是机器验证非人工声明）；断言 DSL 四种（`HTTP <n>` / `code=<n>` / `包含"文本"` / `存 <变量> ← <点路径>`），语法/来源引用构建前快失败；留档头部六字段（验证状态/风险分级/启动模式/执行范围/验证时 HEAD/开发放行守卫——步0 尽力调 guard_dev 记录其结果）；C 级 compile+boot；超时默认值注明依据。_shared.py 集中 latest_by_name / tier 三口径 / git_head 防同 skill 内脚本漂移
+- **guard_exec.py 检查5**：留档反查 + 四项交叉校验（验证时 HEAD≠当前→拦「验证过期」；local 须同轮 boot 日志；A/B 级留档冒烟条数=smoke.md 条数；C 级留档遇 A/B 分级→拦 tier 已升级）；「通过(人工降级,日期)」放行但显式 ⚠️ 警示；fail() 改按检查附带补救提示（检查5 为引导式：先建 env/dev.md→跑 dev→重跑）；关卡1 互认改最新份判定
+- **smoke-template.md（新增，sdlc-test/references/dev/）**：冒烟清单权威模板——agent 从 cases.md P0/核心用例推导落盘（计划-验证-执行），四种断言 DSL 规格、条目有序链式、不适用 P0 逐条列原因（防静默缩面）、头部生成会话/复核人责任字段、禁写鉴权真值与内网域名（脱敏红线）
+- **env-template.md**：新增 dev.md（五节：模式/构建/启动/冒烟/回归，占位符尖括号中文）与 dev-auth.local.md（gitignored 本机供给）两节；纪律补三条（鉴权真值只进 local、留档响应尾部脱敏、dev-auth 依赖 `sdlc/env/*.local.md` gitignore 条目）
+- **sdlc-test SKILL.md**：路由表加 dev 子命令（阶段 1.5）；新节「阶段 1.5 dev」——三步 checklist + smoke 重生成口径（P0/可适用集合变化才重生成，结果回填不算）+ 降级边界（人工降级留档会被警示）；反合理化加三行（开发完成≠静态过 / 冒烟过≠功能对 / 占位回归判负）；description 扩 dev 与触发词
+- **sdlc-gate SKILL.md**：Step 5 扩「放行后：开发放行守卫（已机械化 2026-09-28）」；路由节补「已放行≠可开发」
+- **eval-6 / eval-8（新增，与 SKILL 同步产出）**：guard_dev 三态 + ack 后直接开发判负 + 伪造 issues 判负；dev 流程 + 漏翻 P0 判负 + 冒烟当功能对判负 + 占位回归判负 + 手写通过留档判负（两 README 索引同步）
+- **docs**：workflow mermaid 时序统一（确认点②定稿→gate 评审裁决→放行→③，B6 加完成验证留档）+ §3/§5 表双关卡 + 顺手修两处「4 个子代理」分档漂移；playbook mermaid 插 gate 节点 + §2 用例并行产出约定（不做设计先行用例后补降级档——交叉审查依赖用例在场）+ 确认点③措辞 + §7 源项目（Trellis）侧接入点表（任务 start 校验 guard_dev exit 0 / 任务完成校验 verify 留档）；faq 2 新 Q + 术语表 3 行（开发放行守卫/开发完成验证/冒烟清单——声明与关卡1/2 的轴别：机器守卫 vs 人工关口）；landscape 强制层两行 + ②③ 时序对齐 + 分级路由表「开发完成验证」行（A/B=全量、C=compile+boot）+ guard_dev 入不分级项 + 产物目录加 dev
+- **templates**：stage3 验证命令节 compile 单条→分级四件套指向（env/dev.md + /sdlc-test dev）；stage2 验证方式同步
+- **README**：sdlc-test 行子命令串加 dev、sdlc-gate 行加 guard_dev、关键机制加「开发双关卡」；版本指针 v0.10.0→v0.12.0（顺手修落后一版）
+
+## v0.11.5 (2026-09-27)（补录）
+
+C 约束 / H 假设决策类型 + 用例反馈层级 L/M/H（阿里《AI Native 研发范式实践手册》对照落地，78066b6）。依据：手册 p19「Spec 区分约束与假设——约束长期保存+自动检查，假设按反馈调整」与「分层验证体系：秒级/分钟级/人工」。
+
+- **sdlc-intent**：第 4 层新增「隐含约束未声明」检查项；体检明细表增类型列 C?/H?/—（初判带问号，PM 答复定型）；定型 C→人工转 sdlc-guardrails 候选、H→测试验证项；eval-10
+- **sdlc-test**：用例头部增「反馈层级」L/M/H；反馈层级与 spec 资产化联动；报告增反馈层级分布与证据索引表；spec-guide 增断言基线
+- **templates/large-req-stage2**：D 表增类型列值域
+- **docs**：新增 ai-native-alibaba-handbook（docs/README.md 登记）；sdlc-test-design 补 D22/§10 闭环不变量并去重；CLAUDE.md 计数同步、README 版本指针修正；.gitignore 排除手册 PDF（后经 v0.13 CR 发现误入库并移出，见 v0.13.0）
+
 ## v0.11.0 (2026-09-27)
 
 digest 产物图例与图题落地 + 流程/状态机结构化上平台（payload v1.4）：让产物脱离模板自描述（符号体系集中图例、每图有题），补平台「需求摘要」缺流程/状态机视图的澄清期缺口（摘要区外移表、含断点行，折叠区原文不动），标准文档维持逻辑文本化仅显式化 ❓ 断点取材。依据：C4「每图须有 key/legend + title」、Moody《Physics of Notations》Dual Coding / Semantic Transparency；AI spec 工具对照（GitHub spec-kit 内嵌 mermaid、AWS Kiro）。已过全新上下文对抗式审核（1 阻断：resolve_anchors 同步扩展；10 建议全吸收，含图例第三措辞坑、render 时序、组名撞名）。

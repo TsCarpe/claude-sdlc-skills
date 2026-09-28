@@ -23,8 +23,9 @@
 │                                                                   │
 │ 📚 知识层（怎么判断）                                               │
 │    sdlc-intent    需求梳理 + 七层体检（digest / audit / Q表）        │
+│    sdlc-design   技术设计产出（备选/契约/资产/D表/切分约束）         │
 │    sdlc-gate      评审关口（4 角色扇出 + RECONCILE + 人工裁决）      │
-│    sdlc-test      测试四阶段（cases / static / exec / report）      │
+│    sdlc-test      测试五阶段（dev / cases / static / exec / report） │
 │    sdlc-doubt     决策对抗复查                                      │
 │    sdlc-config-review  发版配置审计                                 │
 │    （另有 sdlc-doc / sdlc-yapi：飞书技术设计文档与接口文档同步，      │
@@ -34,8 +35,10 @@
 │    sdlc-guardrails/engine/check.py 规则引擎（项目侧配置规则）       │
 │    sdlc-guardrails/engine/audit_profiles.py OVAL 分组跨文件对账    │
 │    scripts/check_runner_form.py 文档命令形态自检                   │
-│    sdlc-test/scripts/guard_exec.py   关卡守卫                       │
+│    sdlc-test/scripts/guard_exec.py   关卡守卫（含开发完成验证反查） │
+│    sdlc-test/scripts/verify_dev.py   开发完成验证编排（四件套留档）│
 │    sdlc-gate/scripts/check_trace.py  产物链追溯校验                 │
+│    sdlc-gate/scripts/guard_dev.py    开发放行守卫（ack≠放行）      │
 │    sdlc-guardrails/templates/ hook 段 / pre-commit 模板           │
 ├─────────────────────────────────────────────────────────────────┤
 │ 项目层（目标项目里自建，源项目为范例）                                │
@@ -49,7 +52,7 @@
 │             .githooks/pre-commit         提交兜底                   │
 │                                                                   │
 │ 📋 状态层    任务框架（CLI 入口带守卫）                               │
-│             sdlc/<需求名>/  产物目录（req / test / review）          │
+│             sdlc/<需求名>/  产物目录（req / test / review / dev）    │
 ├─────────────────────────────────────────────────────────────────┤
 │ 🔧 全局工具层：codegraph / mysql / yapi MCP / chrome-devtools /     │
 │               serena / context7 / lark-cli                          │
@@ -79,7 +82,8 @@
 | 评审关口 | 4 子代理 | 2 子代理（数据模型+交叉） | 主会话自查（仍走裁决+放行，保互认链） |
 | 用例生成（按 FR 级） | 全技术 + P0/P1/P2 | P0+P1+闭环不变量 | P0+闭环不变量 |
 | spec 资产化 | 强制 | 默认做 | 跳过 |
-| **不分级项** | guardrails / config-review / 人工关卡 / check 脚本——任何级全量 | 同左 | 同左 |
+| 开发完成验证（verify_dev） | 全量（+冒烟+回归） | 全量（同 A：+冒烟+回归） | compile+boot |
+| **不分级项** | guardrails / config-review / 人工关卡 / check 脚本 / guard_dev 开发放行守卫——任何级全量 | 同左 | 同左 |
 
 分级落库（sdlc-sync v1.3 `risk_tier`）后，按级统计泄漏率即可校准评分卡边界——分级与度量互为配套。
 
@@ -101,18 +105,20 @@
    → ⏸ 确认点①：四件核对 + 体检问题去向表
 
 ② 技术骨架 ∥ 测试用例（并行独立产出）
-   技术骨架：接口契约读写分级 / 公共资产清单六类 / D 表八类别
+   技术骨架（sdlc-design）：接口契约读写分级 / 公共资产清单六类 / D 表八类别 / 实施切分约束
+   → ⏸ 确认点②：骨架逐行定稿（框架/文档 ack＝定稿信号，非放行）
    sdlc-test cases：红线禁读设计（保交叉独立性）
    → sdlc-gate：按风险分级分档扇出（A=4 fresh-context 子代理 / B=2 / C=主会话自查）
       → RECONCILE 四分类 → 人工逐条裁决 → 放行
-   → ⏸ 确认点②③
 
 ③ 实施与验证
+   ⏸ 确认点③：child prd 评审 + gate 已放行 → 🔒 guard_dev 拦开发
    child 任务：implement / check 子代理（curate 过的上下文注入）
    → 编码 ·············· 🔒 hook 拦
    → 自检 ·············· 判断类复查
-   → sdlc-test static ·· 代码 ↔ 用例一致性（三态结论）
-   → exec ·············· 🔒 guard_exec 守卫（关卡1 / 互认 / 资产一致性）
+   → 开发完成验证 ······ verify_dev：compile/boot/冒烟/回归 → 留档（/sdlc-test dev）
+   → sdlc-test static ·· 代码 ↔ 用例一致性（三态结论；入口反查 verify 留档）
+   → exec ·············· 🔒 guard_exec 守卫（关卡1 / 互认 / 开发完成验证 / 资产一致性）
         派发子代理执行 + 回归轮两步（spec 先跑 runner）
    → spec 资产化 ······· 已通过用例 → Playwright spec（零 token 回归）
    → 报告 + ⏸ 关卡2 复验
@@ -139,7 +145,7 @@
 
 | 维度 | 状态 | 说明 |
 |---|---|---|
-| 知识层 | ★★★ | 六 skill + 三级规范，多轮 best-practices 复核 |
+| 知识层 | ★★★ | 八 skill + 三级规范，多轮 best-practices 复核（sdlc-design 尚未真实任务验证） |
 | 执行层 | ★★★ | 子代理扇出、派发协议、spec runner 零 token |
 | 强制层 | ★★☆ | 2026-09-15/16 从零拦截建成三档齐备——**未经真实任务检验** |
 | 编排层 | ★★ | 扇出仍靠 skill 指示（workflow 化未做，触发条件：再出编排漂移事故） |

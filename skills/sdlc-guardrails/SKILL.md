@@ -1,6 +1,6 @@
 ---
 name: sdlc-guardrails
-description: Deterministic guardrail engine that enforces "write-it-and-it's-wrong" red-lines at write time - a PostToolUse hook runs engine/check.py on every Write/Edit and blocks violations per project-defined guardrails.yaml rules (forbid / require / require_if / count_ge), with pre-commit fallback and --check baseline scanning for legacy code. Engine is mechanism (one global copy), rules are content (per project). Use when 接入或配置红线拦截、给项目编写 guardrails 规则、排查 hook 拦截了或没拦、扫描存量违规基线，或用户说 guardrails、红线引擎、红线拦截、接入红线、规则文件、红线扫描、baseline scan。
+description: "Deterministic guardrail engine that enforces \"write-it-and-it's-wrong\" red-lines at write time - a PostToolUse hook runs engine/check.py on every Write/Edit and blocks violations per project-defined guardrails.yaml rules (forbid / require / require_if / count_ge), with pre-commit fallback and --check baseline scanning for legacy code. Engine is mechanism (one global copy), rules are content (per project). Use when 接入或配置红线拦截、给项目编写 guardrails 规则、排查 hook 拦截了或没拦、扫描存量违规基线，或用户说 guardrails、红线引擎、红线拦截、接入红线、规则文件、红线扫描、baseline scan."
 ---
 
 # sdlc-guardrails：红线拦截引擎
@@ -54,4 +54,4 @@ description: Deterministic guardrail engine that enforces "write-it-and-it's-wro
 ## 参考（一层引用）
 
 - [README.md](README.md)：架构细则、规则语法全量、语义要点（Write/Edit 差异、no-op 行为）、已知边界
-- [templates/](templates/)：settings-hook.json（hook 挂载段）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test（../sdlc-test/templates/，单独安装时仅作来源说明）
+- [templates/](templates/)：settings-hook.json（hook 挂载段）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test（../sdlc-test/templates/，单独安装本 skill 时该引用仅作来源说明，不依赖其存在）

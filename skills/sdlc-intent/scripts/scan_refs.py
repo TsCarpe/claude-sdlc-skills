@@ -89,13 +89,14 @@ def parse_md_tables(md_text):
 
 
 def seeds_mode(doc_path):
-    texts, headings, _ = load_doc(doc_path)
+    texts, headings, is_docjson = load_doc(doc_path)
     out = {"generator": GENERATOR, "mode": "seeds", "ref_statements": [], "parallel_chapter_groups": []}
     for idx, t in texts:
         m = REF_PATTERNS.search(t)
         if m:
+            # doc.json 用块 idx；markdown 是 0-based 行号，人读从 1 起（「行0」不可读）
             out["ref_statements"].append({
-                "where": f"块{idx}" if idx else "行",
+                "where": f"块{idx}" if is_docjson else f"行{idx + 1}",
                 "text": t[:120],
                 "matched": m.group(0),
                 "note": "落点是否存在于标题集，交 LLM 判定；标题集见 parallel_chapter_groups 与原文",
@@ -119,7 +120,7 @@ def is_empty_cell(cell):
 
 
 def verify_mode(doc_path, refs_path):
-    texts, headings, _ = load_doc(doc_path)
+    texts, headings, is_docjson = load_doc(doc_path)
     refs_md = Path(refs_path).read_text(encoding="utf-8")
     tables = parse_md_tables(refs_md)
     out = {"generator": GENERATOR, "mode": "verify",
@@ -154,7 +155,9 @@ def verify_mode(doc_path, refs_path):
                 short = field.split(".")[-1].split("（")[0].strip()
                 if not short or len(short) < 2:
                     continue
-                hits = [f"块{i}:{t[max(0, t.find(short) - 10):t.find(short) + len(short) + 10]}"
+                # 位置标签与 seeds_mode 同口径：doc.json 块 idx / markdown 行号（1 起）
+                hits = [f"{('块' + str(i)) if is_docjson else ('行' + str(i + 1))}:"
+                        f"{t[max(0, t.find(short) - 10):t.find(short) + len(short) + 10]}"
                         for i, t in texts if short in t]
                 # 截断至 12 条：证据用途只需覆盖 count<=1 的低频场景，超长清单徒耗判定层 token
                 out["field_occurrences"].append(
@@ -176,6 +179,9 @@ def verify_mode(doc_path, refs_path):
 
 
 def self_test():
+    import shutil
+    import tempfile
+
     md = """# 测试需求
 ## 一、甲组设置
 达标线划线，口径见下文说明
@@ -184,7 +190,6 @@ def self_test():
 ## 三、统计报告
 1. 达标率 = 达标数 / 总数
 """
-    Path("/tmp/_sr_test_doc.md").write_text(md, encoding="utf-8")
     refs = """# 参照表
 ## 1. 数据字典（必建）
 | 字段（实体.字段） | 录入处 | 消费处 | 来源 |
@@ -202,23 +207,30 @@ def self_test():
 | C1 | 数据字典 | 有录无消 | 一.1 | 机构类型 |
 | C2 | 指标字典 | 空列 | 三.3 | 贡献度指数 |
 """
-    Path("/tmp/_sr_test_refs.md").write_text(refs, encoding="utf-8")
+    # tempfile 隔离目录：/tmp 固定路径在并发 self-test（CI 矩阵/多 agent）下互踩
+    tmp = tempfile.mkdtemp(prefix="_sr_test_")
+    doc_p, refs_p = Path(tmp) / "doc.md", Path(tmp) / "refs.md"
+    try:
+        doc_p.write_text(md, encoding="utf-8")
+        refs_p.write_text(refs, encoding="utf-8")
 
-    s = seeds_mode("/tmp/_sr_test_doc.md")
-    assert any("下文" in r["matched"] or "说明" in r["text"] for r in s["ref_statements"]), s
-    assert any(g["tail"] == "设置" and len(g["headings"]) == 2 for g in s["parallel_chapter_groups"]), s
+        s = seeds_mode(str(doc_p))
+        assert any("下文" in r["matched"] or "说明" in r["text"] for r in s["ref_statements"]), s
+        assert any(g["tail"] == "设置" and len(g["headings"]) == 2 for g in s["parallel_chapter_groups"]), s
+        # markdown 输入的引用语句位置标签应为「行N」（1 起）
+        assert s["ref_statements"] and s["ref_statements"][0]["where"].startswith("行"), s
 
-    v = verify_mode("/tmp/_sr_test_doc.md", "/tmp/_sr_test_refs.md")
-    fields = {f["field"]: f for f in v["field_occurrences"]}
-    assert fields["活动.所属赛区"]["count"] == 0  # 正文未出现「所属赛区」→ count==0 即有消无录证据
-    assert len(v["conflicts"]) == 1 and "达标率" in v["conflicts"][0]["row"][0]
-    assert len(v["pending_rows"]) == 1
-    mech = [c for c in v["mechanical_candidates"]]
-    assert any(c["key"] == "贡献度指数" and len(c["empty_cols"]) == 4 for c in mech), mech
-    assert v["count_check"]["candidate_list_rows"] == 2
+        v = verify_mode(str(doc_p), str(refs_p))
+        fields = {f["field"]: f for f in v["field_occurrences"]}
+        assert fields["活动.所属赛区"]["count"] == 0  # 正文未出现「所属赛区」→ count==0 即有消无录证据
+        assert len(v["conflicts"]) == 1 and "达标率" in v["conflicts"][0]["row"][0]
+        assert len(v["pending_rows"]) == 1
+        mech = [c for c in v["mechanical_candidates"]]
+        assert any(c["key"] == "贡献度指数" and len(c["empty_cols"]) == 4 for c in mech), mech
+        assert v["count_check"]["candidate_list_rows"] == 2
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
     print("[scan_refs] self-test OK")
-    for f in ("/tmp/_sr_test_doc.md", "/tmp/_sr_test_refs.md"):
-        Path(f).unlink(missing_ok=True)
 
 
 def main():

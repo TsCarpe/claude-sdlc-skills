@@ -44,7 +44,7 @@
 
 想改某个机制、或把自己的项目接进来——
 
-1. 测试侧：[sdlc-test-design.md](sdlc-test-design.md)（D1-D21 决策）→ [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（回归档演进）
+1. 测试侧：[sdlc-test-design.md](sdlc-test-design.md)（D1-D22 决策）→ [sdlc-test-spec-evolution.md](sdlc-test-spec-evolution.md)（回归档演进）
 2. 产物互引：[design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md)（ID 体系）
 3. 项目侧接入：[dev-standards-reference/README.md](dev-standards-reference/README.md)（规范底座）→ [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md)（红线引擎三步接入）
 

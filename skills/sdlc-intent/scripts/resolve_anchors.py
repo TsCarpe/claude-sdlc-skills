@@ -14,6 +14,7 @@ payload 需含 digest.fr_points / digest.features / digest.flows / digest.states
 import argparse
 import json
 import re
+import sys
 
 
 def _ref_key(s):
@@ -48,8 +49,8 @@ def descendants(children, rid):
     return out
 
 
-def resolve_source(src, doc_lookups, comments_index):
-    """出处字符串 → block 或 None"""
+def resolve_source(src, doc_lookups, comments_index, loose_log=None):
+    """出处字符串 → block 或 None。loose_log 非空时，三级宽匹配兜底命中的记入该列表。"""
     blocks, by_id, rows, parent_of, children, comments_by_id, comment_by_ref = doc_lookups
     s = str(src or "")
     m = re.search(r"详述(\d+)", s)
@@ -76,11 +77,14 @@ def resolve_source(src, doc_lookups, comments_index):
                 t = d.get("text") or ""
                 if tail[:10] and tail[:10] in t:  # 小节名取前 10 字子串命中（原名常带「：说明」尾巴，全等匹配会漏）
                     return d
-            # ③ 短文本回退
-            for d in descendants(children, row["id"]):
-                t = d.get("text") or ""
-                if tail[:4] and tail[:4] in t:  # 再放宽到前 4 字宽匹配兜底（②级仍漏时接受少量误配）
-                    return d
+            # ③ 短文本回退：前 4 字宽匹配兜底，仅唯一命中才采纳——多候选时前缀撞车
+            #    （如「商品订单管理」vs「商品订单退改规则」同含「商品订单」）会静默挂错条款块，宁缺毋错
+            short_hits = [d for d in descendants(children, row["id"])
+                          if tail[:4] and tail[:4] in (d.get("text") or "")]
+            if len(short_hits) == 1:
+                if loose_log is not None:
+                    loose_log.append((s, short_hits[0]["id"]))
+                return short_hits[0]
         return row
     mc = re.search(r"评论区#(\d+)", s)
     if mc:
@@ -129,9 +133,10 @@ def main():
             comments_index.setdefault(i, mm.group(1) if mm else "")
 
     stats = {"fr": 0, "feature": 0, "flow": 0, "state": 0, "audit": 0, "item": 0, "miss": 0}
+    loose_log = []  # 三级前 4 字宽匹配兜底的命中（误锚风险高于①②级，供人工抽检）
 
     def attach(entry, source_text, quote_text, kind):
-        blk = resolve_source(source_text, lookups, comments_index)
+        blk = resolve_source(source_text, lookups, comments_index, loose_log)
         if blk is None:
             blk = resolve_quote(quote_text, lookups[0])
         if blk is not None:
@@ -155,6 +160,10 @@ def main():
 
     json.dump(payload, open(args.out, "w", encoding="utf-8"), ensure_ascii=False)
     print("anchors:", stats)
+    if loose_log:  # 锚点已全落盘后再提示，不阻断流程
+        print(f"loose 锚点 {len(loose_log)} 个（建议人工抽检）", file=sys.stderr)
+        for s, bid in loose_log:
+            print(f"  - {s} → {bid}", file=sys.stderr)
 
 
 if __name__ == "__main__":

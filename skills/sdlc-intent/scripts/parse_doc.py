@@ -241,7 +241,7 @@ class DocParser:
                 elif sub.tag == "img":
                     images.append(sub)
                 else:
-                    t = inline_text(sub) if sub.tag != "p" else inline_text(sub)
+                    t = inline_text(sub)
                     if t:
                         text = (text + "\n" + t).strip() if text else t
             if not text:
@@ -438,8 +438,10 @@ def download_media(media_list, media_dir):
     os.makedirs(media_dir, exist_ok=True)
     lark = _find_lark_cli()
     if not lark:
+        print("错误: 未找到 lark-cli(查找顺序:PATH → ~/.nvm/versions/node/*/bin → "
+              "/usr/local/bin、/opt/homebrew/bin)——媒体下载全部失败", file=sys.stderr)
         for m in media_list:
-            m["status"] = "failed: lark-cli not on PATH"
+            m["status"] = "failed: lark-cli not found"
         return
     env = dict(os.environ)
     env["PATH"] = os.path.dirname(lark) + os.pathsep + env.get("PATH", "")
@@ -468,7 +470,12 @@ def download_media(media_list, media_dir):
             m["status"] = f"failed: {e}"
 
 
+# lark-cli 常见默认安装路径(npm 非 nvm 全局装 / Homebrew node 全局装的默认 bin 前缀)
+LARK_CLI_DEFAULTS = ("/usr/local/bin/lark-cli", "/opt/homebrew/bin/lark-cli")
+
+
 def _find_lark_cli():
+    """解析顺序:① PATH(which) ② nvm glob ③ 常见默认安装路径;全 miss 返回 None。"""
     p = shutil.which("lark-cli")
     if p:
         return p
@@ -476,6 +483,9 @@ def _find_lark_cli():
         hits = sorted(glob.glob(pat))
         if hits:
             return hits[-1]
+    for p in LARK_CLI_DEFAULTS:
+        if os.path.isfile(p) and os.access(p, os.X_OK):
+            return p
     return None
 
 
@@ -500,12 +510,16 @@ def main():
 
     p = DocParser(refmap=refmap, url=args.url, document_id=args.document_id,
                   revision_id=args.revision_id)
+    md_mode = False
     if args.xml:
         content = open(args.xml, encoding="utf-8").read()
         root = parse_tree(content)
         p.walk(root)
     elif args.md:
         p.parse_markdown(open(args.md, encoding="utf-8").read())
+        md_mode = True
+        print("警告: markdown 回退模式：产物无块级 ordinal/parent 结构，resolve_anchors 条款级解析与"
+              "list_clauses 全量列表不可用（doc-pipeline.md：仅调试/补位）", file=sys.stderr)
     else:
         ap.error("--xml 或 --md 必填其一")
     p.emit_comments()
@@ -515,7 +529,7 @@ def main():
         download_media(media_list, args.media_dir)
 
     doc = {
-        "generator": GENERATOR,
+        "generator": (GENERATOR + " markdown-fallback") if md_mode else GENERATOR,
         "source": {"url": args.url, "documentId": args.document_id,
                    "revisionId": args.revision_id},
         "blocks": p.blocks,
@@ -530,7 +544,12 @@ def main():
     print(f"media={len(media_list)} ok={ok} pending/failed={len(media_list) - ok}")
     anchored = sum(1 for b in p.blocks if not str(b["id"]).startswith("x-"))
     print(f"native-anchors={anchored}/{len(p.blocks)}")
+    failed = sum(1 for m in media_list if str(m["status"]).startswith("failed"))
+    if failed:  # 媒体下载失败不以 exit 0 收场(产物照常落盘,统计照常输出,调用方可感知)
+        print(f"注意：{failed} 个媒体下载失败（见 media 状态），exit 1")
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

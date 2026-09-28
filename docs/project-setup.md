@@ -18,7 +18,7 @@
 flowchart TB
     subgraph G["全局侧（一次性）"]
         G1["安装 skills<br/>项目级 .claude/skills/ 或全局 ~/.claude/skills/<br/>（sdlc-guardrails 引擎随 skill 安装）"]
-        G3["MCP 工具（可选，均带降级）"]
+        G3["外部工具（可选，均带降级：<br/>MCP 四件 + lark-cli）"]
     end
 
     subgraph H["① sdlc-guardrails 强制层（可选，红线拦截）"]
@@ -34,7 +34,7 @@ flowchart TB
     end
 
     subgraph E["③ 环境配置"]
-        E1["sdlc/env/ 四件<br/>test · repos.local · accounts.local · ui-recipe<br/>「skill 首跑引导生成」"]
+        E1["sdlc/env/ 六件<br/>test · repos.local · accounts.local · ui-recipe · dev（开发验证档）· dev-auth.local<br/>「skill 首跑引导生成」"]
     end
 
     G1 -. 引擎路径（默认安装位置）.-> H1
@@ -50,7 +50,7 @@ flowchart TB
 | 项 | 怎么来 | 说明 |
 |---|---|---|
 | 安装 skills | `npx skills add TsCarpe/claude-sdlc-skills`（项目级 `.claude/skills/`）或 `-g`（全局 `~/.claude/skills/`） | 两种位置都行；sdlc-guardrails 引擎随 skill 一并安装，项目侧 hook 直接引用安装位置，**无需 clone 本仓库** |
-| MCP 工具（全部可选） | chrome-devtools / mysql / codegraph / YApi / lark-cli | 每个 skill 对外部依赖都声明了降级路径，缺了不炸（[降级矩阵](faq.md)） |
+| 外部工具（全部可选） | MCP：chrome-devtools / mysql / codegraph / YApi；CLI：lark-cli（sdlc-intent 拉原文 / sdlc-sync push-artifacts 拉快照） | 每个 skill 对外部依赖都声明了降级路径，缺了不炸（[降级矩阵](faq.md)） |
 
 ## 1. sdlc-guardrails 强制层（可选，红线拦截）
 
@@ -98,6 +98,8 @@ sdlc-test 的 spec 资产化与回归轮依赖一套 Playwright runner，全部�
 | `sdlc/env/repos.local.md` | static 首跑引导（gitignore） | 前后端仓库本地路径与索引状态 |
 | `sdlc/env/accounts.local.md` | exec 首跑引导（gitignore） | 角色 → 账号密码 |
 | `sdlc/env/ui-recipe.md` | exec 首条用例侦察后沉淀（入库） | 项目特有 UI 配方：路由清单 / 环境检查恢复动作 / 鉴权直调头 / 项目特有坑；跨需求复用，持续增量回写 |
+| `sdlc/env/dev.md` | dev 首跑引导（入库） | 开发验证档：模式 / 构建 / 启动 / 冒烟 / 回归五节固定（`/sdlc-test dev` 按此编排；C 级最轻可只留构建、启动两节） |
+| `sdlc/env/dev-auth.local.md` | dev 首跑引导（gitignore） | 开发验证冒烟需鉴权时的本机头值供给（鉴权真值只进 local 文件，不入库） |
 
 ## 4. 最小配置阶梯（按需逐级上）
 
@@ -105,6 +107,8 @@ sdlc-test 的 spec 资产化与回归轮依赖一套 Playwright runner，全部�
 |---|---|
 | sdlc-intent / sdlc-doubt / sdlc-config-review | **零配置**，装 skill 即用 |
 | sdlc-test cases | 零硬配置（YApi / lark-cli 为可选增强） |
+| sdlc-design | digest 三件套（C 级跳过）；codegraph / mysql MCP 可选（均带降级） |
+| /sdlc-test dev | `sdlc/env/dev.md` + `dev-auth.local.md`（dev 首跑引导生成） |
 | sdlc-test static | `sdlc/env/repos.local.md` + codegraph / mysql MCP |
 | sdlc-test exec | `sdlc/env/` 四份环境文件 + chrome-devtools MCP |
 | spec 资产化 + 回归轮 | 第 2 节 runner 全套 |

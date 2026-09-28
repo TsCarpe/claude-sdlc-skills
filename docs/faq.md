@@ -21,31 +21,40 @@ npx skills add TsCarpe/claude-sdlc-skills -g -a claude-code -s <skill名> -y
 
 注意 `-s` 每次只认一个 skill 名（不支持逗号分隔）。plugin 渠道用 `/plugin` 重装不受此影响。
 
-**Q：MCP 工具缺失会怎样？**
+**Q：外部依赖（MCP / CLI / 内置工具）缺失会怎样？**
 A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能力打折（下表）：
 
-| 依赖 | 谁用 | 缺失时行为 |
+| 外部依赖 | 谁用 | 缺失时行为 |
 |---|---|---|
-| mysql MCP | sdlc-gate（核对表结构）、sdlc-test（落库核验） | gate 角色降级纯文档比对；test 落库断言降级「疑似」并注明 |
+| mysql MCP | sdlc-gate（核对表结构）、sdlc-design（存量勘察核对表结构）、sdlc-test（落库核验） | gate 角色降级纯文档比对；design 按设计内声明的表结构并注明；test 落库断言降级「疑似」并注明 |
 | chrome-devtools MCP | sdlc-test exec | 降级 Playwright（再缺失则该阶段阻塞，不是跳过） |
-| codegraph MCP | sdlc-test static | 降级定向 grep + 读文件，结果注明证据降级 |
-| lark-cli | sdlc-intent（飞书文档/评论区） | 用本地 markdown 文件路径输入，跳过评论区整合 |
+| codegraph MCP | sdlc-design（存量勘察）、sdlc-test static | 降级定向 grep + 读文件，结果注明证据降级 |
+| lark-cli | sdlc-intent（飞书文档/评论区）、sdlc-sync（push-artifacts 拉飞书原文快照） | intent 用本地 markdown 文件路径输入，跳过评论区整合；sync 无原文快照可推（快照是质检依据版本），先补 lark-cli 再推 |
 | YApi MCP | sdlc-test cases（接口契约摄入） | 跳过该信息源，用例按需求文档推导 |
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**
-A：不必须。6 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
+A：不必须。8 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
 
 ### 使用建议
 
 **Q：从哪个 skill 开始用？**
-A：按依赖重量渐进（详见 README「渐进采用阶梯」）：sdlc-intent（零依赖）→ sdlc-config-review（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-gate → sdlc-test（依赖最重）。
+A：按依赖重量渐进（详见 README「渐进采用阶梯」）：sdlc-intent（零依赖）→ sdlc-config-review（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
 
 **Q：sdlc-test 适用什么技术栈？**
 A：按「Java 后端 + MySQL + Web 前端（Element Plus 系组件库）」打磨；static 阶段的前后端代码定位可适配任意栈（codegraph/grep），exec 阶段的交互姿势手册以 Element Plus 为锚点，其他组件库需自行沉淀姿势（手册结构可直接复用）。
 
+**Q：jev-ultrafast（目标驱动浏览器 agent）会接入 sdlc-test exec 吗？**
+A：暂缓。评估结论（2026-09-20）：阶段 A 通过、阶段 B 有条件通过——盲区可静态预判（无 role 弹层控件分诊 fallback）、verify 拦截有效、6.5s/任务，建议双通道（jev 主跑 + agent fallback）而非单通道替代；但接入前置条件「置信门槛规则（DONE 且 confidence<0.5 → 转 fallback）」尚未代码化。详见 [poc/jev-ultrafast/README.md](../poc/jev-ultrafast/README.md)。
+
 **Q：单人开发/小团队值得用吗？**
 A：sdlc-intent（把 PRD 消化成结构化共识）、sdlc-doubt（决策前对抗复查）单人即有收益；sdlc-gate 的多子代理评审在「设计+用例两份产物都存在」时收益最大；确认点/关卡体系本质是「AI 推进、人裁决」的纪律，与团队规模无关。
+
+**Q：任务框架（如 Trellis）/飞书里已经 ack 了设计文档，为什么还不能开发？**
+A：ack 是**流程性定稿信号**（设计「做完了」），不是质量确认（「对不对」）。放行唯一口径 = sdlc-gate 裁决闭环（issues 头部「评审状态=已放行」，含 --release 落改闭环校验全绿）。guard_dev 守卫拦截的正是「ack 被当成放行信号直接开码」——飞书技术文档的评阅是设计产物的下游发布通道（配套规范见 [feishu-tech-review-guide.md](dev-standards-reference/details/feishu-tech-review-guide.md)；产出该文档的 sdlc-doc 为源项目全局 skill，不在本仓），同样不构成放行。时序：确认点② ack（定稿）→ sdlc-gate 评审+裁决 → 放行 → 确认点③ child prd → 开发。
+
+**Q：开发完成验证（compile/boot/冒烟/回归）为什么前置到开发侧，不全留给 sdlc-test？**
+A：静态检查查不了「起不起得来」；开发阶段验证失败在**同一上下文内修复**最便宜，后置到 exec 才发现则要换会话重载全部背景，且整轮测试编排（关卡+环境+派发）报废。业界同构：DoD「code compiles」是开发完成定义、冒烟是进入深度测试的准入门槛而非替代——开发阶段验「能不能跑」，测试阶段验「跑得对不对」。机制：`/sdlc-test dev` 产 verify 留档，static/exec 入口（guard_exec 检查5）反查留档倒逼，漏跑会被测试入口拦下。
 
 **Q：产物为什么都写成 Markdown 文件而不是对话里输出？**
 A：产物落盘（`sdlc/<需求名>/`）是这套工作流的底座之一——跨会话可恢复（进度与关卡状态持久化在文件头部）、可逐行核对（人工关卡的核对对象）、可追溯（跨产物 `命名空间.编号` 引用）。会话内输出是易碎的。
@@ -53,7 +62,7 @@ A：产物落盘（`sdlc/<需求名>/`）是这套工作流的底座之一——
 ### 深入阅读
 
 **Q：想理解这套体系为什么这样设计 / 改某个机制前看什么？**
-A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 / 理解方法论 / 深入设计）+ 按问题找文档索引。改 sdlc-test 行为前先读它的[设计决策记录](sdlc-test-design.md)（D1-D21），机制都有当时的取舍理由。
+A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 / 理解方法论 / 深入设计）+ 按问题找文档索引。改 sdlc-test 行为前先读它的[设计决策记录](sdlc-test-design.md)（D1-D22），机制都有当时的取舍理由。
 
 ## 术语表
 
@@ -72,11 +81,15 @@ A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 /
 | 骨架 child | 第一个切片任务，交付枚举/常量/DDL/公共子结构，完成后业务 child 才放行 |
 | 横切功能点 | 无独立触发角色、代码落点分散多接口的功能（如定时状态流转），随宿主 child 交付 + 核验矩阵补验 |
 | fresh-context 子代理 | 无历史会话记忆的独立 AI 实例——对抗式审查的前提，避免被主会话结论带偏 |
-| 关卡1 / 关卡2 | sdlc-test 的两道人工关口：用例审核、报告复验（状态持久化在用例文件头部） |
+| 关卡1 / 关卡2 | sdlc-test 的两道**人工**关口：用例审核、报告复验（状态持久化在用例文件头部） |
+| 开发放行守卫 | **机器**守卫（guard_dev.py）：开发入口校验 review 最新一份 issues「评审状态=已放行」——ack≠放行。与关卡1/2 是两条轴：机器守卫 vs 人工关口 |
+| 开发完成验证 | **机器**验证（verify_dev.py，/sdlc-test dev）：compile/boot/冒烟/回归按风险分级执行并留档（C 级 compile+boot；A/B 级全量）；static/exec 入口反查留档 |
+| 冒烟清单 | `sdlc/<需求名>/dev/smoke.md`：agent 从 cases.md P0/核心用例推导落盘的 API 直调清单（四种断言 DSL，计划-验证-执行） |
 | 关卡互认 | sdlc-gate 放行后代改 sdlc-test 关卡1 状态——裁决已覆盖人工用例审核 |
 | RECONCILE 四分类 | 子代理输出的过滤框架：契约误读（不进清单）/ 有效可行动（进）/ 有效权衡（进，标权衡）/ 噪音（不进） |
 | 三类分歧 | 交叉审查发现的设计↔用例口径不一致，按去向分三类：一补用例、二回查设计、三升级用户拍板 |
 | 三去向 | 执行中发现口径冲突的处置：实现偏离=BUG / 需求未定=转 Q / 用例写错=修用例留档；禁止静默按实现校正 |
 | 证据降级 | 外部依赖缺失时退而求其次的取证方式，须在产物中注明（不许静默放行） |
-| 反合理化表 | SKILL.md 中的「借口 vs 现实」表，拦截执行 AI 的自我合理化路径 |
-| evals | skill 的评估场景文件（输入 + expected_behavior 勾选清单），手动回归用、红线判负 |
+| 基线 | 双义注意：guardrails 的存量违规基线（`--check` 扫出的旧账报告，不阻塞编辑）≠ config-review 的基线分支（diff 对比的 master/main） |
+| 反合理化表 | sdlc-test 的「借口 vs 现实」表（references/anti-rationalization.md 全量，SKILL.md 留高频三条），拦截执行 AI 的自我合理化路径 |
+| evals | skill 的评估场景文件：规范格式 = 官方 JSON 结构（skills/query/files/expected_behavior）+ 判负红线节，新场景一律此格式；存量场景为 md 勾选清单形态，按批次迁移中。手动回归用、红线判负（规范见 [CONTRIBUTING.md](../CONTRIBUTING.md)） |

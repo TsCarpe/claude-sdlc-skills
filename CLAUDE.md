@@ -1,13 +1,14 @@
 # claude-sdlc-skills 仓库导航（给在此仓库工作的 AI 与贡献者）
 
-这是一个 Claude Code skill 集合仓库：7 个可安装 skill + 大需求三段式方法论文档。本文件是仓库结构约定与改动护栏。
+这是一个 Claude Code skill 集合仓库：8 个可安装 skill + 大需求三段式方法论文档。本文件是仓库结构约定与改动护栏。
 
 ## 仓库结构
 
 ```
-skills/<name>/SKILL.md        # 7 个 skill（生命周期序：sdlc-intent/test/gate/doubt/config-review/sync + 横切引擎 sdlc-guardrails）
+skills/<name>/SKILL.md        # 8 个 skill（生命周期序：sdlc-intent/design/test/gate/doubt/config-review/sync + 横切引擎 sdlc-guardrails）
   references/                  # skill 的详细参考文档（模板/维度表/姿势手册），SKILL.md 只留精瘦主干+指针
-  evals/                       # 评估场景（输入 + expected_behavior 勾选清单）
+  evals/                       # 评估场景（新场景官方 JSON 结构，存量 md 勾选清单，见下「evals 约定」）
+  scripts/ · engine/           # 守卫与阶段脚本用 scripts/；随 skill 分发、跨项目唯一份的引擎用 engine/（现仅 sdlc-guardrails）
 templates/                     # 大需求三段式产物模板（stage1/2/3），与 docs/large-req-playbook.md 配套
 docs/                          # workflow（全流程叙述）/ large-req-playbook / example-walkthrough / faq / sdlc-test-design
 .claude-plugin/marketplace.json  # 发布清单（plugin 渠道 + skills CLI 共用）
@@ -21,10 +22,11 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 4. 跨 skill 引用用**同级相对路径**（`../sdlc-doubt/SKILL.md`）并声明「单独安装时仅作来源说明」——不同用户安装 scope（全局/项目）不同，禁止写死绝对路径
 5. **脱敏红线**：不得出现真实项目名、公司名、内网地址、真实鉴权头字段、账号凭据；业务示例一律用中性虚构（商品/订单/评选活动类）。提交前跑：
    ```bash
-   rg -i "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . --glob '!CHANGELOG.md'
+   rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . --glob '!CHANGELOG.md' --glob '!.git' --glob '!.github/**' --glob '!CLAUDE.md'
    ```
    应零命中
 6. 权限/配置示例只能新写条目，**禁止从任何本机 settings 文件复制**
+7.（软约定）**三段式规则三写同步**：三段式规则存在三处镜像（README「渐进采用阶梯」/ `docs/workflow.md` §2 / `docs/large-req-playbook.md` 权威版）；改三段式规则时三处必须同步改（CI 无法机检此项，靠本条约定兜底）
 
 ## 本地验证（改完 skill 后）
 
@@ -37,4 +39,4 @@ python3 -m json.tool .claude-plugin/marketplace.json > /dev/null # JSON 合法
 
 ## evals 约定
 
-每个 skill 的 evals/README.md 是评估场景索引；场景文件 = 输入 + expected_behavior 勾选清单，手动回归用（无自动运行器），纪律红线（如「关卡未过就执行」）判负即整场景失败。
+每个 skill 的 evals/README.md 是评估场景索引；**新场景一律用官方 JSON 结构**（skills / query / files / expected_behavior）+ 判负红线节（规范见 [CONTRIBUTING.md](CONTRIBUTING.md)）；存量 md 勾选清单形态（输入 + expected_behavior 清单）按批次迁移中。手动回归用（无自动运行器），纪律红线（如「关卡未过就执行」）判负即整场景失败。

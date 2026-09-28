@@ -9,6 +9,7 @@
 
 用法：
     python3 check_trace.py <项目根> <需求名> [--release]
+    python3 check_trace.py --self-test        # 内置 fixture 回归（CI 用，exit 0 = 过）
 
 扫描（各取文件名日期最大一份；文件缺失/解析失败跳过并注明，存量不回改）：
     sdlc/<需求名>/intake/digest-*.md        需求.FR-xx / 需求.A-xx 定义源
@@ -74,12 +75,16 @@ DEF_SPECS: dict[str, list[tuple[re.Pattern, object]]] = {
 }
 REGISTERED_ONLY = re.compile(r"设计\.D\d+|功能\.F\d+|确认\.Q\d+|ER\.[A-Z]")
 DETAIL_ROW_ID = re.compile(r"^([DAST])-(\d+)$")
+GROUP_ROW_ID = re.compile(r"^[DAST]-\d+\s*[~–-]\s*[DAST]-\d+$")  # 分组裁决行（T-14~T-23）：状态以明细行为准
 FR_DEF = re.compile(r"^\|\s*FR-(\d+)\s*\|")
 TRACE_ROW = re.compile(r"^需求\.FR-(\d+)")
 
 
 def latest_by_name(paths: list[Path]) -> Path | None:
-    """按文件名中的日期/rN 序号取最新一份（digest-20260910.md、issues-20260910-r2.md）。"""
+    """按文件名中的日期/rN 序号取最新一份（digest-20260910.md、issues-20260910-r2.md）。
+
+    三处复刻互相点名（跨 skill 不 import，单独安装互相不可见），改口径须三处同步：
+    同目录内 check_trace.py 与 guard_dev.py 两处 + sdlc-test 侧 scripts/_shared.py。"""
     def key(p: Path):
         d = re.search(r"(\d{8})", p.name)
         r = re.search(r"-r(\d+)", p.name)
@@ -128,12 +133,15 @@ def fmt_available(defs: set[str], prefix: str, src_name: str) -> str:
 
 
 def check_refs(files: dict[str, Path], defs: dict[str, set[str]]) -> tuple[list[str], int]:
-    """检查 1：引用可达。ID/编号体系声明行内的示例引用跳过。"""
+    """检查 1：引用可达。头部 kv 区「| 编号体系 |」声明行的示例引用跳过。"""
     msgs, checked = [], 0
     for key, path in files.items():
+        in_header = True  # 头部 kv 区 = 首个 ## 标题之前（编号体系声明行只在此区豁免）
         for i, ln in enumerate(read_lines(path), 1):
-            if "体系" in ln:
-                continue
+            if ln.startswith("##"):
+                in_header = False
+            if in_header and re.match(r"^\|\s*编号体系\s*\|", ln):
+                continue  # issue-template 头部声明行：ID 体系说明非实际引用
             for pat, src, build in REF_SPECS:
                 for m in pat.finditer(ln):
                     checked += 1
@@ -169,8 +177,9 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
         head = cs[0].strip("*")
         if sec == "〇":
             if head.startswith(BUCKETS) and len(cs) >= 4:
+                bucket = next(b for b in BUCKETS if head.startswith(b))  # 完整桶名作 key（「可测性」截 2 字成「可测」会导致比较时永不命中）
                 try:
-                    declared[head[:2]] = {s: int(cs[1 + j].strip("*") or 0) for j, s in enumerate(SEV)}
+                    declared[bucket] = {s: int(cs[1 + j].strip("*") or 0) for j, s in enumerate(SEV)}
                 except ValueError:
                     return [f"计数检查跳过：{issues_name} 速览统计表含非数字单元格（结构偏离模板）"]
             elif head.startswith("备案") and len(cs) >= 6:
@@ -206,13 +215,18 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
 
 
 def check_release(lines: list[str], issues_name: str) -> list[str]:
-    """检查 3（--release）：裁决=落改的行，落点/状态列须=已执行。"""
+    """检查 3（--release）：裁决=落改的行，落点/状态列须=已执行。
+
+    分组裁决行（编号列含范围分隔符，模板约定「分组内逐条各有落点；状态见明细行」）
+    跳过本身——分组内每条的闭环由一/二节明细行逐条校验，拦分组行只会误伤按模板字面填写者。"""
     msgs = []
     for i, ln, sec in section_marks(lines):
         if sec not in ("一", "二", "四") or not is_table_row(ln):
             continue
         cs = cells_of(ln)
         head = cs[0].strip("*")
+        if GROUP_ROW_ID.match(head):
+            continue
         if not re.match(r"^[DAST]-\d+", head):
             continue
         verdict_idx = 1 if sec == "四" else -2  # 汇总表列序：编号|裁决|摘要|落点/状态
@@ -251,8 +265,192 @@ def check_fr_coverage(digest_lines: list[str], cases_lines: list[str],
     return [], True
 
 
-def main() -> int:
-    argv = sys.argv[1:]
+# ---------- self-test（--self-test：内置 fixture 回归锚，供 CI 与本地改动后快验） ----------
+
+_DIGEST_MD = """# selftest digest
+
+| FR 编号 | 功能点 |
+|---|---|
+| FR-01 | 商品下单 |
+| FR-02 | 订单退改 |
+"""
+
+_CASES_MD = """# selftest cases
+
+## 双向追踪表
+
+| FR | 功能 | 用例 | 原因 |
+|---|---|---|---|
+| 需求.FR-01 | 商品下单 | TC-01、TC-02 | |
+| 需求.FR-02 | 订单退改 | TC-02 | |
+
+## 用例明细
+
+### TC-01 下单成功
+
+| 用例 | 步骤 |
+|---|---|
+| TC-01 | 下单 |
+
+### TC-02 退改成功
+
+| 用例 | 步骤 |
+|---|---|
+| TC-02 | 退改 |
+"""
+
+_T14_ROW = "| T-14 | 用例 | 快照口径 | 高 | cases.md | 「x」 | y | 落改 | 落改（批量） | cases.md ｜ 已执行 |"
+_T15_ROW = "| T-15 | 用例 | 快照口径 | 高 | cases.md | 「x」 | y | 落改 | 落改（批量） | cases.md ｜ 已执行 |"
+_GROUP_ROW = "| T-14~T-15 | 落改（批量） | 快照口径统一 | 分组内逐条各有落点；状态见明细行 |"
+
+_ISSUES_OK = f"""# selftest 评审 issue 清单（20260901 r1）
+
+| 项 | 值 |
+|---|---|
+| 评审状态 | 待裁决 |
+| 编号体系 | 分歧 D-xx / 架构 A-xx / 数据 S-xx / 可测性 T-xx；他产物引用本清单须带命名空间（评审.D-02 等） |
+
+## 〇、速览与裁决焦点
+
+### 统计
+
+| 区块 | 高 | 中 | 低 | 权衡 | 小计 |
+|---|---|---|---|---|---|
+| 分歧 | 1 | 0 | 0 | — | 1 |
+| 架构 | 1 | 0 | 0 | — | 1 |
+| 数据 | 1 | 0 | 0 | — | 1 |
+| 可测性 | 3 | 0 | 0 | — | 3 |
+| **合计** | **6** | **0** | **0** | — | **6** |
+| 备案（不进裁决） | — | — | — | — | 1 |
+
+### 裁决焦点
+
+| 编号 | 标题 | 建议动作 |
+|---|---|---|
+| D-01 | 覆盖 需求.FR-01 | 落改 |
+
+## 一、分歧清单
+
+| 编号 | 问题标题 | 分类·严重度 | 设计说 | 用例说 | 分歧点/后果 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|
+| D-01 | 覆盖缺口 | 分歧·高 | a | b | 需求.FR-01 覆盖口径不一 | 落改（用例.TC-01） | 落改（补用例） | cases.md TC-01 ｜ 已执行 |
+
+## 二、角色 issue
+
+### 架构一致性
+
+| 编号 | 问题标题 | 严重度 | 位置 | 原文摘引 | 问题 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|
+| A-01 | 分层越界 | 高 | design.md | 「x」 | y | 落改 | 落改（调整） | design.md ｜ 已执行 |
+
+### 数据模型与 SQL
+
+| 编号 | 问题标题 | 严重度 | 位置 | 原文摘引 | 问题 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|
+| S-01 | 字段口径 | 高 | design.md | 「x」 | y | 落改 | 落改（补口径） | design.md ｜ 已执行 |
+
+### 测试可测性
+
+| 编号 | 对象 | 问题标题 | 严重度 | 位置 | 原文摘引 | 问题 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|
+| T-01 | 设计 | 断言缺口 | 高 | cases.md | 「x」 | y | 落改 | 落改（补断言） | cases.md ｜ 已执行 |
+{_T14_ROW}
+{_T15_ROW}
+
+## 三、备案区
+
+| 编号 | 来源角色 | 观察项 | 依据 | 处置 |
+|---|---|---|---|---|
+| T-09 | 可测性 | 观察 | 「x」 | 备案 |
+
+## 四、裁决记录汇总
+
+| 编号 | 裁决 | 摘要/理由 | 落点/状态 |
+|---|---|---|---|
+| D-01 | 落改（补用例） |  | cases.md ｜ 已执行 |
+| A-01 | 落改（调整） |  | design.md ｜ 已执行 |
+| S-01 | 落改（补口径） |  | design.md ｜ 已执行 |
+| T-01 | 落改（补断言） |  | cases.md ｜ 已执行 |
+{_GROUP_ROW}
+"""
+
+# 反例派生：计数反例（可测性速览 9 vs 明细 1，删 T-14/T-15 明细与分组行保持其余桶不误报）
+_ISSUES_COUNT = (_ISSUES_OK
+                 .replace("| 可测性 | 3 | 0 | 0 | — | 3 |", "| 可测性 | 9 | 0 | 0 | — | 9 |")
+                 .replace(_T14_ROW + "\n", "")
+                 .replace(_T15_ROW + "\n", "")
+                 .replace(_GROUP_ROW + "\n", ""))
+# 引用反例：含「体系」的明细行引用未定义 FR-98（修复前整行被「体系」子串豁免吞掉）
+_ISSUES_REF = _ISSUES_OK.replace(
+    "需求.FR-01 覆盖口径不一", "权限体系设计未覆盖 需求.FR-98（关联 需求.FR-01）")
+# 落改反例：分组行全按模板填写，但 T-15 明细行未执行——应拦明细行而非分组行
+_ISSUES_REL = _ISSUES_OK.replace(_T15_ROW, _T15_ROW.replace("已执行", "待执行"))
+
+
+def self_test() -> int:
+    """/tmp 构造产物 fixture，断言关键行为（桶计数 / 编号体系豁免 / 分组裁决行 / 未知 flag）。"""
+    import io
+    import shutil
+    import tempfile
+    from contextlib import redirect_stdout
+
+    tmp = Path(tempfile.mkdtemp(prefix="check_trace_st_"))
+    try:
+        for name, issues in (("ok", _ISSUES_OK), ("count", _ISSUES_COUNT),
+                             ("ref", _ISSUES_REF), ("rel", _ISSUES_REL)):
+            base = tmp / "sdlc" / name
+            (base / "intake").mkdir(parents=True)
+            (base / "test").mkdir(parents=True)
+            (base / "review").mkdir(parents=True)
+            (base / "intake" / "digest-20260901.md").write_text(_DIGEST_MD, encoding="utf-8")
+            (base / "test" / "cases.md").write_text(_CASES_MD, encoding="utf-8")
+            (base / "review" / "issues-20260901.md").write_text(issues, encoding="utf-8")
+
+        def run(args: list[str]) -> tuple[int, str]:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = main(args)
+            return rc, buf.getvalue()
+
+        # 正例：健康产物全绿（四桶计数同源 + 分组行 + 头部编号体系行豁免 + --release 全流程）
+        rc, out = run([str(tmp), "ok", "--release"])
+        assert rc == 0 and "追溯校验通过" in out, f"健康 fixture 应全绿，实际 {rc}：\n{out}"
+
+        # A1 反例：可测性桶速览 9 vs 明细 1 → 报计数不同源；其余桶不误报
+        rc, out = run([str(tmp), "count"])
+        assert rc == 1 and "「可测性·高」声明 9，明细行为 1" in out, out
+        assert not any(f"「{b}·" in out for b in ("分歧", "架构", "数据")), out
+
+        # A2 反例：含「体系」明细行的 需求.FR-98 未定义须被抓；头部编号体系行的 评审.D-02 仍豁免
+        rc, out = run([str(tmp), "ref"])
+        assert rc == 1 and "引用不可达" in out and "需求.FR-98" in out, out
+        assert "评审.D-02" not in out, f"头部编号体系声明行应豁免：\n{out}"
+
+        # A9 反例：分组行本身不拦（按模板字面填写），未执行的 T-15 明细行被拦且指向该行
+        rc, out = run([str(tmp), "rel", "--release"])
+        assert rc == 1 and "落改未闭环" in out and "T-15 裁决=落改" in out, out
+        assert "T-14~T-15" not in out, f"分组裁决行不应被拦：\n{out}"
+
+        # A7：拼错 flag 显式报错，不静默丢弃对应检查
+        rc, out = run(["--relese", str(tmp), "ok"])
+        assert rc == 2 and "未知参数" in out, out
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    print("[check_trace] self-test OK")
+    return 0
+
+
+FLAGS = ("--release", "--self-test")
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if "--self-test" in argv:
+        return self_test()
+    unknown = [a for a in argv if a.startswith("--") and a not in FLAGS]
+    if unknown:  # 拼错 flag（如 --relese）若静默丢弃，对应检查会无声消失全绿——显式报错
+        print(f"{NG} 未知参数：{'、'.join(unknown)}（合法 flag：{'、'.join(FLAGS)}）")
+        return 2
     release = "--release" in argv
     argv = [a for a in argv if not a.startswith("--")]
     if len(argv) != 2:

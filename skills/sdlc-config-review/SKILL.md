@@ -1,6 +1,6 @@
 ---
 name: sdlc-config-review
-description: 扫描当前分支相对基线分支（master/main）的 Java 代码 diff，提取发版前需在代码之外人工处理的事项——①配置中心（Apollo/Nacos）Key：@Value 单值、@ConfigurationProperties 前缀、任意注解属性中的 ${...} 占位符；②外部平台注册操作：@XxlJob 任务（新增/改名/孤儿检测）、RocketMQ/Kafka/Rabbit listener 订阅关系；③行为知会项（@Scheduled 集群重复执行等）。产出配置 Key 清单 + 平台操作清单 + 知会项。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅，或说 config-sentinel、config review、Apollo/Nacos key audit、release config checklist、xxl-job audit、上线检查。
+description: "扫描当前分支相对基线分支（master/main）的 Java 代码 diff，提取发版前需在代码之外人工处理的事项——①配置中心（Apollo/Nacos）Key：@Value 单值、@ConfigurationProperties 前缀、任意注解属性中的 ${...} 占位符；②外部平台注册操作：@XxlJob 任务（新增/改名/孤儿检测）、RocketMQ/Kafka/Rabbit listener 订阅关系；③行为知会项（@Scheduled 集群重复执行等）。产出配置 Key 清单 + 平台操作清单 + 知会项。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅，或说 config-sentinel、config review、Apollo/Nacos key audit、release config checklist、xxl-job audit、上线检查。"
 ---
 
 # SDLC Config Review

@@ -9,8 +9,10 @@ __pycache__/
 # 本地工具产物
 .agents/
 .playwright-cli/
+.playwright-mcp/
 .zcode/
 skills-lock.json
+node_modules/
 
 # 本地演示项目（未随仓库发布）
 platform-demo/
@@ -19,5 +21,5 @@ platform-demo/
 poc/jev-ultrafast/tasks_local.py
 poc/jev-ultrafast/artifacts/
 
-# 外部手册 PDF（26MB，来源见 docs/ai-native-alibaba-handbook.md，不入库）
+# 外部手册 PDF（26MB，0ef67d4 误入库后已移出跟踪；本条目防本地误加新副本）
 poc/ai-native-handbook.pdf

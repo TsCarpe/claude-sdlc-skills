@@ -1,6 +1,6 @@
 ---
 name: sdlc-intent
-description: Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a seven-layer defect taxonomy (six in-document consistency layers plus an external-reference layer for missing-content defects) and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、sdlc-intake、PRD digest、requirement audit.
+description: "Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a seven-layer defect taxonomy (six in-document consistency layers plus an external-reference layer for missing-content defects) and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、PRD digest、requirement audit."
 ---
 
 # 需求接收助手（sdlc-intent）
@@ -9,10 +9,12 @@ description: Digests and health-checks product requirement documents (PRD). Stag
 
 ## 选择工作流
 
+用户说「评审 / 梳理 / 找问题」时先确认宾语：对象是**需求文档**才进本 skill；是设计/用例走 sdlc-gate，是技术方案走 sdlc-doubt，是上线配置走 sdlc-config-review。
+
 按用户意图选择分支：
 
-- 用户说「梳理 / digest / 理解需求」，或**首次**给出需求文档 → 只跑【第一段：需求梳理】，跑完暂停
-- 用户说「体检 / 评审 / 找问题 / review」→ 跑【第二段：需求体检】；若已存在梳理文档（`sdlc/*/intake/digest-*.md`）优先复用，不存在则提示先梳理
+- 用户说「梳理需求 / digest / 理解需求」，或**首次**给出需求文档 → 只跑【第一段：需求梳理】，跑完暂停
+- 用户说「体检 / 需求评审 / 给需求找问题 / review」→ 跑【第二段：需求体检】；若已存在梳理文档（`sdlc/*/intake/digest-*.md`）优先复用，不存在则提示先梳理
 - **复用梳理文档前强制版本校验**：体检本身要重新读取原文，读取后将本次原文的版本/修订时间与梳理文档头「版本」字段比对——一致 → 直接复用；不一致 → 告知用户「原文已从 vX 更新至 vY，梳理文档基于旧版」，建议重梳理（用户明确说沿用才沿用）；原文无版本信息时，向用户展示梳理文档的梳理日期，请其确认原文是否有更新
 - 用户只给文档未指明 → 两段连跑：梳理完成后**暂停**，向用户展示摘要并提示「请确认或补充业务理解，完成后说“继续体检”」，得到确认再跑体检
 

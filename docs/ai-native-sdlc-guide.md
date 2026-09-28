@@ -211,6 +211,8 @@ flowchart LR
 
 以本方法论的源项目（某 Java DDD 业务系统）+ Claude Code 的现状对照上述框架；流程全貌见 [workflow.md](workflow.md)。
 
+> **快照声明（2026-09-16 时点）**：本节是当时的自我诊断，**保留原文以存当时判断**（[ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §3 以本节为独立信源互证，锚点即此）。后续演进对照：#1「反馈回路缺失」已由 v0.12.0 开发完成验证解决（verify_dev：compile/boot/冒烟/回归 + static/exec 入口留档反查）；#2「确定性 Hook 门禁少」已由 v0.5.0 sdlc-guardrails 解决（写时红线拦截）；#4「AI 初轮评审未用」在设计/用例侧已由 sdlc-gate 关口覆盖（提交前代码 review 仍属候选）。
+
 ### 已覆盖
 
 | 框架概念 | 当前实践 |

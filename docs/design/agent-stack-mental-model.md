@@ -244,7 +244,7 @@ CI = Continuous Integration（持续集成），比 LLM 早二十年：push 代�
 |---|---|---|
 | 任务 CLI start 拒绝空上下文文件 | 第 1 步（可机械验证） | 脚本强制。之前是 skill 纪律时反复出问题，下沉后消失 |
 | spec runner 回归轮 | 第 4 步（重复、单步可验证） | 脚本。零 token 1.8 分钟跑 13 条 |
-| sdlc-gate 四子代理 | 第 3 步（要干净上下文防污染） | subagent |
+| sdlc-gate 分档子代理 | 第 3 步（要干净上下文防污染） | subagent |
 | 人工关卡/确认点 | 第 5 概念（人肉 loop） | 判断密集环节，人推是对的；回归段已换成脚本推 |
 | 五大注解 hook + CI | §4.2 两问路由 → 写文件瞬间 | 已落地：harness 引擎 + 项目 guardrails 规则集 |
 

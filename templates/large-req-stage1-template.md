@@ -2,6 +2,7 @@
 
 > **用途**：大需求三段式规划第一段（顶层设计）的全貌文档骨架。规划大需求时复制本骨架到 parent `prd.md` 逐节填充。
 > **规则源**：`docs/large-req-playbook.md`「第一段」——本文只是模板，条款冲突以 playbook 为准。
+> **Q 表载体**：本文 §6 是 Q 表（与 §6.5 体检问题去向）的原生载体——大需求链路 sdlc-design 复用之；轻量链路无 prd 时，Q 表由 sdlc-design 在 design.md 头部生成维护（复用优先规则见 `skills/sdlc-design/SKILL.md`）。design.md 落盘后体检问题去向以 design 头部为准，本文 §6.5 注明「后以 design 为准」。
 > **核心定位**：人和 AI 不回头读需求原文，即可从本文获得完整自洽的业务心智。功能点清单从业务主线推导，而非全貌从清单拼凑。
 
 ---

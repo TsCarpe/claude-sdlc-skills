@@ -28,8 +28,6 @@ flowchart TB
 
 ## 步骤 1：需求梳理 + 体检（sdlc-intent）
 
-## 步骤 1：需求梳理 + 体检（sdlc-intent）
-
 产出 `sdlc/<需求名>/intake/` 三件套。digest 头部长这样（注意评论区必读与版本锚点）：
 
 ```markdown
@@ -162,7 +160,7 @@ sdlc/
     ├── intake/                   # digest / audit / pm-checklist（sdlc-intent 产出）
     ├── review/                   # issues-<日期>.md（sdlc-gate 产出）
     ├── test/                     # cases.md（用例+缺陷跟踪权威文件）+ reports/<日期>-r<N>/（sdlc-test 产出）
-    └── dev/                      # 轻量设计方案（可选）
+    └── dev/                      # 开发完成验证留档（verify-*.md + smoke.md，/sdlc-test dev 产出）
 ```
 
 配套阅读：[workflow.md](workflow.md)（全流程方法论）｜ [large-req-playbook.md](large-req-playbook.md)（大需求拆分规则）

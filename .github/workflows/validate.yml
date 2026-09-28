@@ -35,6 +35,7 @@ jobs:
                       p = t.split('#')[0]
                       if p and not os.path.exists(os.path.normpath(os.path.join(dp, p))):
                           broken.append(f"{f} -> {t}")
+                  # harness=历史路径防回流守卫（v0.5.0 迁出，勿删）；doc=docs 笔误守卫
                   for m in re.finditer(r'`(doc|docs|templates|harness|skills)/[A-Za-z0-9_\-./]+\.(md|json|py|sh|yaml|yml)`', text):
                       if not os.path.exists(m.group(0).strip('`')):
                           broken.append(f"{f} -> {m.group(0)}")
@@ -69,5 +70,76 @@ jobs:
 
       - name: 敏感词防回归（应零命中）
         run: |
-          ! rg -i "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . \
+          ! rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . \
             --glob '!.git' --glob '!CHANGELOG.md' --glob '!CLAUDE.md' --glob '!.github/**'
+
+      - name: 守卫脚本 Python 语法检查（py_compile 逐文件）
+        run: |
+          fail=0
+          for f in $(find scripts skills -name '*.py'); do
+            python3 -m py_compile "$f" || { echo "语法错误: $f"; fail=1; }
+          done
+          exit $fail
+
+      - name: 文档 skill 计数与 skills/ 目录一致（README 矩阵 + CLAUDE.md）
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          actual = len([d for d in os.listdir('skills') if os.path.isdir(f'skills/{d}')])
+          m1 = re.search(r'Skill 矩阵（(\d+) 个）', open('README.md', encoding='utf-8').read())
+          m2 = re.search(r'(\d+) 个可安装 skill', open('CLAUDE.md', encoding='utf-8').read())
+          assert m1, "README.md 未找到「Skill 矩阵（N 个）」锚点（标题被改？）"
+          assert m2, "CLAUDE.md 未找到「N 个可安装 skill」锚点（首段被改？）"
+          assert int(m1.group(1)) == actual, f"README「Skill 矩阵」计数 {m1.group(1)} ≠ skills/ 目录数 {actual}"
+          assert int(m2.group(1)) == actual, f"CLAUDE.md 计数 {m2.group(1)} ≠ skills/ 目录数 {actual}"
+          print(f"OK: 文档 skill 计数一致（{actual}）")
+          EOF
+
+      - name: evals README 索引与场景文件双向对账
+        run: |
+          python3 - <<'EOF'
+          import os, re, glob
+          bad = []
+          for rd in glob.glob('skills/*/evals/README.md'):
+              d = os.path.dirname(rd)
+              files = {m.group(1) for f in os.listdir(d)
+                       for m in [re.match(r'(eval-\d+)[^/]*\.md$', f)] if m}
+              indexed = set(re.findall(r'eval-\d+', open(rd, encoding='utf-8').read()))
+              if files - indexed:
+                  bad.append(f"{rd}: 文件未入 README 索引 {sorted(files - indexed)}")
+              if indexed - files:
+                  bad.append(f"{rd}: README 索引无对应文件 {sorted(indexed - files)}")
+          assert not bad, "\n".join(bad)
+          print(f"OK: evals 索引对账通过（{len(glob.glob('skills/*/evals/README.md'))} 个 README）")
+          EOF
+
+      - name: skills/ 内仓级路径引用检查（安装副本断链防回归）
+        run: |
+          python3 - <<'EOF'
+          import re, glob
+          # 声明性提及白名单：同仓阅读时指路仓库级 docs/ 文档，均带「skill 安装副本中缺失，以本文件为准」降级声明
+          ALLOW = {
+              'skills/sdlc-test/SKILL.md',
+              'skills/sdlc-test/references/spec/spec-guide.md',
+              'skills/sdlc-design/references/design-template.md',
+              'skills/sdlc-design/references/trellis-handoff.md',
+              'skills/sdlc-guardrails/README.md',
+          }
+          pat = re.compile(r'`(docs|templates|harness|poc)/[A-Za-z0-9_\-./]+\.(?:md|json|py|sh|yaml|yml)`')
+          viol = [f"{f}:{i}: {m.group(0)}"
+                  for f in glob.glob('skills/**/*.md', recursive=True)
+                  for i, line in enumerate(open(f, encoding='utf-8'), 1)
+                  for m in [pat.search(line)]
+                  if m and f.replace('\\', '/') not in ALLOW]
+          assert not viol, "仓级路径引用（skill 安装副本中断链）:\n" + "\n".join(viol)
+          print("OK: skills/ 无 allowlist 外仓级路径引用")
+          EOF
+
+      - name: SKILL.md 行数上限（<500）
+        run: |
+          fail=0
+          for f in skills/*/SKILL.md; do
+            n=$(awk 'END{print NR}' "$f")
+            if [ "$n" -ge 500 ]; then echo "超限: $f（${n} 行，上限 500）"; fail=1; fi
+          done
+          exit $fail

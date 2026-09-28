@@ -1,6 +1,6 @@
 # PoC：jev-ultrafast 接入 sdlc-test exec 阶段的可行性评估
 
-> 一次性评估目录，**不是 skill，不注册 marketplace**。评估出结论后本目录归档，结论回写 `docs/`。
+> 一次性评估目录，**不是 skill，不注册 marketplace**。评估已完成（2026-09-20，A 通过 / B 有条件通过）；结论保留在本 README，docs/ 已回写一行指引（[faq](../../docs/faq.md)）；目录保留作评估件存档，不接入 marketplace。
 
 ## 决策问题
 
@@ -117,6 +117,8 @@ uv run --env-file .env python /path/to/this/poc/run_tasks.py --tasks tasks_local
 6. **待复测**：`create-date-fill`（日期不走面板、直接 fill 输入文本）因限流未跑；若可行则日期盲区可绕（该系统 Picker 对键盘输入有校验回退，预期不容乐观）。
 
 **阶段 B 总判定：有条件通过**——D1 66.7%（≥60%）、D3 6.5s（≤30s）达标；D2 原始 11.1% 略超 10%，但置信门槛规则可消除（0%）。结合盲区可预判、verify 拦截有效，**建议接入为 exec 双通道（jev 主跑 + agent fallback + 置信/盲区分诊）**，不建议单通道替代。
+
+> **接入前置条件**：置信门槛规则（`DONE 且 confidence < 0.5 → 转 fallback`）尚未代码化——接入 exec 双通道前必须实现（D2 从 11.1% 压到 0 依赖此规则，见发现 2）。
 
 ## 已知风险（评估时留意）
 

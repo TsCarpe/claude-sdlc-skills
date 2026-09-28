@@ -56,9 +56,9 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 | `--download` | 调 lark-cli 下载媒体（图片/附件/画板缩略图）；不加则媒体条目停留 pending |
 | `--url` / `--document-id` / `--revision-id` | 写入 doc.json source 字段，供溯源 |
 
-- `--md` 回退模式合成 `x-` 前缀 ID（无原生锚点、平台不可直达），仅调试/补位用，正常飞书输入不走。
+- `--md` 回退模式合成 `x-` 前缀 ID（无原生锚点、平台不可直达），仅调试/补位用，正常飞书输入不走；产物 `generator` 标注 `markdown-fallback`，并在 stderr 打警告——该模式下 list-item 的 `ordinal`=marker、`parent`=None，resolve_anchors 条款级解析与 list_clauses 全量列表不可用。
 - 控制台输出三行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
-- 媒体下载逐项容错：lark-cli 不在 PATH 或单项失败时该条目 `status=failed` 带原因，不阻断整体（§7）。
+- 媒体下载逐项容错：lark-cli 不可得（PATH / nvm / 默认安装路径均未命中）或单项失败时该条目 `status=failed` 带原因，不阻断其他条目与产物落盘（§7）。
 
 ## 4. doc.json 块模型
 
@@ -111,6 +111,6 @@ python3 scripts/resolve_anchors.py --doc <doc.json> \
 ## 7. 失败回退与边界
 
 - **解析器整体失败 → 不阻塞梳理/体检**：出处回退章节级，向用户说明 doc.json 未生成，流程照常继续。
-- **媒体单项失败**：条目 `status=failed` 带原因，不阻断；失败清单如实告知用户（不重试，同评论区口径）。
+- **媒体单项失败**：条目 `status=failed` 带原因，不阻断；失败清单如实告知用户（不重试，同评论区口径）。存在 failed 条目时 parse_doc.py 以 exit 1 结束——产物照常落盘、stdout 统计照常输出，仅退出码非零，便于调用方感知失败后处理。
 - **无评论/无 refmap**：省略 `--refmap` 正常运行，doc.json 无 comment 块。
 - **本地 markdown/text 输入**：不运行本管线（无 XML/refmap），出处按章节级约定写。

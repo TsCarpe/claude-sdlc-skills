@@ -1,6 +1,6 @@
 # 阿里《AI Native 研发范式实践手册》对照分析
 
-> 性质：决策记录。来源：[AI Native Handbook 在线阅读](https://ai-native.alistatic.com/app/ainativeinfra/ai-native-handbook-web/index)（2026-09 版，68 页；本文页码引用 = 手册文档页码，PDF 页 − 5）。PDF 未入库（`.gitignore` 已排除），需要原文按 URL 自取。
+> 性质：决策记录。来源：[AI Native Handbook 在线阅读](https://ai-native.alistatic.com/app/ainativeinfra/ai-native-handbook-web/index)（2026-09 版，68 页；本文页码引用 = 手册文档页码，PDF 页 − 5）。PDF 曾于 0ef67d4 随 `.gitignore` 条目误入库（同一提交内 ignore 对已 add 文件无效），现已移出跟踪；历史提交中仍存在（完整 clone 仍含该 26MB blob）；需要原文按 URL 自取。
 >
 > 定位：本仓已有 [ai-native-sdlc-guide.md](ai-native-sdlc-guide.md)（Google/Anthropic/OpenAI 三家理论融合），本文是**第四份材料**——与前三家不同，它提供了一线团队的真实案例数据与失败模式坦白。§4 记录本次吸收落地的四个优化点，§5-§6 是未做项与平台侧 roadmap。
 
@@ -81,4 +81,4 @@ Harness（模型网关 + 接入层五能力：测活/权限卡点/环境预检/�
 5. **guardrails 平台化候选**：三个本地 skill 中它最值得下一个平台化（确定性机制不需要 agent；平台侧对等物 = 任务执行前 guard 检查 + selfCheck 扩展）
 6. **谨慎项**：Sandbox/多租户/身份体系是万人组织的问题，单维护者内网场景保持"钩子按需启用"纪律本身即手册"护栏不是越多越好"的践行
 
-两处增量信息：平台 UI 原型演化线沉淀在本仓 `platform-demo/`（两仓耦合比 README 声称的"代码级零耦合"多这条设计资产线）；进程内 AgentScope 通道曾被 GLM 余额阻塞（glm-5.3/4.6/4.5-air 报 1113），充值后跑 `verify-agent.mjs` 让通道 B 获得真实任务数据——它是方向 2/3 的前置。
+两处增量信息：平台 UI 原型演化线沉淀在本仓 `platform-demo/`（gitignored、未随仓库发布；两仓耦合比 README 声称的"代码级零耦合"多这条设计资产线）；进程内 AgentScope 通道已跑通（`verify-agent.mjs`，属 sdlc-platform 仓），通道 B 由此获得真实任务数据——它是方向 2/3 的前置。

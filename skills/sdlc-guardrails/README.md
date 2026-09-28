@@ -1,6 +1,8 @@
 # sdlc-guardrails — 可移植红线检查引擎
 
-> 对应心智模型见开源仓库 docs/design/agent-stack-mental-model.md §4（skill 安装副本中该文件缺失，以本 README 为准）：时机定载体——
+> 本 skill 为引擎+文档型（engine/ 随 hook 常驻 + 本 README 作规则语法权威），与其余 7 个工作流型 skill（SKILL.md 主干）结构不同。
+
+> 对应心智模型见开源仓库 `docs/design/agent-stack-mental-model.md` §4（skill 安装副本中该文件缺失，以本 README 为准）：时机定载体——
 > 服从性规则（可机械校验的"写了就是错"）在**写文件瞬间**由 hook 拦截，
 > 判断性规则留在 skill/spec（知识层本职）。
 
@@ -8,7 +10,7 @@
 
 - **引擎（机制）**：本 skill 目录 `engine/check.py`，全局一份（`npx skills add` 安装到用户级 `~/.claude/skills/sdlc-guardrails/`），python3 + PyYAML
 - **规则（内容）**：各项目 `.claude/guardrails.yaml`，从被检文件向上查找
-- **模板**：`templates/`——hook 挂载段（settings-hook.json）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test skill（../sdlc-test/templates/，单独安装时仅作来源说明）
+- **模板**：`templates/`——hook 挂载段（settings-hook.json）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test skill（../sdlc-test/templates/，单独安装本 skill 时该引用仅作来源说明，不依赖其存在）
 - 引擎零项目知识；换项目 = 只写规则文件 + 挂载段
 
 ## 新项目接入（三步）
