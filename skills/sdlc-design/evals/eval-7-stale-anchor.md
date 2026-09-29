@@ -5,7 +5,7 @@
   "skills": ["sdlc-design"],
   "query": "评选活动的设计文档之前出过一版，intake 目录最近有更新，把设计同步一下吧",
   "files": [
-    "sdlc/评选活动/design.md（已存在，A 级全量，头部输入锚点：digest-2026-09-20 / audit-2026-09-20 / pm-checklist-2026-09-20）",
+    "sdlc/评选活动/design/design.md（已存在，A 级全量，头部输入锚点：digest-2026-09-20 / audit-2026-09-20 / pm-checklist-2026-09-20）",
     "sdlc/评选活动/intake/digest-2026-09-20.md（最新一份，内容未变）",
     "sdlc/评选活动/intake/audit-2026-09-27.md（新增的最新一份；旧 audit-2026-09-20.md 仍在目录中）",
     "sdlc/评选活动/intake/pm-checklist-2026-09-20.md（最新一份，内容未变）"

@@ -19,8 +19,8 @@
 | 场景 | design.md 位置 |
 |---|---|
 | 大需求（A 级，走任务框架 parent 任务） | parent 任务目录（Trellis：`.trellis/tasks/<task>/design.md`） |
-| 轻量需求（B 级直达设计） | `sdlc/<需求名>/design.md` |
-| 无任务框架的项目 | `sdlc/<需求名>/design.md` |
+| 轻量需求（B 级直达设计） | `sdlc/<需求名>/design/design.md` |
+| 无任务框架的项目 | `sdlc/<需求名>/design/design.md` |
 
 与 sdlc-gate 前置输入同口径（gate 按「任务系统约定位置」定位设计文档）。
 

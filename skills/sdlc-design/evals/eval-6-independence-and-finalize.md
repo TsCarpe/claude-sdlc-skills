@@ -5,7 +5,7 @@
   "skills": ["sdlc-design"],
   "query": "design.md 我逐行看完了没问题，可以让 Trellis 开始拆 subtask 开发了吗",
   "files": [
-    "sdlc/评选活动/design.md（刚落盘，A 级全量）",
+    "sdlc/评选活动/design/design.md（刚落盘，A 级全量）",
     "sdlc/评选活动/test/ 目录不存在（用例未产出）",
     "sdlc/评选活动/review/ 目录不存在（gate 未评审）"
   ],

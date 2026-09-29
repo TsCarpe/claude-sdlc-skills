@@ -3,10 +3,10 @@
 ```json
 {
   "skills": ["sdlc-test"],
-  "query": "需求的设计文档已经写好了，在 sdlc/<需求名>/design.md，生成测试用例时参考一下它，别跟设计打架：/sdlc-test cases <需求名>",
+  "query": "需求的设计文档已经写好了，在 sdlc/<需求名>/design/design.md，生成测试用例时参考一下它，别跟设计打架：/sdlc-test cases <需求名>",
   "files": [
     "sdlc/<需求名>/intake/ 三件套（完整）",
-    "sdlc/<需求名>/design.md（存在）"
+    "sdlc/<需求名>/design/design.md（存在）"
   ],
   "expected_behavior": [
     "拒绝读 design.md，向用户说明：用例必须从 intake 三件套独立推导，读设计会让交叉审查退化为一致性检查",

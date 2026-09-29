@@ -158,6 +158,7 @@ sdlc/
 ├── env/                          # 环境配置层（test.md/ui-recipe.md 入库；账号等 *.local.md gitignore）
 └── 区域评选活动/                  # 一需求一目录
     ├── intake/                   # digest / audit / pm-checklist（sdlc-intent 产出）
+    ├── design/                   # design.md（sdlc-design 产出；轻量链路落此，大需求随任务框架 parent 任务目录）
     ├── review/                   # issues-<日期>.md（sdlc-gate 产出）
     ├── test/                     # cases.md（用例+缺陷跟踪权威文件）+ reports/<日期>-r<N>/（sdlc-test 产出）
     └── dev/                      # 开发完成验证留档（verify-*.md + smoke.md，/sdlc-test dev 产出）

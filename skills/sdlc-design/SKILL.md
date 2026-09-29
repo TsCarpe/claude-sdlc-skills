@@ -61,7 +61,7 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 | 5 | audit 🔴/🟡 问题去向逐条有落点（已承接 / 转 Q 表 / 本期不做+理由） |
 | 6 | Q 表就位（复用注明来源 prd，或已按定位规则生成） |
 
-**Step 5 落盘 + 🔒 暂停**。落盘路径：轻量 = `sdlc/<需求名>/design.md`；大需求走任务框架 = parent 任务目录（如 Trellis `.trellis/tasks/<task>/design.md`，见 trellis-handoff.md）。确认点② 措辞：
+**Step 5 落盘 + 🔒 暂停**。落盘路径：轻量 = `sdlc/<需求名>/design/design.md`（与 intake/、test/ 等同层级子目录，不存在则创建）；大需求走任务框架 = parent 任务目录（如 Trellis `.trellis/tasks/<task>/design.md`，见 trellis-handoff.md）。确认点② 措辞：
 
 > design.md 已生成于 <路径>，请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从 intake 三件套**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；gate 放行后才可拆分开发（guard_dev 机械拦截）。
 

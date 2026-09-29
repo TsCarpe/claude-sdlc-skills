@@ -6,7 +6,7 @@
   "query": "<需求名> 的设计和用例都出来了，跑一下评审关口",
   "files": [
     "sdlc/<需求名>/intake/digest-*.md（含状态机：草稿→提交→驳回/通过；规则清单未写字数上限）",
-    "sdlc/<需求名>/design.md（写明：作品名称限 30 字以内）",
+    "sdlc/<需求名>/design/design.md（写明：作品名称限 30 字以内）",
     "sdlc/<需求名>/test/cases.md（TC-07 按名称 ≤50 字取边界值：49 内点/50 上点/51 离点）"
   ],
   "expected_behavior": [

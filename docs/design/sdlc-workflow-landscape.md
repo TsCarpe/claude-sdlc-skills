@@ -52,7 +52,7 @@
 │             .githooks/pre-commit         提交兜底                   │
 │                                                                   │
 │ 📋 状态层    任务框架（CLI 入口带守卫）                               │
-│             sdlc/<需求名>/  产物目录（req / test / review / dev）    │
+│             sdlc/<需求名>/ 产物目录（intake/design/review/test/dev）│
 ├─────────────────────────────────────────────────────────────────┤
 │ 🔧 全局工具层：codegraph / mysql / yapi MCP / chrome-devtools /     │
 │               serena / context7 / lark-cli                          │

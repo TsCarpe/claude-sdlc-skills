@@ -23,7 +23,7 @@ skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级�
 
 | 输入 | 来源 |
 |---|---|
-| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；轻量任务 = `sdlc/<需求名>/design.md`。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
+| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；轻量任务 = `sdlc/<需求名>/design/design.md`。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
 | 测试用例 | `sdlc/<需求名>/test/cases.md` |
 | CONTRACT 基准 | `sdlc/<需求名>/intake/` 三件套（digest/audit/pm-checklist），缺失时回退原始 PRD 并注明 |
 

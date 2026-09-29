@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.14.0 (2026-09-29)
+
+design 产物独立目录：轻量链路 design.md 从需求目录根散文件挪进独立子目录 `sdlc/<需求名>/design/design.md`，与 intake/ / review/ / test/ / dev/ 同层级对齐（五子目录）。大需求链路不动（A 级 design.md 仍随任务框架 parent 任务目录，本就不在 sdlc/ 目录树）；守卫脚本零改动（guard_dev / guard_exec / verify_dev / check_trace 均不检查 design 路径）；sdlc-sync payload 不带 design 路径、sdlc-intent digest 不引用 design 位置，均不涉及。**行为变化（置顶注意）**：无旧位兼容——sdlc-design「已存在 design.md」检测只查新位置，v0.13.x 在途产物的旧位 `sdlc/<需求名>/design.md` 需手工挪入 `design/` 子目录（不做 fallback，用户拍板）。
+
+- **sdlc-design**：SKILL.md Step 5 落盘路径改 `sdlc/<需求名>/design/design.md`（子目录不存在则创建）；trellis-handoff.md 落位规则表「轻量需求 / 无任务框架」两行同步（大需求行不动）
+- **sdlc-gate**：前置输入表「技术设计」行轻量路径同步
+- **sdlc-gate（check_trace.py 修复，真实演练产物暴露两处，对照官方 best-practices）**：① 严重度解析宽容模板红线合法变体——局部加粗 `分歧·**高**` 此前被 `strip("*")` 漏解析、明细行被静默跳过、伪装成下游「计数不同源·请重数」的错误方向提示（违反「解决问题，而非推给 Claude」：脚本应处理合法输入变体）；解析彻底失败新增显式报错（文件:行号+前四列原文），不再静默吞行。② 新增 FR 前缀方言检查——cases 追踪表首列误用项目名作命名空间（如 示范.FR-01）此前静默跳过、只报下游「覆盖缺口」不指因（违反「错误消息指向具体问题」）；现报「应为 需求.FR-xx（全局 ID 约定：命名空间是产物名而非项目名）」并指到行，`^需求\.FR-` 锚定本身不放宽（digest-template / case-template / large-req-stage1 模板 / sdlc-sync payload 外键四处背书，非巫术常量）。self-test 增两回归锚：局部加粗宽容正例 + 方言指因反例
+- **sdlc-test**：用例独立性红线括注路径同步（禁读 `sdlc/<需求名>/design/design.md`）
+- **evals（7 场景）**：design eval-1/6/7 落盘与 files 路径断言；eval-4 大需求红线措辞精确化——原「不是 `sdlc/<需求名>/`」与新的 `design/` 子目录前缀歧义，改「不放 sdlc/ 产物目录树（含 `sdlc/<需求名>/design/` 子目录）」（expected_behavior 与判负红线两处）；gate eval-1/3/4 files 路径同步（eval-3 query 内路径同改）
+- **docs**：workflow.md 产物目录约定四→五子目录 + §4 产物层行补 design；example-walkthrough / sdlc-test-design 两处目录树加 design/ 行（注：轻量链路落此，大需求随 parent 任务目录）；landscape 产物目录枚举同步（顺带修旧措辞 req→intake）；id-linkage-plan 轻量需求兜底路径同步
+- **引用基准修复（全仓引用审计发现 4 处存量，非本次引入）**：references/ 子目录文件内「skill 根基准」写法从文件自身位置相对解析会差一级，且 CI 链接守卫（只查 `[](...)` 链接、反引号守卫只查仓级前缀按仓库根解析）覆盖不到——missed-patterns.md `../sdlc-sync/SKILL.md`→`../../`、env-template.md `scripts/verify_dev.py`→`../scripts/` 与 `references/spec/spec-guide.md`→`spec/`、exec-example.md `references/exec/exec-dispatch.md`→同目录 `exec-dispatch.md`；审计其余项全过（相对链接含代码块内零断链、marketplace 双向对账、design 迁移零旧式残留）
+- **README**：版本指针 v0.13.0→v0.14.0
+
 ## v0.13.0 (2026-09-28)
 
 技术设计 skill（sdlc-design，第 8 个）落地：补上「需求评审 → **技术设计** → gate → 任务框架拆分执行 → 测试」链路中设计环节的空位——此前 design.md 靠主会话裸做或人工翻 playbook，gate 的评审对象有产无源。设计与拆分分工：skill 只产 design.md（契约/决策/公共资产/切分约束），任务编排归任务框架（如 Trellis），三段式理念由四层机制保住（design §7 切分约束文档 / `.trellis/spec/` 切分规范 / handoff 确认点③四条件清单 / guard_dev 机械拦截——后者 v0.12.0 已建）。依据：Google Design Docs（Alternatives considered、无 trade-offs 即 implementation manual）、AWS Kiro / GitHub Spec Kit / OpenSpec（requirements→design→tasks 结构对照）、官方 best-practices（评估先行 / 反馈循环 / 模板模式 / 集合命名一致）。方案已过全新上下文对抗式评估（3 阻断 + 7 建议全吸收：Q 表载体断链→sdlc-design 承接（复用 prd 优先、生成兜底，用户拍板）；确认点③与横切矩阵核验无落地载体→handoff 补四条件清单+核验补记时点；eval 红线与 playbook 硬阻塞语义相反→改「锁功能点不锁全局」）。

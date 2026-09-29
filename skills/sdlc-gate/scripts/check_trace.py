@@ -78,6 +78,7 @@ DETAIL_ROW_ID = re.compile(r"^([DAST])-(\d+)$")
 GROUP_ROW_ID = re.compile(r"^[DAST]-\d+\s*[~–-]\s*[DAST]-\d+$")  # 分组裁决行（T-14~T-23）：状态以明细行为准
 FR_DEF = re.compile(r"^\|\s*FR-(\d+)\s*\|")
 TRACE_ROW = re.compile(r"^需求\.FR-(\d+)")
+FR_DIALECT = re.compile(r"^([^.|\s]+)\.FR-(\d+)")  # 命名空间≠需求 的追踪行（如 示范.FR-01）：项目名误作命名空间
 
 
 def latest_by_name(paths: list[Path]) -> Path | None:
@@ -168,9 +169,10 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
     declared: dict[str, dict[str, int]] = {}
     actual: dict[str, dict[str, int]] = {b: {s: 0 for s in SEV} for b in BUCKETS}
     backup = 0
+    unparsed: list[str] = []  # 严重度列解析不出的明细行——静默跳过会把问题伪装成下游「计数不同源·请重数」
     bucket_of = {"D": "分歧", "A": "架构", "S": "数据", "T": "可测性"}
 
-    for _, ln, sec in section_marks(lines):
+    for i, ln, sec in section_marks(lines):
         if not is_table_row(ln):
             continue
         cs = cells_of(ln)
@@ -190,12 +192,16 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
         elif sec in ("一", "二") and DETAIL_ROW_ID.match(head):
             sev = None
             for c in cs[1:5]:  # 严重度可能在第 3/4 列（D 表·分类列、T 表·对象列后移）
-                v = c.strip("*").split("·")[-1].strip()
+                # 星号两态都剥：整格包裹 **三·高** 与只裹严重度的 三·**高**（模板红线只要求「高」加粗，两态皆合法）
+                v = c.strip("*").split("·")[-1].strip("*").strip()
                 if v in SEV:
                     sev = v
                     break
             if sev:
                 actual[bucket_of[head[0]]][sev] += 1
+            else:
+                unparsed.append(f"严重度无法解析：{issues_name}:{i + 1} {head}"
+                                f"（前四列「{'｜'.join(cs[:4])}」——严重度须为 高/中/低，如 分歧·高）")
         elif sec == "三" and DETAIL_ROW_ID.match(head):
             backup += 1
 
@@ -211,7 +217,7 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
     dn = declared.get("备案", {}).get("备案")
     if dn is not None and dn != backup:
         msgs.append(f"计数不同源：{issues_name} 备案声明 {dn}，备案区明细行为 {backup}")
-    return msgs
+    return msgs + unparsed
 
 
 def check_release(lines: list[str], issues_name: str) -> list[str]:
@@ -245,24 +251,32 @@ def check_fr_coverage(digest_lines: list[str], cases_lines: list[str],
         return [], False
 
     covered: set[int] = set()
+    dialect: list[str] = []  # 命名空间写成项目名等方言——不报会伪装成下游「覆盖缺口」，指因才能一次改对
     inside = False
-    for ln in cases_lines:
+    for i, ln in enumerate(cases_lines):
         if re.match(r"^#{1,3}\s", ln):
             inside = "双向追踪表" in ln
             continue
         if not inside or not is_table_row(ln):
             continue
         cs = cells_of(ln)
-        if len(cs) >= 4 and (m := TRACE_ROW.match(cs[0])):
+        if len(cs) < 4:
+            continue
+        if m := TRACE_ROW.match(cs[0]):
             has_tc = bool(re.search(r"TC-", cs[2]))
             has_reason = cs[3] not in ("", "—", "（空）")
             if has_tc or has_reason:
                 covered.add(int(m.group(1)))
+        elif m := FR_DIALECT.match(cs[0]):
+            dialect.append(f"FR 前缀方言：{cases_name}:{i + 1} 首列「{cs[0].strip()}」"
+                           f"应为「需求.FR-{int(m.group(2)):0>2d}」——全局 ID 约定：跨产物引用统一 "
+                           f"命名空间.编号，命名空间是产物名「需求」而非项目名")
     missing = [n for n in frs if n not in covered]
+    msgs = list(dialect)
     if missing:
         refs = "、".join(f"需求.FR-{n:0>2d}" for n in missing)
-        return [f"FR 覆盖缺口：{cases_name} 双向追踪表未覆盖 {refs}（定义于 {digest_name}）"], True
-    return [], True
+        msgs.append(f"FR 覆盖缺口：{cases_name} 双向追踪表未覆盖 {refs}（定义于 {digest_name}）")
+    return msgs, True
 
 
 # ---------- self-test（--self-test：内置 fixture 回归锚，供 CI 与本地改动后快验） ----------
@@ -385,6 +399,10 @@ _ISSUES_REF = _ISSUES_OK.replace(
     "需求.FR-01 覆盖口径不一", "权限体系设计未覆盖 需求.FR-98（关联 需求.FR-01）")
 # 落改反例：分组行全按模板填写，但 T-15 明细行未执行——应拦明细行而非分组行
 _ISSUES_REL = _ISSUES_OK.replace(_T15_ROW, _T15_ROW.replace("已执行", "待执行"))
+# 宽容正例：分类·严重度只局部加粗（分歧·**高**，模板红线「高必须加粗」的合法变体）——计数仍须同源
+_ISSUES_BOLD = _ISSUES_OK.replace("分歧·高 | a |", "分歧·**高** | a |")
+# 方言反例：追踪行命名空间误用项目名（示范.FR-01）——须指因报错而非伪装成覆盖缺口
+_CASES_MD_DIALECT = _CASES_MD.replace("| 需求.FR-01 |", "| 示范.FR-01 |")
 
 
 def self_test() -> int:
@@ -396,14 +414,18 @@ def self_test() -> int:
 
     tmp = Path(tempfile.mkdtemp(prefix="check_trace_st_"))
     try:
-        for name, issues in (("ok", _ISSUES_OK), ("count", _ISSUES_COUNT),
-                             ("ref", _ISSUES_REF), ("rel", _ISSUES_REL)):
+        for name, issues, cases in (("ok", _ISSUES_OK, _CASES_MD),
+                                     ("count", _ISSUES_COUNT, _CASES_MD),
+                                     ("ref", _ISSUES_REF, _CASES_MD),
+                                     ("rel", _ISSUES_REL, _CASES_MD),
+                                     ("bold", _ISSUES_BOLD, _CASES_MD),
+                                     ("dialect", _ISSUES_OK, _CASES_MD_DIALECT)):
             base = tmp / "sdlc" / name
             (base / "intake").mkdir(parents=True)
             (base / "test").mkdir(parents=True)
             (base / "review").mkdir(parents=True)
             (base / "intake" / "digest-20260901.md").write_text(_DIGEST_MD, encoding="utf-8")
-            (base / "test" / "cases.md").write_text(_CASES_MD, encoding="utf-8")
+            (base / "test" / "cases.md").write_text(cases, encoding="utf-8")
             (base / "review" / "issues-20260901.md").write_text(issues, encoding="utf-8")
 
         def run(args: list[str]) -> tuple[int, str]:
@@ -430,6 +452,15 @@ def self_test() -> int:
         rc, out = run([str(tmp), "rel", "--release"])
         assert rc == 1 and "落改未闭环" in out and "T-15 裁决=落改" in out, out
         assert "T-14~T-15" not in out, f"分组裁决行不应被拦：\n{out}"
+
+        # 宽容正例：严重度局部加粗（分歧·**高**）是模板红线合法变体——计数仍同源、全绿
+        rc, out = run([str(tmp), "bold", "--release"])
+        assert rc == 0 and "追溯校验通过" in out, f"局部加粗不应误报：\n{out}"
+
+        # 方言反例：追踪行首列 示范.FR-01（项目名误作命名空间）→ 指因报错含正确形式，覆盖缺口并列
+        rc, out = run([str(tmp), "dialect"])
+        assert rc == 1 and "FR 前缀方言" in out and "应为「需求.FR-01」" in out, out
+        assert "FR 覆盖缺口" in out, out
 
         # A7：拼错 flag 显式报错，不静默丢弃对应检查
         rc, out = run(["--relese", str(tmp), "ok"])

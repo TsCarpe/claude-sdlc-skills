@@ -63,7 +63,7 @@
 
 ## 开发验证档（sdlc/env/dev.md，入库）
 
-开发完成验证（`/sdlc-test dev` → `scripts/verify_dev.py`）的项目级配置——五节结构固定，键名勿改（脚本按「节/键」解析）。
+开发完成验证（`/sdlc-test dev` → `../scripts/verify_dev.py`）的项目级配置——五节结构固定，键名勿改（脚本按「节/键」解析）。
 
 ```markdown
 # 开发验证环境配置
@@ -143,7 +143,7 @@ sdlc/
 ```
 
 - 调用（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
-- 详见 skill `references/spec/spec-guide.md`（含 EP spec 姿势表）
+- 详见 `spec/spec-guide.md`（含 EP spec 姿势表）
 
 ## sdlc/env/ui-recipe.md（环境配方，入库口径同 test.md）
 
