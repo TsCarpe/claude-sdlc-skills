@@ -24,6 +24,8 @@
      权衡列在裁决期才回填，生成时不校验）
   3. 落改闭环（--release）——裁决=落改的行，落点/状态须非空且=已执行
   4. FR 覆盖（best-effort）——digest 每个 FR 在 cases 双向追踪表有覆盖用例或非空原因
+  5. 场景列非空（v0.15.0）——表头声明「场景（白话）」列时，〇节焦点行与一/二节明细行
+     该列不得为空（旧格式无该列自动跳过；「场景必填」模板红线的机械兜底）
 
 登记不校验（定义源在任务系统，位置不可知，输出注明）：
   设计.D-xx / 功能.F-xx / 确认.Q-xx / ER.X
@@ -165,18 +167,37 @@ def section_marks(lines: list[str]):
 
 
 def check_counts(lines: list[str], issues_name: str) -> list[str]:
-    """检查 2：速览统计表（〇节）vs 明细行（一/二节）逐表计数 + 备案行 vs 三节行数。"""
+    """检查 2：速览统计表（〇节）vs 明细行（一/二节）逐表计数 + 备案行 vs 三节行数
+    + 场景列非空（表头声明该列时，〇节焦点行与一/二节明细行）。
+
+    严重度列按表头列名定位（「严重度」/「分类·严重度」兼容），表头状态随节切换重置，
+    节内未见含严重度的表头回退位置扫描 cs[1:5]（旧格式兼容）。v0.15.0 属加固性质：
+    加「场景（白话）」列后（分歧/架构表严重度 cs[3]、可测性表 cs[4]）实测仍在 cs[1:5]
+    窗口内（self-test v2ok fixture 即该证据），表头定位是消除「窗口碰巧够宽」的巧合
+    依赖并支撑场景列校验，非修复超界。"""
     declared: dict[str, dict[str, int]] = {}
     actual: dict[str, dict[str, int]] = {b: {s: 0 for s in SEV} for b in BUCKETS}
     backup = 0
     unparsed: list[str] = []  # 严重度列解析不出的明细行——静默跳过会把问题伪装成下游「计数不同源·请重数」
+    no_scene: list[str] = []  # 场景列缺失——模板「场景列必填」红线的机械兜底（反馈循环）
     bucket_of = {"D": "分歧", "A": "架构", "S": "数据", "T": "可测性"}
+    sev_idx = scene_idx = None  # 节内最近表头定位（数据表「列同上」无自身表头时沿用同节最近表头——巧合变规格）
+    last_sec: object = object()
+
+    def scene_blank(cs: list[str]) -> bool:
+        return scene_idx is not None and (scene_idx >= len(cs) or not cs[scene_idx].strip())
 
     for i, ln, sec in section_marks(lines):
+        if sec != last_sec:  # 节切换重置表头定位（〇焦点表/一二明细表/三四表互不串节）
+            last_sec, sev_idx, scene_idx = sec, None, None
         if not is_table_row(ln):
             continue
         cs = cells_of(ln)
         head = cs[0].strip("*")
+        if head == "编号":  # 明细/焦点/汇总表表头行——按列名定位，行本身不参与计数
+            sev_idx = next((j for j, c in enumerate(cs) if "严重度" in c), None)
+            scene_idx = next((j for j, c in enumerate(cs) if "场景" in c), None)
+            continue
         if sec == "〇":
             if head.startswith(BUCKETS) and len(cs) >= 4:
                 bucket = next(b for b in BUCKETS if head.startswith(b))  # 完整桶名作 key（「可测性」截 2 字成「可测」会导致比较时永不命中）
@@ -189,9 +210,16 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
                     declared.setdefault("备案", {})["备案"] = int(cs[5].strip("*") or 0)
                 except ValueError:
                     pass
+            elif scene_idx is not None and DETAIL_ROW_ID.match(head) and scene_blank(cs):
+                no_scene.append(f"场景列必填：{issues_name}:{i + 1} {head}"
+                                f"（裁决焦点行「场景（白话）」列为空——应从对应明细行同源复制）")
         elif sec in ("一", "二") and DETAIL_ROW_ID.match(head):
+            if scene_idx is not None and scene_blank(cs):
+                no_scene.append(f"场景列必填：{issues_name}:{i + 1} {head}"
+                                f"（「场景（白话）」列为空——2-3 句业务白话：谁、在哪、做什么）")
             sev = None
-            for c in cs[1:5]:  # 严重度可能在第 3/4 列（D 表·分类列、T 表·对象列后移）
+            cands = [cs[sev_idx]] if sev_idx is not None and sev_idx < len(cs) else cs[1:5]
+            for c in cands:  # 表头定位优先；节内未见含严重度的表头回退前四列窗口（严重度可能在第 3/4 列：D 表·分类列、T 表·对象列后移）
                 # 星号两态都剥：整格包裹 **三·高** 与只裹严重度的 三·**高**（模板红线只要求「高」加粗，两态皆合法）
                 v = c.strip("*").split("·")[-1].strip("*").strip()
                 if v in SEV:
@@ -200,8 +228,11 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
             if sev:
                 actual[bucket_of[head[0]]][sev] += 1
             else:
+                where = (f"表头定位第 {sev_idx + 1} 列「{cs[sev_idx]}」"
+                         if sev_idx is not None and sev_idx < len(cs)
+                         else f"前四列「{'｜'.join(cs[:4])}」")
                 unparsed.append(f"严重度无法解析：{issues_name}:{i + 1} {head}"
-                                f"（前四列「{'｜'.join(cs[:4])}」——严重度须为 高/中/低，如 分歧·高）")
+                                f"（{where}——严重度须为 高/中/低，如 分歧·高）")
         elif sec == "三" and DETAIL_ROW_ID.match(head):
             backup += 1
 
@@ -217,7 +248,7 @@ def check_counts(lines: list[str], issues_name: str) -> list[str]:
     dn = declared.get("备案", {}).get("备案")
     if dn is not None and dn != backup:
         msgs.append(f"计数不同源：{issues_name} 备案声明 {dn}，备案区明细行为 {backup}")
-    return msgs + unparsed
+    return msgs + no_scene + unparsed
 
 
 def check_release(lines: list[str], issues_name: str) -> list[str]:
@@ -404,6 +435,97 @@ _ISSUES_BOLD = _ISSUES_OK.replace("分歧·高 | a |", "分歧·**高** | a |")
 # 方言反例：追踪行命名空间误用项目名（示范.FR-01）——须指因报错而非伪装成覆盖缺口
 _CASES_MD_DIALECT = _CASES_MD.replace("| 需求.FR-01 |", "| 示范.FR-01 |")
 
+# v0.15.0 新布局正例 fixture：明细表+焦点表加「场景（白话）」列、头部「业务背景」行、
+# 「代号速查」节（## 非数字标题）、S 表按模板字面「列同上」形态不重复表头。
+# 该 fixture 在表头定位改造前的旧版脚本上即已全绿（2026-09-29 实测：引用可达/计数同源/
+# --release 闭环全过）——证明加列本身兼容旧 cs[1:5] 扫描窗口，表头定位属加固而非修 bug。
+_ISSUES_V2_OK = """# selftest 评审 issue 清单（20260901 r1）
+
+| 项 | 值 |
+|---|---|
+| 评审状态 | 待裁决 |
+| 业务背景 | 参评人在活动页提交作品，运营在后台配置评选规则。核心链路：运营配规则→用户端报名供给 |
+| 编号体系 | 分歧 D-xx / 架构 A-xx / 数据 S-xx / 可测性 T-xx；他产物引用本清单须带命名空间（评审.D-02 等）。具体代号释义见下方「代号速查」 |
+
+## 代号速查（本清单引用）
+
+| 代号 | 释义（白话） | 来源 |
+|---|---|---|
+| 需求.FR-01 | 参评人提交作品的规则 | digest §7 |
+| 用例.TC-01 | 下单成功主流程用例 | cases |
+
+## 〇、速览与裁决焦点
+
+### 统计
+
+| 区块 | 高 | 中 | 低 | 权衡 | 小计 |
+|---|---|---|---|---|---|
+| 分歧（一 1） | 1 | 0 | 0 | — | 1 |
+| 架构 | 1 | 0 | 0 | — | 1 |
+| 数据 | 1 | 0 | 0 | — | 1 |
+| 可测性 | 3 | 0 | 0 | — | 3 |
+| **合计** | **6** | **0** | **0** | — | **6** |
+| 备案（不进裁决） | — | — | — | — | 1 |
+
+### 裁决焦点
+
+| 编号 | 标题 | 场景（白话） | 建议动作 |
+|---|---|---|---|
+| D-01 | 覆盖 需求.FR-01 | 参评人在活动页提交作品 | 落改 |
+
+## 一、分歧清单
+
+| 编号 | 问题标题 | 场景（白话） | 分类·严重度 | 设计说 | 用例说 | 分歧点/后果 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|---|
+| D-01 | 覆盖缺口 | 参评人在活动页提交作品 | 分歧·高 | a | b | 需求.FR-01 覆盖口径不一 | 落改（用例.TC-01） | 落改（补用例） | cases.md TC-01 ｜ 已执行 |
+
+## 二、角色 issue
+
+### 架构一致性
+
+| 编号 | 问题标题 | 场景（白话） | 严重度 | 位置 | 原文摘引 | 问题 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|---|
+| A-01 | 分层越界 | 运营在后台配置评选规则 | 高 | design.md | 「x」 | y | 落改 | 落改（调整） | design.md ｜ 已执行 |
+
+### 数据模型与 SQL
+
+（列同上，编号 S-xx——不重复表头，锚定同节最近表头沿用规格）
+
+| S-01 | 字段口径 | 运营在后台配置评选规则 | 高 | design.md | 「x」 | y | 落改 | 落改（补口径） | design.md ｜ 已执行 |
+
+### 测试可测性
+
+| 编号 | 对象 | 问题标题 | 场景（白话） | 严重度 | 位置 | 原文摘引 | 问题 | 建议 | 裁决｜理由 | 落点/状态 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| T-01 | 设计 | 断言缺口 | 参评人在活动页提交作品 | 高 | cases.md | 「x」 | y | 落改 | 落改（补断言） | cases.md ｜ 已执行 |
+| T-14 | 用例 | 快照口径 | 参评人在活动页提交作品 | 高 | cases.md | 「x」 | y | 落改 | 落改（批量） | cases.md ｜ 已执行 |
+| T-15 | 用例 | 快照口径 | 参评人在活动页提交作品 | 高 | cases.md | 「x」 | y | 落改 | 落改（批量） | cases.md ｜ 已执行 |
+
+## 三、备案区
+
+| 编号 | 来源角色 | 观察项 | 依据 | 处置 |
+|---|---|---|---|---|
+| T-09 | 可测性 | 观察 | 「x」 | 备案 |
+
+## 四、裁决记录汇总
+
+| 编号 | 裁决 | 摘要/理由 | 落点/状态 |
+|---|---|---|---|
+| D-01 | 落改（补用例） |  | cases.md ｜ 已执行 |
+| A-01 | 落改（调整） |  | design.md ｜ 已执行 |
+| S-01 | 落改（补口径） |  | design.md ｜ 已执行 |
+| T-01 | 落改（补断言） |  | cases.md ｜ 已执行 |
+| T-14~T-15 | 落改（批量） | 快照口径统一 | 分组内逐条各有落点；状态见明细行 |
+"""
+# 场景反例（一/二节）：A-01 明细行场景列挖空 → 报「场景列必填」并指到 A-01
+_ISSUES_V2_SCENE = _ISSUES_V2_OK.replace(
+    "| A-01 | 分层越界 | 运营在后台配置评选规则 | 高 |",
+    "| A-01 | 分层越界 |  | 高 |")
+# 场景反例（〇节）：裁决焦点行 D-01 场景列挖空 → 报且仅报该行（明细 D-01 场景有效，不误报）
+_ISSUES_V2_FOCUS = _ISSUES_V2_OK.replace(
+    "| D-01 | 覆盖 需求.FR-01 | 参评人在活动页提交作品 | 落改 |",
+    "| D-01 | 覆盖 需求.FR-01 |  | 落改 |")
+
 
 def self_test() -> int:
     """/tmp 构造产物 fixture，断言关键行为（桶计数 / 编号体系豁免 / 分组裁决行 / 未知 flag）。"""
@@ -419,7 +541,10 @@ def self_test() -> int:
                                      ("ref", _ISSUES_REF, _CASES_MD),
                                      ("rel", _ISSUES_REL, _CASES_MD),
                                      ("bold", _ISSUES_BOLD, _CASES_MD),
-                                     ("dialect", _ISSUES_OK, _CASES_MD_DIALECT)):
+                                     ("dialect", _ISSUES_OK, _CASES_MD_DIALECT),
+                                     ("v2ok", _ISSUES_V2_OK, _CASES_MD),
+                                     ("v2scene", _ISSUES_V2_SCENE, _CASES_MD),
+                                     ("v2focus", _ISSUES_V2_FOCUS, _CASES_MD)):
             base = tmp / "sdlc" / name
             (base / "intake").mkdir(parents=True)
             (base / "test").mkdir(parents=True)
@@ -461,6 +586,19 @@ def self_test() -> int:
         rc, out = run([str(tmp), "dialect"])
         assert rc == 1 and "FR 前缀方言" in out and "应为「需求.FR-01」" in out, out
         assert "FR 覆盖缺口" in out, out
+
+        # v0.15.0 正例：新布局（场景列三表 + 焦点表场景 + 业务背景 + 代号速查节 + S 表列同上
+        # 无自身表头）全绿——旧格式 "ok" fixture 同轮通过即旧格式兼容锚，双形态同绿
+        rc, out = run([str(tmp), "v2ok", "--release"])
+        assert rc == 0 and "追溯校验通过" in out, f"新布局应全绿：\n{out}"
+
+        # 反例：一/二节明细行场景列为空 → 报「场景列必填」并指到该行编号
+        rc, out = run([str(tmp), "v2scene"])
+        assert rc == 1 and "场景列必填" in out and "A-01" in out, out
+
+        # 反例：〇节裁决焦点行场景列为空 → 报且仅报该行（明细 D-01 场景有效，不得误报）
+        rc, out = run([str(tmp), "v2focus"])
+        assert rc == 1 and out.count("场景列必填") == 1, out
 
         # A7：拼错 flag 显式报错，不静默丢弃对应检查
         rc, out = run(["--relese", str(tmp), "ok"])

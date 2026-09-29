@@ -88,7 +88,7 @@ flowchart TB
 |---|---|---|---|
 | 1. 接收与梳理体检 | sdlc-intent：梳理（含流程图/状态机）→ 七层体检；评论区必读 | 梳理产物落盘后暂停 | intake/ 三件套：digest（需求摘要）/ audit（缺陷体检报告）/ pm-checklist（待 PM 澄清清单） |
 | 2. 规划（金字塔顶层） | 业务主线串联（角色×状态×功能点）→ 功能点从主线推导 → ER 后置；Q 表硬阻塞 | **确认点①** 逐行核对 | parent prd.md + design.md 上半（ER） |
-| 3. 评审（关口） | 技术设计（sdlc-design 产 design.md：备选/契约分级/D 表/公共资产/切分约束；C 级跳过，B 级 mini）与测试用例并行独立产出 → sdlc-gate（A＝4/B＝2/C＝自查分档扇出）+ RECONCILE（对账过滤，剔除误报） | **确认点②** 设计逐行定稿（框架 ack＝定稿信号，非放行）；**逐条裁决**（分歧类必须人拍板）→ 放行 | design.md（sdlc-design）、review/issues-日期.md（宽表含原文摘引+裁决列） |
+| 3. 评审（关口） | 技术设计（sdlc-design 产 design.md：备选/契约分级/D 表/公共资产/切分约束；C 级跳过，B 级 mini）与测试用例并行独立产出 → sdlc-gate（A＝4/B＝2/C＝自查分档扇出）+ RECONCILE（对账过滤，剔除误报） | **确认点②** 设计逐行定稿（框架 ack＝定稿信号，非放行）；**逐条裁决**（分歧类必须人拍板）→ 放行 | design.md（sdlc-design）、review/issues-日期.md（宽表含场景白话+原文摘引+裁决列，头部业务背景+代号速查） |
 | 4. 切片开发（金字塔中/底层） | 🔒 guard_dev 开发放行守卫（gate 已放行才可开发）；骨架 child 先行、child prd 内联瘦身；或轻量任务主会话直做 | **确认点③** child prd 评审后才开发 | child prd、代码变更 |
 | 5. 质量核验 | 规范合规 / 跨层数据流 / 复用检查 + verify_dev 开发完成验证（C 级 compile+boot；A/B 级＋冒烟+回归） | 🔴 问题人工介入 | 检查报告、dev/verify-*.md（完成验证留档） |
 | 6. AI 测试 | sdlc-test：cases → static（用例↔代码比对）→ exec（浏览器）→ report | **🔒关卡1** 用例审核；**🔒关卡2** 报告复验 | cases.md、reports/ |

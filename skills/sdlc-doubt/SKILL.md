@@ -75,7 +75,7 @@ WHY: 不一致会导致取消后订单列表与操作记录不符
 
 ## 对抗 Prompt 模板
 
-> 模板与 sdlc-gate skill（`../sdlc-gate/SKILL.md`，同集合安装时与本 skill 同级）Step 2 的对抗模板**同源**；输出形态按消费方有意分化——本 skill 会话内 RECONCILE 消费，行级证据即可；sdlc-gate 输出汇总进 issues 文件，需结构化四字段（标题/原文/位置/严重度）。单独安装本 skill 时该引用仅作来源说明，不依赖其存在。
+> 模板与 sdlc-gate skill（`../sdlc-gate/SKILL.md`，同集合安装时与本 skill 同级）Step 2 的对抗模板**同源**；输出形态按消费方有意分化——本 skill 会话内 RECONCILE 消费，行级证据即可；sdlc-gate 输出汇总进 issues 文件，需结构化字段（标题/场景/原文/位置/严重度/依据，以 sdlc-gate 侧模板为准）。单独安装本 skill 时该引用仅作来源说明，不依赖其存在。
 
 ```
 Adversarial review. Find what is wrong with this artifact.
