@@ -26,7 +26,7 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
    ```
    应零命中
 6. 权限/配置示例只能新写条目，**禁止从任何本机 settings 文件复制**
-7.（软约定）**三段式规则三写同步**：三段式规则存在三处镜像（README「渐进采用阶梯」/ `docs/workflow.md` §2 / `docs/large-req-playbook.md` 权威版）；改三段式规则时三处必须同步改（CI 无法机检此项，靠本条约定兜底）
+7.（软约定）**三段式规则三写同步**：三段式规则存在三处镜像（README「大需求三段式」/ `docs/workflow.md` §2 / `docs/large-req-playbook.md` 权威版）；改三段式规则时三处必须同步改（CI 无法机检此项，靠本条约定兜底）
 
 ## 本地验证（改完 skill 后）
 
