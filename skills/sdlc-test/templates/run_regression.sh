@@ -41,7 +41,7 @@ echo ""
 if [ -n "$REQ" ]; then
   SPEC_DIR="$ROOT/sdlc/$REQ/test/specs"
   if ! ls "$SPEC_DIR"/*.spec.ts >/dev/null 2>&1; then
-    echo "⚪ 需求「${REQ}」无已资产化 spec（specs/ 为空）——先走 /sdlc-test exec 轮 + spec 资产化"
+    echo "需求「${REQ}」无已资产化 spec（specs/ 为空）——先走 /sdlc-test exec 轮 + spec 资产化"
     exit 0
   fi
   REPORT_DIR="$ROOT/sdlc/$REQ/test/reports/$(date +%Y%m%d)-manual"

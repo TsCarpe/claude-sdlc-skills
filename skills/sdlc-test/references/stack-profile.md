@@ -9,7 +9,7 @@
 
 | 面 | 方法论不变量（不动） | 栈姿势（随栈重写） | 承载位置 | 换栈动作 |
 |---|---|---|---|---|
-| 代码定位（static） | 规则逐条比对实现链路；✅/⚠️/❓ 三态结论；代码位置精确到 文件:行号；证据降级标注 | codegraph MCP 定位 Controller → Service → Mapper/XML 链路；前端仓库传 projectPath 用索引 | SKILL.md 阶段2 步3；`static/static-check-template.md` | 换链路写法（如 handler → service → repo）与索引工具，模板结构不动 |
+| 代码定位（static） | 规则逐条比对实现链路；✅/⚠️/🤔 三态结论；代码位置精确到 文件:行号；证据降级标注 | codegraph MCP 定位 Controller → Service → Mapper/XML 链路；前端仓库传 projectPath 用索引 | SKILL.md 阶段2 步3；`static/static-check-template.md` | 换链路写法（如 handler → service → repo）与索引工具，模板结构不动 |
 | 数据访问 | 只读红线；表结构以本轮 static.md 为准；业务键定位断言 | `mysql:mysql_query` 只读；bigint JSON 舍入规避 | SKILL.md 阶段2/3；`exec/exec-interaction.md`「MySQL 断言规范」 | 换对应只读客户端；舍入/类型坑按新栈重沉淀 |
 | 浏览器执行与登录 | 四类证据缺一存疑；等稳定再取证；视觉复核；降级链显式声明 | chrome-devtools MCP（失效降级 Playwright skill）；Element Plus 姿势表（teleport/日期/多选/上传） | SKILL.md 阶段3；`exec/exec-interaction.md` | 为新组件库重沉淀姿势表（本表保留为范例与「旧模式」段式样例）；登录态采集重写 |
 | 造数与鉴权 | 造数必须走后端完整校验，禁止改库/DB 直写 | 探索档走前端页面造数；spec 档 API 直调（鉴权头按 ui-recipe 侦察） | SKILL.md 造数纪律；`env-template.md` ui-recipe 节 | 鉴权头侦察方式随栈；纪律原文不动 |

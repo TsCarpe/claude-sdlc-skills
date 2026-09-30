@@ -8,7 +8,7 @@
 
 ENGINE="${SDLCSKILLS_HOME:-$HOME/.claude/skills/sdlc-guardrails}/engine/check.py"
 if [ ! -f "$ENGINE" ]; then
-    echo "⚠  guardrails: 引擎未找到（$ENGINE），跳过检查"
+    echo "⚠️  guardrails: 引擎未找到（$ENGINE），跳过检查"
     echo "   npx skills add TsCarpe/claude-sdlc-skills -g -s sdlc-guardrails 安装，或设 export SDLCSKILLS_HOME=<引擎目录>（checkout 使用者指到 skills/sdlc-guardrails）"
     exit 0
 fi

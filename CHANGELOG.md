@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.18.0 (2026-09-30)
+
+全仓符号体系视觉优化（~40 种符号审计后按「一符号一义 / 色彩语义一致 / 重量分级」三原则收敛），权威版约定见 `docs/workflow.md` §8。改前摸底：核心 15 种符号占 95% 用量，三类缺陷——红色被 🔴/❌/❓ 三义占用（❓ 渲染为红色重 emoji 但语义是中性「信息缺失」）、⏸(14处)与 🔒(34处) 同义两符（example-walkthrough 同文档混用）、三色等级图例只在 intent 的 report-template（design/stage1 模板裸用，违反单独安装自包含）。
+
+- **批次 1（合并去重）**：⏸→🔒（5 文档 14 处，含 mermaid 节点；evals 无 ⏸ 锚定零回归）；sdlc-test-design 能力对比表 ✗/✓→❌/✅（4 处，`spec ✓` 专有标注不动）；capture-login.mjs 输出 ✗→❌（1 处）；run_regression.sh ⚪ 去符号（1 处）；裸 ⚠ 补 FE0F（example-walkthrough + guardrails pre-commit 模板 2 处）
+- **批次 2（❓→🤔，17 文件 ~38 处）**：色彩归「黄=不确定」大类（⚠️=发现疑点、🤔=信息不足无法判断），语义直觉零图例成本；含 scan_refs.py `EMPTY_CELL_MARKS` 输入约定同步、evals 3 场景断言措辞同步；payload 数据值 `"?"`/`gap:true` 不动
+- **批次 3（图例自包含）**：design-template 与 stage1-template 去向表补「🔴 阻断 / 🟡 严重 / 🔵 建议」一行；workflow.md 新增 §8 全仓符号约定（四轴总表 + 三设计原则 + 局部符号/非文档符号说明）
+- **验证**：⏸/✗/⚪/❓/裸⚠ 残留全仓零命中（CHANGELOG 除外）；scan_refs.py py_compile 通过；`npx skills add --list` 8 skill 全列；marketplace.json 合法；脱敏红线零命中
+
 ## v0.17.0 (2026-09-30)
 
 对照 Claude 官方 Agent Skills best-practices 全仓评估 + 四批优化。评估报告（16 维评分卡 + 问题清单 + 脚本质量卡 + 执行路径 token 预算表）归档于 `docs/skill-audit-2026-09.md`；流程：三路摸底 → 计划经全新上下文代理对抗式评审（4 Blocker/6 Major 全数吸收）→ 批次 0 证据重验（28 项 26 PASS，2 项修正）→ 分批执行。总评：结构层健康（全部 SKILL.md ≤165 行、frontmatter 合规、零断链），债务集中在时效信息渗入规范条文、多写同步失守（已实证 5 处）、evals 纯手动形态。

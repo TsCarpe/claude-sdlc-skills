@@ -32,7 +32,7 @@ REF_PATTERNS = re.compile(r"(另行说明|另行规定|如上所述|上文提到
 # 常见并列章节后缀（对称维度 seed 用；仅提示性，识别定义以 ref-tables.md 通用定义为准）
 PARALLEL_TAILS = ("设置", "分析", "管理", "列表", "报告", "评价", "详情", "对比", "说明")
 
-EMPTY_CELL_MARKS = ("—", "❓")
+EMPTY_CELL_MARKS = ("—", "🤔")
 
 
 def load_doc(path):

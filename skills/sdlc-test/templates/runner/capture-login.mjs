@@ -59,6 +59,6 @@ while (Date.now() < deadline) {
 }
 await browser.close();
 if (!saved) {
-  console.error('✗ 超时未检测到登录。观察到 localStorage 键名:', [...seenKeys].join(', ') || '(无)');
+  console.error('❌ 超时未检测到登录。观察到 localStorage 键名:', [...seenKeys].join(', ') || '(无)');
   process.exit(1);
 }

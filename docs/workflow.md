@@ -190,6 +190,27 @@ flowchart TB
 
 ---
 
+## 8. 附：全仓符号约定
+
+各 skill 产物共用的标记体系，按语义分四轴（同一符号不跨轴复用）：
+
+| 轴 | 符号 | 含义 |
+|---|---|---|
+| 等级（缺陷/风险分级） | 🔴 / 🟡 / 🔵 | 阻断 / 严重 / 建议 |
+| 结果（执行/比对结论） | ✅ / ❌ / ⛔ / 🤔 | 通过 / 失败 / 阻塞 / 疑似·无法确认（信息不足） |
+| 关卡（强制人工暂停） | 🔒 | 暂停等人裁决，禁止自动继续 |
+| 标注（行内轻标记） | ⚠️ · ✓ · ①②③ · → | 警告 / spec 资产化标注（sdlc-test 专有）/ 行内枚举 / 流转 |
+
+三条设计原则（新增符号前自查）：
+
+1. **一符号一义**——同义不设第二符号（✓ 仅保留「spec 资产化」单一语义轴）
+2. **色彩语义一致**——红=阻断/失败（🔴❌⛔）、黄=不确定（🟡 等级严重 / ⚠️ 发现疑点 / 🤔 信息不足，形状区分子类）、蓝=建议（🔵）、绿=通过（✅）
+3. **重量分级**——状态列用 emoji，行内高频标注用轻符号（✓、①、→）
+
+另有各 skill 局部符号在各自模板内自带图例：📦🏠（发布渠道，见本文 §4）、🆕（config-review 新增标记）；⭐ 为 sdlc-sync payload 的业务数据格式（菜单名前缀），不是文档符号。
+
+---
+
 ## 参考
 
 - [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) ｜ [Claude Agent Skills 最佳实践](https://platform.claude.com/docs/zh-CN/agents-and-tools/agent-skills/best-practices) ｜ [AI-Native SDLC Playbook](https://academy.claude.com/zh-CN/courses/ai-native-sdlc-playbook)

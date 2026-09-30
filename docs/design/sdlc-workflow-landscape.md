@@ -102,17 +102,17 @@
 ```
 ① 需求全貌
    sdlc-intent：digest + audit + Q表（飞书评论区必读，最新评论优先）
-   → ⏸ 确认点①：四件核对 + 体检问题去向表
+   → 🔒 确认点①：四件核对 + 体检问题去向表
 
 ② 技术骨架 ∥ 测试用例（并行独立产出）
    技术骨架（sdlc-design）：接口契约读写分级 / 公共资产清单六类 / D 表八类别 / 实施切分约束
-   → ⏸ 确认点②：骨架逐行定稿（框架/文档 ack＝定稿信号，非放行）
+   → 🔒 确认点②：骨架逐行定稿（框架/文档 ack＝定稿信号，非放行）
    sdlc-test cases：红线禁读设计（保交叉独立性）
    → sdlc-gate：按风险分级分档扇出（A=4 fresh-context 子代理 / B=2 / C=主会话自查）
       → RECONCILE 四分类 → 人工逐条裁决 → 放行
 
 ③ 实施与验证
-   ⏸ 确认点③：child prd 评审 + gate 已放行 → 🔒 guard_dev 拦开发
+   🔒 确认点③：child prd 评审 + gate 已放行 → 🔒 guard_dev 拦开发
    child 任务：implement / check 子代理（curate 过的上下文注入）
    → 编码 ·············· 🔒 hook 拦
    → 自检 ·············· 判断类复查
@@ -121,7 +121,7 @@
    → exec ·············· 🔒 guard_exec 守卫（关卡1 / 互认 / 开发完成验证 / 资产一致性）
         派发子代理执行 + 回归轮两步（spec 先跑 runner）
    → spec 资产化 ······· 已通过用例 → Playwright spec（零 token 回归）
-   → 报告 + ⏸ 关卡2 复验
+   → 报告 + 🔒 关卡2 复验
    → 上线前 sdlc-config-review（Apollo key 清单）
 
    之后随手回归：runner 一键回归脚本（人工触发，不占轮次号；

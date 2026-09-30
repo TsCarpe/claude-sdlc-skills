@@ -27,7 +27,7 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 ## 轮次（round）规则
 
 - **轮次目录**：`sdlc/<需求名>/test/reports/<日期>-r<N>/`，同轮 static / exec-log / report / screenshots 聚合一处；目录名用小写 `r<N>`，用例结果/缺陷状态/修复轮次用大写 `R<N>`，N = 已有最大轮次 +1（不存在从 r1 起）
-- **回归轮（r2+）默认只复检上轮问题项**：static 只复检 ⚠️ 疑似偏差与 ❓ 未确认项，exec 只重跑失败/疑似/阻塞 + 缺陷未闭环关联用例（存在 specs/ 时回归轮两步，见阶段3）；`--all` 全量重比/重跑
+- **回归轮（r2+）默认只复检上轮问题项**：static 只复检 ⚠️ 疑似偏差与 🤔 未确认项，exec 只重跑失败/疑似/阻塞 + 缺陷未闭环关联用例（存在 specs/ 时回归轮两步，见阶段3）；`--all` 全量重比/重跑
 - **用例文件是当前状态快照**（结果字段只反映最新轮次，历史判定在各轮 exec-log 留档）；**缺陷生命周期只在用例文件「缺陷跟踪」表维护**，各轮 report 摘引该表当轮子集
 
 轮次含义与回归范围细则见 [references/round-rules.md](references/round-rules.md)。
@@ -74,7 +74,7 @@ Dev 进度：
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
 2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（三件套缺失时回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
 3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则降级定向 grep + 读文件，结果注明证据降级
-4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ ❓静态无法确认
+4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ 🤔静态无法确认
 5. ⚠️ 项写入用例文件「重点验证项」区块，阶段3 优先执行；重大偏差立即报告用户
 
 ## 阶段 3 exec：前端功能测试

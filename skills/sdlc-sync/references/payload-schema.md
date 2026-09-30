@@ -1,6 +1,6 @@
 # sdlc-sync payload 契约（v1.4）
 
-> v1.4 变更（流程/状态机结构化上平台）：push-artifacts 的 `digest` 增可选 `flows[]`（§5 主流程步骤表）与 `states[]`（§6 状态机流转边表直投）——`gap:true` 行为原文断点（❓），`flows[].next` / `states[].to` 填 `"?"`；行级 `src` 出处 + 可选 `anchor`（resolve_anchors.py 附加，同 features）。平台摘要 tab 新增两表展示（平台 v2.3 起）。v1.3 及以前全部字段与红线不变，无该字段即旧行为。
+> v1.4 变更（流程/状态机结构化上平台）：push-artifacts 的 `digest` 增可选 `flows[]`（§5 主流程步骤表）与 `states[]`（§6 状态机流转边表直投）——`gap:true` 行为原文断点（🤔），`flows[].next` / `states[].to` 填 `"?"`；行级 `src` 出处 + 可选 `anchor`（resolve_anchors.py 附加，同 features）。平台摘要 tab 新增两表展示（平台 v2.3 起）。v1.3 及以前全部字段与红线不变，无该字段即旧行为。
 
 所有请求 `Content-Type: application/json`；写接口在平台启用 write-token 时需带头 `X-Token: <token>`。
 
