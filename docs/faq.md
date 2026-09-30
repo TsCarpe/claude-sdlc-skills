@@ -39,7 +39,7 @@ A：不必须。8 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目�
 ### 使用建议
 
 **Q：从哪个 skill 开始用？**
-A：按依赖重量渐进（详见 README「渐进采用阶梯」）：sdlc-intent（零依赖）→ sdlc-config-review（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
+A：按依赖重量渐进（详见 README「按需采用，不必全装」）：sdlc-intent（零依赖）→ sdlc-config-review（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
 
 **Q：sdlc-test 适用什么技术栈？**
 A：按「Java 后端 + MySQL + Web 前端（Element Plus 系组件库）」打磨；static 阶段的前后端代码定位可适配任意栈（codegraph/grep），exec 阶段的交互姿势手册以 Element Plus 为锚点，其他组件库需自行沉淀姿势（手册结构可直接复用）。

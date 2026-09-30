@@ -46,6 +46,9 @@ jobs:
       - name: runner 命令形态一致性（scripts/check_runner_form.py，基线 0 违规）
         run: python3 scripts/check_runner_form.py .
 
+      - name: 对抗 prompt 共享核心段一致性（gate ↔ doubt，漂移零容忍）
+        run: python3 scripts/check_adversarial_core.py
+
       - name: 每个 skill 目录有合法 frontmatter name（kebab-case）
         run: |
           fail=0

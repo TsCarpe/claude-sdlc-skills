@@ -18,7 +18,7 @@
   rules:
     - id: ctrl-logrecord          # 唯一标识，用于 reason 回溯
       glob: "**/controller/**/*Controller.java"   # ** 跨目录, * 单段
-      type: count_ge | require | forbid
+      type: count_ge | require | require_if | forbid
       anchor: "@PostMapping"      # count_ge 专用：分母
       pattern: "@LogRecord"       # 正则
       message: "每个接口方法必须带 @LogRecord"

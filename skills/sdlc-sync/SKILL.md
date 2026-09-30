@@ -5,9 +5,9 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 # 产物同步桥（sdlc-sync）
 
-本地 markdown 是**工作权威**（六个 sdlc skill 的消费链不经过平台），平台是**共享权威与交互面**。本 skill 是两者之间唯一的桥：只做搬运与回写，不做任何质检/生成决策。
+本地 markdown 是**工作权威**（六个 sdlc skill 的消费链不经过平台），平台是**共享权威与交互面**。本 skill 是两者之间唯一的桥：只做搬运与回写，不做任何体检/生成决策。
 
-> **平台 v2.0 起的定位变化（2026-09-20）**：平台已上线「任务队列 + Runner」全流程线上化——质检生成、澄清答复、标准文档发布、用例登记在平台完成（AI 产物走草稿人审两态，`pushArtifacts`/`publish` 守卫自动继承）。本 skill 的 `push-artifacts` / `pull-answers` / `publish` / `push-cases` 降级为**平台不可用时的本地兜底通道**（降级 = v1 全流程可用），`submit` 建卡仍可日常使用。
+> **平台 v2.0 起的定位变化（2026-09-20）**：平台已上线「任务队列 + Runner」全流程线上化——体检生成、澄清答复、标准文档发布、用例登记在平台完成（AI 产物走草稿人审两态，`pushArtifacts`/`publish` 守卫自动继承）。本 skill 的 `push-artifacts` / `pull-answers` / `publish` / `push-cases` 降级为**平台不可用时的本地兜底通道**（降级 = v1 全流程可用），`submit` 建卡仍可日常使用。
 
 ## 前置
 
@@ -22,7 +22,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 | 意图 | 子命令 |
 |---|---|
-| 「把这个需求发到平台 / PM 要看质检结果」 | push-artifacts |
+| 「把这个需求发到平台 / PM 要看体检结果」 | push-artifacts |
 | 「拉一下 PM 的答复 / 看看平台上答了没」 | pull-answers |
 | 「澄清完了，发布标准需求文档」 | publish |
 | 「把用例登记到平台 / 用例上平台」 | push-cases |
@@ -40,12 +40,12 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 `sourceType=text` 时用 `sourceText` 代替 `sourceUrl`。梳理文档头有「风险分级」时建卡带上 `risk_tier`；建卡早于定级时由 push-artifacts 的 `digest.risk_tier` 后到覆盖（契约见 payload-schema v1.3）。返回的 `reqId` 写入 `sdlc/<需求名>/.platform`。
 
-### 2. push-artifacts —— 推质检三件套（需求进入待澄清）
+### 2. push-artifacts —— 推体检三件套（需求进入待澄清）
 
 读本地 `sdlc/<需求名>/intake/` 三件套，结构化为 payload（字段规范见 [references/payload-schema.md](references/payload-schema.md)）：
 
-- `snapshot`：**经 lark-cli 拉取飞书需求原文全文**放入 `{md}`（原文快照 = 质检与澄清的依据版本，平台据此实现出处定位；推送前报告快照字节数）
-- `domains`：全局需求域顺序数组（本轮质检的需求域聚类，如 修改比赛/状态机与流转/…；体检与澄清分组同源同序）
+- `snapshot`：**经 lark-cli 拉取飞书需求原文全文**放入 `{md}`（原文快照 = 体检与澄清的依据版本，平台据此实现出处定位；推送前报告快照字节数）
+- `domains`：全局需求域顺序数组（本轮体检的需求域聚类，如 修改比赛/状态机与流转/…；体检与澄清分组同源同序）
 - `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）、流程步骤表 flows（§5 主流程，`{role,step,next,gap,src}`）与状态机流转边表 states（§6 边表直投，`{obj,from,on,to,gap,src}`；两表 `gap:true` 为原文断点行、next/to 填 `?`，可选 anchor 同 features）
 - `audit`：分级计数 + 问题明细（`{id:"体检.P01", level, title, where, go, group:"<需求域>", quote:"「完整冲突原文」"}`，go = 处理状态/去向）
 - `items`：澄清清单，**seq 必须用原始编号**（如 `P19`），`theme` 必填（需求域，与 audit group 同体系），`quote` 带原文摘引（可空），`answer` 带上本地已有的答复内容

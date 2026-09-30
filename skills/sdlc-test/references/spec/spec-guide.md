@@ -1,17 +1,17 @@
 # 回归档 spec 指南（资产化与 runner 执行）
 
 > 定位：通过且口径拍板的用例资产化为 Playwright spec；回归轮跑 runner（零 agent token），agent 只诊断红色项。探索档（chrome-devtools MCP 首验/新用例/失败现场诊断）纪律不变，本指南只管回归档。
-> 依据：两层架构决策见开源仓库 `docs/sdlc-test-design.md` v0.3（skill 安装副本中缺失，以本指南为准）；runner 基础设施在 `sdlc/env/runner/`。
+> 依据：两层架构决策见开源仓库 `docs/sdlc-test-design.md`（设计决策记录，位于仓库 docs/，不随 skill 单独分发，以本指南为准）；runner 基础设施在 `sdlc/env/runner/`。
 
 ## 目录
 
 > 本目录是 spec-guide.md 自身的导航（非产物内容）；下方「目录与粒度」讲的是 spec 文件落位规则，两处「目录」勿混淆。
 
 - [目录与粒度](#目录与粒度)
-- [runner 标准布局](#runner-标准布局2026-09-14-试点定型)
+- [runner 标准布局](#runner-标准布局)
 - [前置复用（三层，禁 beforeAll 共享）](#前置复用三层禁-beforeall-共享)
 - [选择器与断言](#选择器与断言)
-- [Element Plus spec 姿势](#element-plus-spec-姿势2026-09-14-试点实测区别于-mcp-探索档)
+- [Element Plus spec 姿势](#element-plus-spec-姿势试点实测区别于-mcp-探索档)
 - [四类证据映射](#四类证据映射)
 - [资产化流程（/sdlc-test spec）](#资产化流程sdlc-test-spec-需求名)
 - [spec 失败三向（回归版口径冲突）](#spec-失败三向回归版口径冲突)
@@ -23,7 +23,7 @@
 - **`test()` = 一条用例**，标题首带编号（`test('TC-27 无专家配置可提交', …)`），与 cases.md TC-xx 一一对应，结果可直接回填
 - **文件 = 按 G-xx 执行分组 / 同模块归档**，与 cases.md 分组结构对齐
 
-## runner 标准布局（2026-09-14 试点定型）
+## runner 标准布局
 
 ```text
 sdlc/
@@ -50,9 +50,9 @@ sdlc/
 - 选择器优先级：`getByRole` / `getByLabel` / 可见文本 > CSS 类（组件库内部类名如 `.el-select-dropdown__item` 可作兜底，须注释「内部类名，升级风险」）；禁 XPath
 - 真 Playwright 无 MCP 快照失明问题：teleport 下拉直接 `getByRole('option', { name })` 点选，**禁止**把 exec-interaction 里的 evaluate_script hack 搬进 spec
 - 动态值纪律：不断言 uuid/绝对时间戳/精确 ID；日期断言用相对口径；文案断言用稳定关键词不用全句；toast 叠加场景（连发两次拦截）用 `.first()` 收敛避免 strict violation
-- **提交类 spec 可重入**：名称带运行时唯一后缀（`创建验证-spec${Date.now()%100000}`）——区域内未删唯一约束下固定名第二跑必撞重名拦截（2026-09-14 试点实测）
+- **提交类 spec 可重入**：名称带运行时唯一后缀（`创建验证-spec${Date.now()%100000}`）——区域内未删唯一约束下固定名第二跑必撞重名拦截（试点实测）
 
-## Element Plus spec 姿势（2026-09-14 试点实测，区别于 MCP 探索档）
+## Element Plus spec 姿势（试点实测，区别于 MCP 探索档）
 
 | 场景 | spec 做法 |
 |---|---|
@@ -88,7 +88,7 @@ SQL 清单格式（spec 文件头注释）：
 
 ```ts
 /**
- * 断言基线（来源：2026-09-26 R2 exec-log#L45）
+ * 断言基线（来源：R2 轮 exec-log 实测）
  * - POST /v1/xx/save → { "code": 0, "data": { "status": 1 } }（code=0 且落库 status=1 是 TC-01 通过依据）
  */
 ```
@@ -100,7 +100,7 @@ SQL 清单格式（spec 文件头注释）：
 3. **生成后立即以绝对路径形态跑 runner 验证**（命令见下方「runner 执行纪律」红线：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`，单条用例加 `--grep "TC-xx"`）——全绿才算资产化完成；红色项按下方三向处置，修完复跑
 4. cases.md 用例条目标注 `spec ✓（日期）`（新格式=总览表 spec 列；存量表格文件=行内标注），文件粒度记入头部进度
 
-**runner 执行纪律（红线，2026-09-14 试点实测定型）**：
+**runner 执行纪律（红线）**：
 - 调用形态用**绝对路径二进制 + 绝对路径 config**（cwd 无关）：
   `<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts <需求名>`
   ——`cd sdlc && npx playwright test` 形态实测不可靠（cwd 不持久/误从项目根跑会撞根目录另一份 playwright，报 "imported by the configuration file" 等误导性错误）

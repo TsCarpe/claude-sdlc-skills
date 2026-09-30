@@ -1,6 +1,6 @@
 # 一人 + 一群 AI：AI 原生 SDLC 工作流全解
 
-> 一套在真实 Java 项目跑通的 AI 原生 SDLC（软件开发生命周期）工作流：AI 承担梳理、设计、用例、编码、测试的重复劳动，人只在关键关口裁决。本文是完整方法论叙述；可安装的技能见仓库 [skills/](../skills/)，大需求拆分模板见 [templates/](../templates/)，全部文档的阅读顺序见 [docs 导读](README.md)。
+> 一套在真实 Java 项目跑通的 AI 原生 SDLC（软件开发生命周期）工作流：AI 承担梳理、设计、用例、编码、测试的重复劳动，人只在关键关口裁决。本文是完整方法论叙述；可安装的技能见仓库 [skills/](../skills/)，大需求拆分模板见 [templates/](../templates/)，全部文档的阅读顺序见 [docs 导读](README.md)，资产与分级的速查地图见 [sdlc-workflow-landscape](design/sdlc-workflow-landscape.md)。
 
 - **载体**：某 Java DDD 分层业务系统（Spring Boot + MyBatis Plus，Maven 多模块，多人协作）
 - **工具面**：Claude Code 主驾驶 + 任务框架（可选）+ CodeGraph/只读 MySQL 等 MCP（模型上下文协议，让 AI 调用外部工具）
@@ -49,11 +49,11 @@ flowchart TB
 
 - 菱形节点全是人：AI 自动推进，人只在关口裁决；设计与用例互不阅读，是评审关口分歧信号的前提。
 - 底座每轮生效：规范经 hook（生命周期钩子）或任务级上下文清单注入执行 AI 的上下文——写码的子代理看不到规范，等于没有规范。
-- 大需求（涉及表结构变更 / 跨业务域 / 功能点 ≥5）不整块开发，走[三段式自顶向下拆分](large-req-playbook.md)（触发条件 ≈ 需求风险分级 A 级；B/C 级走分级路由，见 [sdlc-workflow-landscape](design/sdlc-workflow-landscape.md)）。
+- 大需求（涉及表结构变更 / 跨业务域 / 功能点 ≥5 / AI 判定为大型且用户确认，满足任一）不整块开发，走[三段式自顶向下拆分](large-req-playbook.md)（触发条件 ≈ 需求风险分级 A 级；B/C 级走分级路由，见 [sdlc-workflow-landscape](design/sdlc-workflow-landscape.md)）。
 
 ## 2. 大需求拆解：三层金字塔
 
-大需求（涉及表结构变更 / 跨业务域 / 功能点 ≥5，满足任一即触发）不整块开发，而是拆成三层金字塔：**上层 parent（父任务）做框架，底层拆成 child（子任务）切片执行**。
+大需求（涉及表结构变更 / 跨业务域 / 功能点 ≥5 / AI 判定为大型且用户确认，满足任一即触发）不整块开发，而是拆成三层金字塔：**上层 parent（父任务）做框架，底层拆成 child（子任务）切片执行**。
 
 ```mermaid
 flowchart TB

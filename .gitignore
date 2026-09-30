@@ -17,9 +17,5 @@ node_modules/
 # 本地演示项目（未随仓库发布）
 platform-demo/
 
-# jev-ultrafast PoC 本地产物（评估期）
-poc/jev-ultrafast/tasks_local.py
-poc/jev-ultrafast/artifacts/
-
-# 外部手册 PDF（26MB，0ef67d4 误入库后已移出跟踪；本条目防本地误加新副本）
-poc/ai-native-handbook.pdf
+# PoC 本地产物（评估期；已移出 git 追踪，本地保留）
+poc/

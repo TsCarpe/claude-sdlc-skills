@@ -1,6 +1,6 @@
 ---
 name: sdlc-doubt
-description: '对刚做出的非平凡技术决策发起对抗式独立复查——把决策剥离结论后交给全新上下文的审查者"找问题"。Use when 影响ER或公共组件的决策回写前、复杂SQL/状态机流转定稿前、提交前对"已全范围检查"断言存疑时、用户说"这个判断我不放心""帮我质疑一下这个方案""doubt-review"。'
+description: '对刚做出的非平凡技术决策发起对抗式独立复查——把决策剥离结论后交给全新上下文的审查者"找问题"。Use when 影响ER或公共组件的决策回写前、复杂SQL/状态机流转定稿前、技术方案选型二选一定稿前、提交前对"已全范围检查"断言存疑时、用户说"这个判断我不放心""帮我质疑一下这个方案""这个方案稳不稳""doubt-review"。'
 ---
 
 # Doubt Review（对抗式决策复查）
@@ -75,8 +75,9 @@ WHY: 不一致会导致取消后订单列表与操作记录不符
 
 ## 对抗 Prompt 模板
 
-> 模板与 sdlc-gate skill（`../sdlc-gate/SKILL.md`，同集合安装时与本 skill 同级）Step 2 的对抗模板**同源**；输出形态按消费方有意分化——本 skill 会话内 RECONCILE 消费，行级证据即可；sdlc-gate 输出汇总进 issues 文件，需结构化字段（标题/场景/原文/位置/严重度/依据，以 sdlc-gate 侧模板为准）。单独安装本 skill 时该引用仅作来源说明，不依赖其存在。
+> 模板分两段：**共享核心段**与 sdlc-gate skill（`../sdlc-gate/SKILL.md`，同集合安装时与本 skill 同级）Step 2 逐字节同步（CI 比对：仓库根 `scripts/check_adversarial_core.py`）；**输出段**按消费方有意分化——本 skill 会话内 RECONCILE 消费行级证据即可，sdlc-gate 汇总进 issues 文件需结构化字段（以 sdlc-gate 侧为准）。审查者 prompt = 下方两段按序拼接。单独安装本 skill 时跨 skill 引用仅作来源说明，不依赖其存在。
 
+<!-- adversarial-core-start：与 sdlc-gate 逐字节同步，CI 比对；改此处必须同步改对侧 -->
 ```
 Adversarial review. Find what is wrong with this artifact.
 Assume the author is overconfident. Look for:
@@ -91,6 +92,12 @@ Assume the author is overconfident. Look for:
 
 Do NOT validate. Do NOT summarize. Find issues, or state
 explicitly that you cannot find any after thorough examination.
+```
+<!-- adversarial-core-end -->
+
+**输出段**（本 skill 消费方形态，本侧维护）：
+
+```
 输出仅限问题清单，每条附 artifact 中的行级证据（引用原文）。
 
 ARTIFACT: <粘贴 artifact>

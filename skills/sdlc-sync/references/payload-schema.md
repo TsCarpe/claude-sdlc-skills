@@ -7,7 +7,7 @@
 ## 目录
 
 - POST /api/requirements —— 建卡
-- POST /api/requirements/{id}/artifacts —— 推质检产物
+- POST /api/requirements/{id}/artifacts —— 推体检产物（三件套）
 - POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 - GET /api/requirements/{id}/answers —— 拉答复
 - PUT /api/requirements/{id}/answers/{seq} —— 平台侧作答（前端用）
@@ -35,7 +35,7 @@
 - `risk_tier`（v1.3 可选）：`"A" | "B" | "C"`，需求风险分级，来源梳理文档头「风险分级」；建卡早于定级时可缺省，后续 push-artifacts 的 `digest.risk_tier` 后到覆盖
 - 返回 `{"id":"REQ-2026-001","status":"submitted"}`
 
-## POST /api/requirements/{id}/artifacts —— 推质检产物
+## POST /api/requirements/{id}/artifacts —— 推体检产物（三件套）
 
 ```json
 {
@@ -90,7 +90,7 @@
 - `domains[]` = 全局需求域顺序常量（平台级分组基准，体检/澄清共用）；缺省保留上次值
 - `digest.risk_tier`（v1.3 可选）：需求级风险分级 `"A"|"B"|"C"`，非空时覆盖建卡值（后到为准——建卡早于定级的时序兜底）；FR 级分级不上平台
 - `digest.flows[]` / `digest.states[]`（v1.4 可选）：§5 主流程步骤表 `{role,step,next,gap,src,anchor}` 与 §6 流转边表直投 `{obj,from,on,to,gap,src,anchor}`；`gap:true` = 原文断点行（`next`/`to` 填 `"?"`）；`states[].obj` 取自 §6 图题「图 N：<对象名> 状态机」的对象名；anchor 均可由 sdlc-intent 的 resolve_anchors.py 附加（同 features）
-- `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：质检与澄清的依据；发布后冻结）；缺省保留旧快照
+- `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：体检与澄清的依据；发布后冻结）；缺省保留旧快照
 - `quote` 平台侧无长度限制，取完整冲突/依据原文，渲染为引用块并作快照定位锚
 - `doc`（v1.2 可选顶层）：`{blocks,media,source,generator}`，由 sdlc-intent 的 parse_doc.py 产出；推送前需先完成媒体上传（见下节）
 - `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）

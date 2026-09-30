@@ -68,14 +68,14 @@ flowchart LR
 **第 1 步 · 安装**（二选一）：
 
 ```bash
-# 方式一：skills CLI（推荐）
+### 方式一：skills CLI（推荐）
 npx skills add TsCarpe/claude-sdlc-skills        # 装到当前项目 .claude/skills/
 npx skills add TsCarpe/claude-sdlc-skills -g     # 装到全局 ~/.claude/skills/
 npx skills update <skill名> -g                   # 更新单个；跨文件迁移的版本可能报 Failed to update，remove 后重新 add 即可（见 faq）
 ```
 
 ```
-# 方式二：Claude Code 插件市场
+### 方式二：Claude Code 插件市场
 /plugin marketplace add TsCarpe/claude-sdlc-skills
 /plugin install claude-sdlc-skills@claude-sdlc-skills
 ```
@@ -138,7 +138,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 
 ## License
 
-[MIT](LICENSE) · 版本兼容：已在 Claude Code + skills CLI（2026-09 版）验证；skill 遵循 Agent Skills 开放标准，其他兼容 agent（Cursor 等）经 skills.sh 亦可安装。更新日志：[CHANGELOG.md](CHANGELOG.md)（最新 v0.15.0）
+[MIT](LICENSE) · 版本兼容：已在 Claude Code + skills CLI（2026-09 版）验证；skill 遵循 Agent Skills 开放标准，其他兼容 agent（Cursor 等）经 skills.sh 亦可安装。更新日志：[CHANGELOG.md](CHANGELOG.md)（最新 v0.16.0）
 
 ## Community
 

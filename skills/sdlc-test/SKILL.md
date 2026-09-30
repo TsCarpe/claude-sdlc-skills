@@ -5,7 +5,7 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 
 # AI 测试智能体
 
-方案全文见开源仓库 `docs/sdlc-test-design.md`（设计决策记录，非 references 一层引用；skill 安装副本中该文件缺失，以本 SKILL.md 与 references/ 为准继续执行）。测试对象是 test 环境的 Web 前端（Java DDD 后端 + MySQL）。
+方案全文见开源仓库 `docs/sdlc-test-design.md`（设计决策记录，位于仓库 docs/，不随 skill 单独分发；以本 SKILL.md 与 references/ 为准继续执行）。测试对象是 test 环境的 Web 前端（Java DDD 后端 + MySQL）。
 
 **栈适配**：方法论栈无关；栈绑定面的盘点与换栈入口见 `references/stack-profile.md`（换栈/新项目接入时读，日常执行不加载）。
 
@@ -18,9 +18,9 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 | `cases <需求名或文档路径>` | 1 用例生成 | `sdlc/<需求名>/test/cases.md` | 无 |
 | `dev <需求名>` | 1.5 开发完成验证 | `sdlc/<需求名>/dev/smoke.md` + `verify-<日期>-r<N>.md`（脚本生成） | 开发已完成；A/B 级须 env/dev.md 与 smoke.md 就绪 |
 | `static <需求名>` | 2 静态代码检测 | `sdlc/<需求名>/test/reports/<日期>-r<N>/static.md` + 用例文件重点验证项 | 关卡1 已过 |
-| `exec <需求名> [--from TC-xx \| --all]` | 3 前端功能测试 | 同轮目录 `exec-log.md` + 用例回填/缺陷跟踪 + 截图 | 关卡1 已过 |
+| `exec <需求名> [--from TC-xx \| --all]` | 3 前端功能测试 | 本轮目录 `exec-log.md` + 用例回填/缺陷跟踪 + 截图 | 关卡1 已过 |
 | `spec <需求名>` | 3.5 spec 资产化 | `sdlc/<需求名>/test/specs/*.spec.ts` | 关卡1 已过；目标用例已通过且口径拍板；风险分级 A 级强制 / B 级默认 / C 级跳过 |
-| `report <需求名>` | 4 报告生成 | 同轮目录 `report.md` | 阶段3 有结果 |
+| `report <需求名>` | 4 报告生成 | 本轮目录 `report.md` | 阶段3 有结果 |
 
 未带子命令时询问用户执行哪个阶段；无 `sdlc/<需求名>/test/cases.md` 时引导从 `cases` 开始。
 
@@ -35,7 +35,7 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 **关卡强制**：执行 `static`/`exec` 前读用例文件头部，`审核状态 ≠ 已确认` 时拒绝并提示用户先完成关卡1（人工审核用例后，将头部状态改为 `已确认（日期）`，或让用户口头确认后代改）。若 `sdlc/<需求名>/review/` 存在，关卡1 以 sdlc-gate 状态为准：`评审状态 = 已放行` 视同关卡1 通过（代改时引用 issues 文件），`≠ 已放行` 时拒绝并提示先完成 sdlc-gate 裁决；review 目录不存在则维持本条原行为。
 **本条已机械化**（2026-09-15，2026-09-28 增检查5）：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认，v0.12.0 起锚定最新一份 issues）、风险分级三口径、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）、**开发完成验证留档反查与交叉校验**（一律拦，老需求补跑一次即过）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
 
-## 阶段1 cases：用例生成
+## 阶段 1 cases：用例生成
 
 ```text
 Cases 进度：
@@ -68,7 +68,7 @@ Dev 进度：
 - **留档反查**：最新留档头部「验证状态」= 通过才可进 static/exec（guard_exec 检查5，含 HEAD 比对/boot 日志/冒烟条数交叉校验，防伪造留档）；「通过(人工降级,日期)」形态会被显式 ⚠️ 警示
 - **降级边界**：脚本不可得（无 python3）时人工跑四件套，留档头部手写「验证状态：通过(人工降级,日期)」——guard_exec 会警示降级形态
 
-## 阶段2 static：静态代码检测（前后端）
+## 阶段 2 static：静态代码检测（前后端）
 
 0. 入口守卫：`python3 <skill 目录>/scripts/guard_exec.py <项目根> <需求名> static`（skill 目录 = 本 SKILL.md 所在目录：项目级安装为 `<项目根>/.claude/skills/sdlc-test`，全局安装为 `~/.claude/skills/sdlc-test`）——exit≠0 时停止并向用户呈现缺失清单（关卡1 未过/轮次命名违规/spec 资产失真），禁止绕过
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
@@ -77,7 +77,7 @@ Dev 进度：
 4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ ❓静态无法确认
 5. ⚠️ 项写入用例文件「重点验证项」区块，阶段3 优先执行；重大偏差立即报告用户
 
-## 阶段3 exec：前端功能测试
+## 阶段 3 exec：前端功能测试
 
 > 执行≠验证：跑通创建流程≠验证了业务规则；页面表现正常≠无缺陷（接口/落库/console 必查）；用例预期与实现冲突时**禁止静默按实现校正**。首次执行参考 `references/exec/exec-example.md` 完整范例
 
@@ -97,7 +97,7 @@ Exec 进度：
 - **交互姿势**：浏览器/数据库操作按 `references/exec/exec-interaction.md` 执行（浮层失明降级、日期键盘路径、evaluate 同步返回等）；新控件姿势 ≤3 次试错后回写该手册
 - **分组合并执行**：同 G-xx 组（见用例文件「执行分组」区块）拦截类用例在同一表单会话内连续验证（改字段→断言→复原），每条用例仍独立留档判定；涉及提交/落库的用例不合并
 - **执行红线摘要**（全量纪律随批由 exec-dispatch prompt 原文携带，对子 agent 同样强制；借口拦截见反合理化表）：四类证据（页面表现/接口响应/落库核验/console）缺一即标"疑似"，**error 级必查**（无法解释的 error 不判通过，warning 记档不阻断）；操作后等待稳定再取证（`chrome-devtools:wait_for` 或确认网络请求已完成，禁止轮询快照等稳定），等待超时本身是证据写入备注；口径冲突先以需求/拍板口径判定，三去向：实现偏离=BUG / 需求未定=转 Q / 用例写错=修用例留档，仅确认实现正确后才按实际口径校正预期；疑似偶发失败 retry-once 上限 1 次/用例/轮（详见 exec-dispatch.md「anti-flake」）
-- **取证细则**：接口响应按 URL 定向 `get_network_request`（`list_network_requests` 仅定位不到时用）；表结构/列名以本轮 static.md 为准，bigint 主键按 exec-interaction 规范用业务键定位（JSON 往返舍入）；判"通过"前视觉复核全页截图（视觉异常即使接口与落库正确也降"疑似"）；截图一律先落本轮 `screenshots/`、仅展示类断言或疑点时查看（在子 agent 上下文）；a11y 快照对 canvas/复杂自定义组件失明时降级截图+视觉判断，chrome-devtools MCP 失效时降级 Playwright skill——降级均注明证据降级
+- **取证要点**（工具用法与降级姿势以 exec-interaction.md 为准）：接口响应按 URL 定向取证（定位不到才列表扫）；bigint 主键用业务键定位；判"通过"前视觉复核全页截图——视觉异常即使接口与落库正确也降"疑似"；截图先落本轮 `screenshots/` 再按需查看；a11y 失明/工具失效按手册降级，降级一律注明「证据降级」
 - **留档与缺陷**：按 `references/exec/exec-log-template.md` 逐用例即时追加 exec-log（当日志而非汇总写；本轮开始先按范围预填「结果总览」表，执行期只更新对应行；备注记任何让你停顿的观察，不预筛"是不是缺陷"）；新失败在用例文件「缺陷跟踪」表登记 BUG-xx（四要素详见 report-template），回归通过后更新状态/修复轮次；P0 缺陷立即快报，不等整批执行完
 - **造数纪律：探索档允许通过前端页面操作（点击触发后端接口）生成前置数据；spec 档允许 API 直调造前置（走后端完整校验，鉴权头见 ui-recipe）；两档均禁止改库/任何 DB 直写**；MySQL MCP 只读仅做核验
 - **阻塞前穷尽解锁**：标阻塞前先依次确认 ui-recipe 路由清单、Playwright skill 降级、接口直调（鉴权头见 ui-recipe）三条路径均不可行
@@ -113,7 +113,7 @@ Exec 进度：
 3. **生成后立即 runner 验证，全绿才算资产化完成**；红色按失败三向处置（实现坏=BUG / 页面变=修 spec 留档 / 环境=备注重跑）
 4. cases.md 用例条目标注 `spec ✓（日期）`（新格式=总览表 spec 列；存量表格文件=行内标注）；DB 断言不进 spec，出过 DB BUG 的用例在 spec 头部挂 SQL 清单（回归轮 agent 抽查）
 
-## 阶段4 report：报告生成
+## 阶段 4 report：报告生成
 
 1. 按 `references/report/report-template.md` 汇总产出本轮目录 `report.md`（回归轮为回归报告：重跑范围+缺陷闭环情况）；含 runner 执行时按模板「回归档」口径呈现 runner 执行子集与 DB 抽查结果
 2. 🔒 关卡2 措辞：「报告已生成于 <路径>，请复验缺陷真伪；确认后的缺陷由你转达开发」。缺陷不自动推送任何外部系统。用户复验确认后，勾选用例头部「🔒 关卡2 报告复验」并注明轮次（如 `已复验（R2，YYYY-MM-DD）`）——与关卡1 代改口径对称，多轮场景可从用例文件看出各轮报告复验状态

@@ -31,10 +31,14 @@ skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级�
 Review-gate 进度：
 - [ ] Step 1: 定位输入（设计 / 用例 / intake 三件套），确认独立性（用例文件是否读过设计）
 - [ ] Step 2: 按风险分级分档扇出预审（A=4：3 角色+交叉审查者；B=2：数据模型+交叉审查者；C=主会话自查）
-- [ ] Step 3: RECONCILE 过滤 → 同根因合并 → 汇总 issues 文件并机械校验，状态置「待裁决」，🔒 暂停等人
+- [ ] Step 3: RECONCILE 过滤（CONTRACT 仲裁不了时定向核对代码）→ 同根因合并 → 汇总 issues 文件并机械校验，状态置「待裁决」，🔒 暂停等人
 - [ ] Step 4: 逐条裁决（落改 / 驳回 / 存疑），驳回理由沉淀
 - [ ] Step 5: 全部裁决单元裁决后过 --release 校验，状态置「已放行（日期）」
 ```
+
+## Step 1: 定位输入
+
+按「前置输入」表定位三路输入（技术设计 / 测试用例 / CONTRACT 三件套；缺失则引导补齐，降级须在 issues 文件注明）。确认用例独立性：用例生成时未读过设计文档（见顶部定位段的前置条件，不满足时交叉审查退化为一致性检查）。
 
 ## Step 2: 扇出预审（按风险分级分档，全新上下文）
 
@@ -57,8 +61,9 @@ Review-gate 进度：
 
 ### 对抗 Prompt 模板（角色 1-3）
 
-> 模板与 sdlc-doubt skill（`../sdlc-doubt/SKILL.md`，同集合安装时与本 skill 同级）的对抗模板**同源**；输出形态按消费方有意分化——本 skill 输出汇总进 issues 文件，需结构化字段；sdlc-doubt 会话内 RECONCILE 消费，行级证据即可。单独安装本 skill 时该引用仅作来源说明，不依赖其存在。
+> 模板分两段：**共享核心段**与 sdlc-doubt skill（`../sdlc-doubt/SKILL.md`，同集合安装时与本 skill 同级）逐字节同步（CI 比对：仓库根 `scripts/check_adversarial_core.py`）；**输出段**按消费方有意分化——本 skill 汇总进 issues 文件需结构化字段，sdlc-doubt 会话内 RECONCILE 消费行级证据即可。子代理 prompt = 下方两段按序拼接。单独安装本 skill 时跨 skill 引用仅作来源说明，不依赖其存在。
 
+<!-- adversarial-core-start：与 sdlc-doubt 逐字节同步，CI 比对；改此处必须同步改对侧 -->
 ```
 Adversarial review. Find what is wrong with this artifact.
 Assume the author is overconfident. Look for:
@@ -70,8 +75,15 @@ Assume the author is overconfident. Look for:
 - Failure modes under unexpected input
 - Concurrency or race conditions under parallel access
 - Irreversible or hard-to-rollback changes
+
 Do NOT validate. Do NOT summarize. Find issues, or state
 explicitly that you cannot find any after thorough examination.
+```
+<!-- adversarial-core-end -->
+
+**输出段**（本 skill 消费方形态，本侧维护）：
+
+```
 输出仅限问题清单，每条必须包含以下结构化字段：
 - 标题：一句话说清问题本体（自解释，不以代号开头）
 - 场景：2-3 句业务白话（谁、在哪、做什么；禁代号；素材 = ARTIFACT 行为描述 + CONTRACT 章节）——汇总进 issues「场景（白话）」列的初稿
@@ -108,13 +120,22 @@ CONTRACT: <intake 三件套相关章节>
 | 有效权衡 | 真取舍但修复成本大于接受成本 | 进清单，标「权衡」 |
 | 噪音 | 同义反复/风格偏好/不存在场景 | 不进清单 |
 
+**代码核对（定向，只读）**——CONTRACT 仲裁不了的候选先核对代码再归类：
+
+| 环节 | 规则 |
+|---|---|
+| 触发 | ① 疑似契约误读且所缺上下文在代码里（数据来源内部可信 / 上游已校验 / 注释写明的有意设计）；② 条目断言存量行为（设计称复用某接口/表/组件，CONTRACT 无该信息） |
+| 方式 | 只读定向检索**条目点名的类/接口/组件**：codegraph 可用走 `codegraph:codegraph_explore`，缺失降级定向 grep + 读文件；表结构可用 `mysql:mysql_query` 只读核对（缺失如实记定位不到）；禁止开放探索 |
+| 落点 | 坐实误读 → 按契约误读处置（不进清单、零留痕）；坐实问题真实 → 进清单，代码定位（类名:行号）作证据附注（表达规则见 issue-template.md「依据类型」）；定位不到 → 仍按四分类归类，issues 头「证据降级」行点名条目编号注明 |
+| 分歧例外 | 不适用「坐实误读」落点——代码核对只作裁决证据（分歧点/后果列附代码定位），分歧仍全部进清单交人裁决；定向核对顺带发现的真实问题进备案区，来源标「代码核对顺带」 |
+
 过滤后执行**同根因合并**：同一根因多条（跨角色或单角色内）并成一个裁决单元——人裁决的是裁决单元数，不是发现数；严重度=低且无动作建议的进备案区。规则与示例见 issue-template.md。
 
 issues 文件的产物结构与填写规则以 [issue-template.md](references/issue-template.md) 为**唯一权威**——宽表一行一条、分歧清单置顶、头部速览与裁决焦点、可读性红线（标题与原文摘引原样保留、场景（白话）列必填、`<br>` 分行、代号内联释义、严重度降序、速览与明细同源、头部业务背景与代号速查、焦点表场景同源复制）全部以模板为准，本文件不重复。头部状态置 `待裁决`。
 
 🔒 关卡措辞：「issue 清单已生成于 <路径>，共 X 条（分歧 Y 条）；请逐条裁决，确认后我继续，需修改请直接说」。
 
-**生成后机械校验（本条已机械化，2026-09-16）**：issues 文件生成后**运行** `python3 <skill 目录>/scripts/check_trace.py <项目根> <需求名>`——校验引用可达（命名空间引用在定义源一跳定位）、计数同源（速览统计 vs 明细行）、FR 覆盖（best-effort）；exit≠0 按清单修复后重跑（反馈循环），全绿才进入裁决。脚本不可得（无 python3）时按 issue-template 填写规则人工核对，并在 issues 头部注明降级。
+**生成后机械校验（本条已机械化）**：issues 文件生成后**运行** `python3 <skill 目录>/scripts/check_trace.py <项目根> <需求名>`——校验引用可达（命名空间引用在定义源一跳定位）、计数同源（速览统计 vs 明细行）、FR 覆盖（best-effort）；exit≠0 按清单修复后重跑（反馈循环），全绿才进入裁决。脚本不可得（无 python3）时按 issue-template 填写规则人工核对，并在 issues 头部注明降级。
 
 ## Step 4: 会话内裁决
 
@@ -153,7 +174,7 @@ issues 文件的产物结构与填写规则以 [issue-template.md](references/is
 
 **sdlc-test 关卡互认**：已放行后，可将 `sdlc/<需求名>/test/cases.md` 头部 `审核状态` 代改为 `已确认（日期，sdlc-gate 已放行）`——sdlc-gate 裁决已覆盖人工用例审核。放行后才允许进入开发 / sdlc-test `static`、`exec`。
 
-**放行后：开发放行守卫（本条已机械化 2026-09-28）**：开发会话启动前**运行** `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`——校验 review/ 最新一份 issues（文件名日期+轮号取最大，与 check_trace 同口径）头部「评审状态」= 已放行；exit≠0 时停止并向用户呈现缺失清单，禁止绕过；脚本不可得（无 python3）时人工核对最新 issues 头部。措辞红线：任务框架或协作文档对设计的 ack（确认点③、飞书技术文档确认等）是**流程性定稿信号，不构成质量放行**——本守卫拦截的正是「ack 被当成放行信号直接开码」。
+**放行后：开发放行守卫（本条已机械化）**：开发会话启动前**运行** `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`——校验 review/ 最新一份 issues（文件名日期+轮号取最大，与 check_trace 同口径）头部「评审状态」= 已放行；exit≠0 时停止并向用户呈现缺失清单，禁止绕过；脚本不可得（无 python3）时人工核对最新 issues 头部。措辞红线：任务框架或协作文档对设计的 ack（确认点③、飞书技术文档确认等）是**流程性定稿信号，不构成质量放行**——本守卫拦截的正是「ack 被当成放行信号直接开码」。
 
 ## 通用纪律
 

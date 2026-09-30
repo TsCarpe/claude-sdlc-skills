@@ -1,7 +1,7 @@
 # SDLC 工作流全貌
 
 > **这份文档是什么**：方法论源项目（某 Java DDD 业务系统）开发工作流在 2026-09-16 的完整地图快照——有哪些资产、各在哪一层、一条需求怎么走完全程、人机怎么分工。可移植层即本仓库；项目层部分是"你需要在目标项目自建什么"的范例（完整规范参考实现见 [dev-standards-reference/](../dev-standards-reference/README.md)）。
-> **和另一份的关系**：[agent-stack-mental-model.md](agent-stack-mental-model.md) 回答"为什么这样设计"（概念分层 + 载体路由），本文档回答"现在有什么、怎么运转"（是什么）。
+> **和另一份的关系**：[agent-stack-mental-model.md](agent-stack-mental-model.md) 回答"为什么这样设计"（概念分层 + 载体路由），本文档回答"现在有什么、怎么运转"（是什么）；流程的教程式逐步叙述见 [workflow.md](../workflow.md)（怎么理解），本文是速查地图——同一流程的两种视角有意并存，勿互相改写。
 > 2026-09-16 随资产回收整理（删去源项目内部遗留事项清单）。
 
 ## 目录

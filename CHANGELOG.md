@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.17.0 (2026-09-30)
+
+对照 Claude 官方 Agent Skills best-practices 全仓评估 + 四批优化。评估报告（16 维评分卡 + 问题清单 + 脚本质量卡 + 执行路径 token 预算表）归档于 `docs/skill-audit-2026-09.md`；流程：三路摸底 → 计划经全新上下文代理对抗式评审（4 Blocker/6 Major 全数吸收）→ 批次 0 证据重验（28 项 26 PASS，2 项修正）→ 分批执行。总评：结构层健康（全部 SKILL.md ≤165 行、frontmatter 合规、零断链），债务集中在时效信息渗入规范条文、多写同步失守（已实证 5 处）、evals 纯手动形态。
+
+- **批次 0（先建评估再改文档）**：sdlc-doubt 3 个 evals 场景迁官方 JSON 结构（断言语义不变仅换载体，README 登记形态）；sdlc-gate /tmp 试验项目安装冒烟（15 文件完整、guard 脚本可执行、报错含用法说明——留作 #8 改动前基线）
+- **批次 1（P0 卫生）**：本地 pyc/.DS_Store 清理（git 未追踪，安装实测不带走）；faq 死节名「渐进采用阶梯」→ 实名「按需采用，不必全装」；sdlc-test SKILL:8「安装副本中该文件缺失」措辞改为「位于仓库 docs/，不随 skill 单独分发」；sdlc-gate 补 `## Step 1` 节（checklist 列 1-5 而正文缺首节）；check.py docstring 规则类型补 `require_if`（代码已实现）；sdlc-test 阶段标题空格统一、「同轮/本轮目录」统一、README 两个中部 H1 降 H3；gate/test evals README 过时状态句更新（去 v0.15 依赖句与 M1 滞留句）
+- **批次 2（P1 结构）**：sdlc-gate「代码核对」493 字符单段表格化（触发/方式/落点/分歧例外四行表，表述压缩不外移——无子命令每轮必经内容外移反增读取成本，评审 B3 结论）；sdlc-test 取证细则压缩为要点+指针（「执行红线摘要」派发锚点常驻不动）；sdlc-doubt description 增量补触发词（148→168 字符，只增不删：加「技术方案选型二选一定稿前」「这个方案稳不稳」）；时效清洗 10 处（spec-guide 8 行去试点日期/版本号/运行痕迹、gate 3 处「已机械化」去日期，TOC 锚点同步）；质检→体检统一（sdlc-sync SKILL 6 处 + payload-schema 叙述 3 处；「质检依据快照时间」等 3 处平台字段名白名单保留）
+- **批次 3（P2 压缩，4 项经用户裁决）**：三镜像取最小方案——workflow.md 两处触发条件补第 4 条「AI 判定为大型且用户确认」（对齐 playbook/README，三写重新一致；指针原已齐备不另加）；**对抗模板同步护栏（评审 M3 方案）**——gate/doubt 对抗 prompt 拆「共享核心段」（英文 12 行，`<!-- adversarial-core-start/end -->` 标记）+「消费方输出段」两个独立 fenced block，新增 `scripts/check_adversarial_core.py` 逐字节比对共享段（正反向验证：改坏红灯还原绿灯）并挂入 CI validate.yml——「同源声明」从有声明无机制升级为机检护栏；stage2 模板 implement.md 侧自重复表收敛为列头+拷贝指令（消除示例双维护）；体检去向示例 P11 落点统一 Q6（design-template.md:40 的 Q3 系分化）；sdlc-test-design 目录树快照加「现行以 workflow.md 为准」注记（快照定位不动内容）；workflow↔landscape 核对结论为重复段各有职责轴（教程叙事 vs 速查地图）故互加职责声明不强删；poc/ 4 个文件移出 git 追踪（.gitignore 简化为整目录）
+- **CHANGELOG 归档**：v0.9.0 及更早 161 行移入 `docs/changelog-archive.md`（**敏感词先清洗**——归档内容含脱敏红线词 1 处已中性化，归档后脱敏+断链双验证绿；相对链接基准从仓库根修正为 docs/），主文件 103 行 + 指针
+- **现场裁量两处**（偏离计划 v2 的执行记录）：#15 导航去重降级为记录不动——8-skill 清单 4 轮各有职责面（获客/教程/导读/FAQ），删除伤对应读者；#7 二层引用无需改动——sdlc-test SKILL.md 实以反引号格式直引全部 14 个 references，全仓一层可达性天然合规（首轮摸底正则只认链接格式致误判）
+- **验证**：每批及收尾全量跑 skills --list 解析、marketplace JSON、脱敏扫描（含归档文件，零命中）、断链零容忍（CI 原版语义）、runner 形态基线、对抗核心段比对、frontmatter——全绿
+
+## v0.16.0 (2026-09-30)
+
+sdlc-gate RECONCILE 代码核对：补上四分类过滤的仲裁灰区——intake 三件套（CONTRACT）判不了的候选条目（①疑似契约误读但所缺上下文在代码里：数据来源内部可信/上游已校验/注释写明的有意设计；②条目断言存量行为：设计称复用某接口/表/组件而 CONTRACT 无该信息），此前主会话只能凭直觉归类，误杀真问题与放进误读同险。落法：主会话 RECONCILE 侧只读定向检索条目点名的类/接口/组件（codegraph 可用走 `codegraph:codegraph_explore`，缺失降级定向 grep+读文件；表结构可用 `mysql:mysql_query` 只读核对——与 sdlc-design Step 2 存量勘察同款双 MCP 写法），三向落点：坐实误读→按契约误读处置不进清单零留痕；坐实问题真实→进清单、代码定位（类名:行号）作问题列证据附注；定位不到→仍按四分类归类、issues 头「证据降级」行点名条目编号注明。两道护栏：**分歧条目例外**——代码核对只作裁决证据（分歧点/后果列附代码定位），分歧仍全部进清单交人裁决，不得零留痕消解（守住「分歧必须人拍板」）；定向核对顺带发现的真实问题进备案区（来源标「代码核对顺带」），不给顺带发现开进裁决焦点的口子。token 纪律前提不动：代码只在主会话 RECONCILE 侧进场，子代理对抗模板与喂料纪律零改动——审查者缺上下文是全新上下文设计使然，补上下文的成本由持有全上下文的主会话承担，不在喂料侧开口子。四分类分类学未变、sdlc-doubt 对侧零改动（两表本按消费方有意分化，同对抗模板先例，无需同步）。对照官方 best-practices：高自由度启发式指令（只写何时核对/核对什么/结果怎么落，不写脚本不写伪代码）/ 术语一致（CONTRACT、契约误读、定向、证据降级、hard/soft 全沿用）/ 单一权威（证据在文件内的表达规则落 issue-template，SKILL.md 只留流程主干）/ 评估先行（eval-8 与规则同批，五路径覆盖双向判负）。方案已过全新上下文对抗式评审（1 中高+2 中+4 低全数吸收：分歧条目零留痕消解与「分歧必须人拍板」四重规则冲突、表核对缺 mysql 路径、doubt「镜像一致」表述纠错、顺带发现落点、降级 kv 条目指向、合并主行排序衔接、锚点数字）。
+
+- **sdlc-gate SKILL.md**：Step 3 四分类表后新增「代码核对（定向，只读）」段（两类触发 + 双 MCP 核对路径与降级链 + 三向落点 + 禁止开放探索 + 分歧条目例外 + 顺带发现进备案区）；checklist Step 3 项补「（CONTRACT 仲裁不了时定向核对代码）」；四分类表、对抗模板、子代理喂料纪律、C 级自查路径零字节改动；通用纪律「源码与数据库只读」本就覆盖核对动作（只读合法，补的只是何时去核对）
+- **issue-template.md**：填写规则「依据类型」补代码证据语义——代码定位是附加证据不改 hard/soft（hard/soft 只看 artifact 原文可摘性），坐实条目在问题/分歧点列作证据附注（合并主行置于影响范围之后），缺失型条目经代码坐实仍按 soft；头部 kv「证据降级」示例补「代码核对定位不到（点名条目编号）」；备案规则文字不动（顺带发现按既有「有效但纯观察」口径进备案区）、宽表零加列
+- **evals（8 场景）**：新增 eval-8 RECONCILE 代码核对（五路径：触发·坐实误读/触发·坐实真实/不触发·可仲裁/触发·定位不到/分歧条目例外；判负红线四条：该核对未核对、乱核对或开放探索、坐实误读进清单且代码证据改写 hard/soft、分歧条目被零留痕消解）；README 索引七→八、行 3 主线补「RECONCILE 代码核对」、评分纪律红线补双向条款
+- **README**：版本指针 v0.15.0→v0.16.0
+
 ## v0.15.0 (2026-09-29)
 
 sdlc-gate 产出物可读性：会话裁决呈现与 issues 文件双双白话化——起于真实演练反馈「呈现内容可读性差、无法关联上下文、没有解释，裁决变成盲选推荐项」。两条线落地：①Step 4 裁决呈现纪律重写为**两段式+四段结构**（正文逐条展开：场景白话/问题/不修的后果/方案，再问答收裁决——解释责任在正文，问答只收答案）；②issues 产物自足（明细表+裁决焦点表加「场景（白话）」列、头部「业务背景」行、新增「代号速查」小节——冷启动读者不翻 design/digest 可锚定；实际产物中「编号体系」kv 行被塞成 200+ 字代号表正是导读需求的实证，速查节将其解放回命名规则本职）。对照官方 best-practices：低自由度精确护栏（四段结构）/ 模板模式 / 示例模式（good/bad 场景对照）/ 反馈循环（check_trace 场景列非空校验）/ 评估先行（eval-7 与规则同批，标注落地后回归）。方案已过全新上下文对抗式评审（1🔴+5🟡+6🔵 全数吸收：真漏点 sdlc-doubt 镜像漂移、表头定位边界规格、eval 回归时点、walkthrough 声明句一致性等）。
@@ -92,163 +113,4 @@ digest 产物图例与图题落地 + 流程/状态机结构化上平台（payloa
 - **docs**：landscape 第二章新增「需求分级路由」节（含控制矩阵），轻量/大需求小节挂分级、gate 扇出改分档措辞；playbook 触发条件注明 ≈ A 级（正文 + mermaid 节点）；workflow.md 对齐注；README 关键机制加「需求分级路由」+ 大需求判据对齐注
 - 版本卫生：v0.9.0（在途未提交）与本条建议分两次提交；payload v1.2 在途纠正随 v1.3 历史变更节归档说明
 
-## v0.9.0 (2026-09-22)
-
-sdlc-intent 体检阶段1 视角推导落地（intent-audit-v2 批3）：三引擎齐备——句子级（七层）/ 结构级（参照表 D1）/ 视角级（PBR 推导 D2）。PBR 实证：视角化审查优于清单式阅读，对不熟悉应用域的审查者（LLM 处境）效果最显著。
-
-- **perspectives.md（新增）**：阶段1 任务卡——实现者视角（模块数据流草图）/ 测试者视角（FR 断言草稿），derivation task 而非提问清单，缺陷是推导副产品；收敛纪律五条（反向锚点：能定位到答案的不报、定位不到才留并附检索尝试；不与 D1 重复；⚠️冲突格只追问不假设；缺口式表述；只留动手级）；扇出用 Agent 工具新上下文子代理，喂料纪律同 sdlc-gate（任务卡+模块切片+相关表行，不喂全文）
-- **scan_refs.py（新增，scripts/）**：机械扫描器纯 stdlib——seeds 模式构表前产断链/并列章节 seed；verify 模式构表后产字段出现位置清单（有录无消证据义务脚本化）、机械候选行、⚠️冲突/依赖待裁决登记、候选计数一致性核对；--self-test 内置 fixture
-- **SKILL.md**：第二段定稿七步——Step 1 轻重路由（重需求=功能点≥5/跨域/涉表或含计算指标/平行结构/原型，对齐 playbook 触发条件，判定写入执行摘要首句）；阶段1 仅重需求执行；脚本为可选辅助不阻塞
-- **dimensions.md**：第 7 层升级为 D1/D2/D3 三路汇流判定层（同根因合并标 D1）
-- **report-template.md**：D2 标注启用；PM 清单 D2 条目句末标「（推导发现）」排同主题 D1/D3 之后（置信中等，不占必须确认档顶部）
-- **eval-8（新增）**：阶段1 场景（扇出/喂料/反向锚点反例/冲突格判负红线/轻需求跳过）；README 索引同步
-- **官方 best-practices 合规检查**：对照平台官方清单逐条核查（frontmatter 硬限/500 行/目录/一层引用/术语/脚本规范全过）；修复 dimensions.md 指向 docs/ 的二层引用（改声明性提及，同 v0.5.1 先例）与 scan_refs 截断常量无依据。诚实声明：多模型测试（Haiku/Sonnet/Opus）未做，全部验证在单一模型执行；真实使用回归待下次真实需求体检
-- **sdlc-sync 契约纠错**：payload-schema.md push-artifacts 返回 `missingMedia` 由数组 `["m-xx",…]` 修正为 int 计数（对齐平台实现 RequirementService 与 DESIGN-v1.2「如实计数」、verify-m4 断言口径）；同条返回示例补漏字段 `changedQuestions`（P 编号漂移计数，平台稳定返回、verify-guard/verify-m5 断言）。skill 侧消费不依赖形态，无功能影响
-
-
-## v0.8.0 (2026-09-22)
-
-sdlc-intent 体检阶段0 参照系落地（intent-audit-v2 批2）：缺失类检测从"维度条目人工推导"升级为"参照表构造 + 结构 diff"，三引擎中的引擎二（结构级）上线。
-
-- **ref-tables.md（新增）**：阶段0 参照系构造规范——数据字典（三查：有录无消/有消无录/无源）、指标字典（空列即候选）、平行结构矩阵（对称维度识别用通用定义+缺格标注）、引用图与外部依赖；裁剪规则按触发特征建表、构造不出记原因不静默跳过；忠实提取+推导标注纪律；**冲突格纪律**（同概念两处口径不一写 `⚠️冲突[出处A|出处B]` 禁止择一填入，下游行标「依赖待裁决」）；候选清单 → 第 7 层语义判定 → D1/D3 来源分流
-- **SKILL.md**：体检第二段重构为阶段0（参照系构造，产 `intake/refs-<日期>.md`）+ 七层核对（第 7 层优先消费阶段0 候选）流程；体检纪律补「冲突不裁决」
-- **dimensions.md**：第 7 层加输入优先级（有 refs 表消费候选标 D1，无表按构造姿势推导标 D3，同根因合并取 D1）
-- **report-template.md**：命中来源标注 `〔D1〕〔D3〕`（D2 视角推导为批3 预留），终检第 1 项同验标注非空
-- **sdlc-sync**：pull-answers 加可选「漏检比对」步骤——PM 答复与体检命中对照，漏检归因记入 sdlc-intent missed-patterns.md（跨 skill 相对路径，单独安装声明）；missed-patterns.md 写入时机同步更新
-- **eval-7（新增）**：阶段0 场景（四表构造/冲突格判负红线/裁剪对照/D1·D3 标注）；README 索引同步
-- 批1 全量重跑验收取消（原始需求文档已按 PM 答复修订，归因基线失效）；批3（perspectives 视角推导 + 扇出 + 路由分级 + 扫描脚本）待立项
-
-## v0.7.0 (2026-09-22)
-
-sdlc-intent 体检维度六层 → 七层：新增「第 7 层 外部参照层」治缺失类缺陷。真实漏检复盘驱动——一份多平行组别统计类需求体检后人工补提 26 问，11 条完全漏检且全部是"该写而没写"（3 条 PM 确认为真需求缺口），根因是 v1 六层全部为文档内部一致性检查，而缺失类的判定基准（oracle）在文档之外，通读查不出。方案调研（PBR/requirement smells/CRUD 矩阵/业界产品）与三引擎架构定稿于 docs/intent-audit-v2.md（决策记录），本版为批0+批1 止血件。
-
-- **dimensions.md**：序言加两类检查心智模型（写错类 oracle 在文档内 / 缺失类在文档外）；新增第 7 层 6 检查项四列表（检查项/命中定义含中性虚构例子/严重度倾向/**证据要求**）：有录无消、有消无录、数据无源、引用断链、对称缺格、跨模块不对齐；本层严重度纪律显式覆盖全局从严（从严适用于是否记录、不适用于级别，拿不准降一级）；第 6 层「评论结论未同步正文」加源间冲突升级规则（互斥口径升 🟡 标「源间冲突待裁决」，不静默择一）；检查顺序 1→7 + 第 7 层回写去重规则
-- **report-template.md**：统计表/第 3 章加「7 外部参照层」（3.7 节）；撰写规则补缺失类问式（原文定位写「全文未见 X」+ 关联章节，不虚构引文）与对称缺格聚合纪律（同维度多格合并一个主题组拆子问，禁止一格一问）
-- **missed-patterns.md（新增）**：漏检模式回流库（维护者 backlog、不注入 prompt），与 sdlc-gate false-positive-patterns（治误报·运行时注入）成对偶；首批录入本次 5 类漏检模式，4 类已回流为第 7 层条目
-- **eval-6（新增）+ eval-2（扩展）**：eval-6 中性虚构场景覆盖 6 检查项命中 + 误报对照（被消费字段不得报有录无消）；eval-2 拆未同步型（🔵）与互斥型（🟡 升级）两档断言；README 索引同步
-- **层号口径全仓同步**：SKILL.md（frontmatter description/Step 2/体检纪律）、README、docs（workflow/example-walkthrough/faq/design-landscape）、eval-1 共 11 处「六层/six-layer」→「七层/seven-layer」；marketplace.json 仅 description 一词（skills 数组不动）
-- 批2（四张参照表+体检三阶段流程）、批3（视角推导子代理+路由分级+扫描脚本）待立项，路线图与验收基线见 docs/intent-audit-v2.md §9
-
-## v0.6.0 (2026-09-20)
-
-sdlc-test 用例设计技术六种 → 七种：新增「闭环不变量」（编辑类功能四组强制用例）。真实缺陷驱动——教学技能比赛编辑链路三缺陷复盘（零修改被误拦 / 回显缺对账键致对账误判 / 删已开始环节未拦）均落在既有六技术覆盖面之外。
-
-- **design-techniques.md**：技术表加第 7 行 + 专则四组（G1 零修改提交全状态遍历 / G2 锁定态负向按矩阵逐行 / G3 锁定态正向防误拦 / G4 回显契约比对——对账键字符串原样回传）；不适用须在覆盖矩阵写原因，不许静默跳过
-- **SKILL.md**：阶段1 进度行「六种」→「七种」（一层引用结构不变）
-- **eval-7**：编辑闭环不变量四组触发/降级/红线三场景；README 索引同步
-- 配套（项目侧，非本仓）：edu-region guardrails 新增 `resp-dto-long-id` 红线（出参 DTO 大数 id 必须 String，version 豁免；靶子实测拦截 + 存量 9 处基线知情）
-
-## v0.5.1 (2026-09-16)
-
-v0.5.0 harness 迁移的域归属修正 + 安装用户接入引导补全。
-
-- **runner 模板迁域**：`skills/sdlc-guardrails/templates/runner/` 四件与 `run_regression.sh` → `skills/sdlc-test/templates/`（git mv 保留历史）——回归 runner 服务 sdlc-test 的 spec 资产与回归轮，guardrails 模板只留 hook 挂载段与 pre-commit
-- **check_runner_form.py 独立为仓级脚本**：engine/ → `scripts/`，接入 validate.yml（runner 命令形态 0 违规基线进 CI；此前为无调用点的孤儿工具）
-- **guardrails.example.yaml 迁入 skill**：docs/dev-standards-reference/ → skills/sdlc-guardrails/references/（单一来源，安装副本内可链接），docs 各处反向指向；头部残留 harness 旧路径修正；规则条数口径统一为 23 条
-- **sdlc-test runner 接入引导**：env-template.md runner 节扩为接入表（模板→落位→占位符→就绪判据，安装副本自洽、零仓库级指针）；SKILL.md 阶段 3.5 前置路由 + 回归轮两步补语；run_regression.sh 用法首次入 skill
-- **guardrails 安装副本断链修复**：README 心智模型链接改声明性提及（sdlc-test 同款降级口径）、example.yaml 改指 skill 内 references/；SKILL.md 三步接入补项目级安装引擎路径改法、pre-commit 补 `*.java` 过滤适配点
-- project-setup / workflow-landscape / agent-stack-mental-model / dev-standards-reference / docs 导读路径同步
-
-## v0.5.0 (2026-09-16)
-
-harness 从顶层目录迁为第 6 个可安装 skill（sdlc-guardrails）——`npx skills add` 与 plugin 渠道现在直接分发红线引擎，接入不再要求 clone 本仓库。
-
-- **目录迁移**：`harness/` → `skills/sdlc-guardrails/`（git mv 保留历史）；新增 SKILL.md（三步接入主干：挂载 hook → 写规则文件 → pipe-test 反馈环，脆弱操作低自由度）与 evals/ 三场景（接入闭环 / 规则语法 / 排障与基线）
-- **引擎默认路径改安装位置**：settings-hook 与 pre-commit 模板默认 `~/.claude/skills/sdlc-guardrails/engine/check.py`（`SDLCSKILLS_HOME` 覆盖机制保留；clone 仓库使用者可改 checkout 内绝对路径）——项目侧配置从此零 checkout 依赖
-- **文档口径同步**：README（Skill 矩阵 6 个、渐进阶梯第 6 级）、project-setup（全局侧删除「本仓库 checkout」依赖行，mermaid 全景图同步）、docs 导读、dev-standards-reference、sdlc-workflow-landscape 资产图、agent-stack-mental-model 附录全部指向新路径
-- **CI**：断链扫描排除 CHANGELOG.md（历史条目路径不回改，与敏感词扫描同口径）
-- marketplace.json 登记 sdlc-guardrails（skills CLI 与 plugin 两渠道集合一致）
-
-## v0.4.0 (2026-09-16)
-
-评审注意力分层 + 产物链追溯机械化 + 栈解耦显式化（外部优化建议对照仓库现状逐条分析后收敛的四个增量，已实施约半数建议的前提上只补真实缺口）。
-
-- **sdlc-gate 裁决分层**：RECONCILE 后同根因合并（跨角色同根因并成一个裁决单元，主行带根因句 + 影响范围 + 两角色证据）——人裁决的是裁决单元数不是发现数；新增**备案区**（低严重度无动作观察项退出裁决流，不进焦点、不需裁决、不参与放行闭环）；**依据分级 hard/soft**（无直接原文支撑标 soft 默认进批量预填组；严重度=高的 soft 条目仍进焦点——风险优先于不确定性）
-- **对抗要点补全**：三角色审查要点补存量兼容 / 回滚可逆 / 并发一致性 / 兼容可测性；对抗模板 look-for 补并发与不可回滚两行（sdlc-doubt 同源模板同步）+ 第五输出字段（依据）；交叉审查维度六维→七维
-- **check_trace.py 追溯机械化**（`skills/sdlc-gate/scripts/`，stdlib-only 入口守卫）：引用可达 / 计数同源 / 落改闭环（--release 模式）/ FR 覆盖四类检查；issues 生成后与放行前运行，错误消息带可修复上下文（现有编号范围与末 5 个）；fixture 自测四类命中、修复后全绿
-- **sdlc-test 栈适配总账**（`references/stack-profile.md`）：五个栈绑定面 × 方法论不变量 / 栈姿势 / 承载位置 / 换栈动作 + 接入 checklist——换栈按清单改，方法论不动；日常执行不加载，不构成两层引用链
-- **sdlc-intent 假设类型**：假设清单加「类型」列（推断 = 有原文推导链 / 假设 = 无依据拍板），下游判断口径承重程度有据
-- eval-4 评估场景（同根因合并 / 备案 / soft 路由，评估先行）；issue-template 超 100 行补目录与合并输入/输出示例；README 适用边界指向 stack-profile
-- 诚实声明：多模型测试未做（单模型验证）；check_trace 与裁决分层机制尚未经真实需求全链路检验
-
-## v0.3.0 (2026-09-16)
-
-sdlc-config-review 升级为发版外部依赖审计——不只配置中心 Key，覆盖「漏配 = 功能静默缺失」的平台注册项。
-
-- **新增模式 D（平台注册型注解）**：@XxlJob 任务三态检测（新增 / 改名——旧 handler 名标「疑似下线或改名」/ 纯下线孤儿）；RocketMQ/Kafka/Rabbit listener 属性分流（`${}` 走模式 C 进 Key 清单、字面量进平台操作清单、**配置引用形态双列**——Key 清单之外平台操作清单同列一行，实测回写、常量引用尾部人工确认）
-- **新增行为知会项**：@Scheduled 集群每实例重复执行提醒（无外部配置，不进操作清单）
-- **输出扩为三节**：配置 Key 清单 + 外部平台操作清单 + 知会项；纯文本块仍仅含可粘贴的配置 Key；三节均无新增时明确输出无
-- **新增 eval-5 / eval-6** 评估场景；description 触发词补 xxl-job / 定时任务 / MQ 订阅 / 上线检查；README 矩阵行同步
-
-## v0.2.2 (2026-09-16)
-
-项目侧接入指南 + runner 模板收录（新项目从装 skill 到全功能的配置地图）。
-
-- **新增 [docs/project-setup.md](docs/project-setup.md)**：项目侧配置全景——harness 强制层（hook 挂载段 / guardrails.yaml / pre-commit）、runner 基础设施、sdlc/env 环境文件，每个文件标注来源（复制模板 / 按约定自写 / skill 首跑引导生成），附最小配置阶梯与已知边界；README 安装段与 docs 导读挂载
-- **runner 四件模板收录**（`harness/templates/runner/`）：playwright.config.ts / package.json / capture-login.mjs / spike.spec.ts——自源项目实测脚本脱敏（占位符按项目替换），补齐「登录态采集与冒烟脚本无模板，新项目需自写」缺口
-- **叙述类文档补 mermaid 图 ×4**：project-setup（配置全景一图流）、large-req-playbook（三段式总流程含偏差回写回边）、example-walkthrough（六步产物流转图）、ai-native-sdlc-guide（六阶段工件链）；SKILL.md 与决策记录类文档不加图（token 纪律 / 收益低）
-- **README 重写**：首屏重排（badges + 一句话定位 + 一行安装 + 为什么是这套三条纪律 + 实测数字）；主流程图升级（旁路入图、人工关口六边形标注）；Skill 矩阵与原 5 小节合并为单表（触发示例/产物/依赖一屏尽览）；删与流程图重复的 6 步表格；文档导航补 project-setup 路径；版本号对齐 v0.2.2
-- harness README 架构段补 `templates/` 清单说明
-
-## v0.2.1 (2026-09-16)
-
-docs 资产回收 + 重组导读（方法论源项目沉淀文档脱敏收录，skills 与 harness 机制零改动）。
-
-- **新增 5 篇方法论文档**：[ai-native-sdlc-guide](docs/ai-native-sdlc-guide.md)（Google/Anthropic/OpenAI 三篇权威文章融合提炼）；design/ 三篇——[agent-stack-mental-model](docs/design/agent-stack-mental-model.md)（两桶心智模型 + 载体路由，harness README 原断链指向此文，已修复）、[sdlc-workflow-landscape](docs/design/sdlc-workflow-landscape.md)（资产全貌快照）、[sdlc-id-linkage-plan](docs/design/sdlc-id-linkage-plan.md)（跨产物 ID 体系，标注已实施 + 落地核对）
-- **新增 sdlc-test-spec-evolution**：「点击员→脚本作者」流派研究 + 改进计划合并（标注已实施，决策点裁决对照 D14-D21）
-- **sdlc-test-design 升 v0.3**：补 §9 回归档（D13-D21，D20 按现行红线改写为绝对路径命令形态）
-- **新增 dev-standards-reference/**：项目级分层规范体系全套参考实现（入口层示例 + 自检清单 + guardrails 20 条规则示例 + 8 份细则，含飞书技术设计文档生成规范）；统一脱敏为 HRSystem/hr-* 中性示例
-- **docs/README.md 导读**（新增）：文档地图（按性质四分类）+ 三条阅读路径 + 按问题找文档索引；仓库 README 加「文档怎么读」段并修正版本号引用
-- **红线清理**：harness/README、check.py、env-template、eval-6 中的源项目名残留改中性表述
-- **断链与历史名清理**（官方 best-practices 复核）：sdlc-test SKILL.md 与 spec-guide 中「doc/ai-testing-solution.md」历史路径断链改指 [docs/sdlc-test-design.md](docs/sdlc-test-design.md)；全仓 skill 历史名（ai-test / requirement-intake / review-gate）统一为现名并从触发词移除；入口守卫命令去掉全局安装路径假设，改按 skill 安装目录说明（项目级/全局均适用）
-- **harness README 补 require_if**：规则类型说明与 check.py 实现、guardrails.example.yaml 对齐（四类）；settings-hook 挂载段引用改链接形式消歧
-- **CI 新增断链检查**：markdown 相对链接 + 反引号路径引用存在性（零容忍）；.gitignore 补 `.idea/`、`.serena/`、`.claude/settings.local.json`；case-template 顶部补模板区块目录，术语「关卡 1」统一为「关卡1」
-
-## v0.2.0 (2026-09-16)
-
-新增 harness 可移植强制层（红线从 skill 文字下沉到确定性执行），sdlc-test 关卡强制机械化。
-
-- **harness/**（新顶层组件）：guardrails 检查引擎 `engine/check.py`——规则四类（forbid / require / count_ge 锚点计数 / require_if 条件触发），纯 regex 不做 AST；Write 全文件全规则、Edit 只查本次新增文本（存量旧账不阻塞编辑者）；无规则文件 no-op；引擎异常静默退出，永不打断 agent 循环
-- **规则与引擎分离**：引擎全局一份，各项目 `.claude/guardrails.yaml` 自定义规则（从被检文件向上查找），新项目接入三步（挂载段模板 + 规则文件 + pipe-test，见 harness/README.md）
-- **`engine/audit_profiles.py`**：OVAL `@Validate` ↔ `profiles` 跨文件对账——悬空分组（接口无专属校验规则）单文件检查抓不到，首轮实测即发现 6 个
-- **`engine/check_runner_form.py`**：全仓 md 的 runner 命令形态自检（绝对路径红线守护，豁免 install/反例引文）
-- **模板**：`templates/`（settings hook 挂载段 / pre-commit 薄壳 / run_regression.sh 一键回归——人工触发零 token，spike 健康检查→runner→`-manual` 报告不占轮次号）
-- **sdlc-test 关卡机械化**：新增 `scripts/guard_exec.py` 挂阶段2/3 入口第 0 步——关卡1 判定（含 sdlc-gate 互认）、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防资产丢失后标注失真导致回归轮静默跳过）；SKILL.md 关卡强制段标注"已机械化"
-- 设计依据：载体路由三档（CLI 入口守卫 / hook 写入拦截 / pre-commit 提交兜底）——同脚本多时点复用，存量违规不追溯只拦增量
-
-## v0.1.3 (2026-09-15)
-
-exec 执行纪律增强（agent-browser 设计思想借鉴 + 官方 best-practices 四度复核通过）。
-
-- 交互手册总则新增「页面身份断言」：用例操作前断言 URL/特征文本=预期路由（对照 ui-recipe 路由清单），防重定向换页/上一用例残留页面静默污染；页面结构性变化后旧 uid 失效，重试前重新 snapshot
-- 前置健康检查升级为「检查项→恢复动作」：ui-recipe 环境检查各项附「→ 恢复：」动作，无法自愈标「报用户」，检查失败先按恢复动作处置不空等人工（SKILL.md 与 env-template 模板同步）
-- exec-dispatch 子 agent 模板【姿势】节补「总则 4 条必挂」，总则级纪律（同步返回/页面身份断言等）确保随批注入子 agent
-
-## v0.1.2 (2026-09-15)
-
-sdlc-test 产物格式与文档结构重做（R3 派发验证轮落地）。
-
-- references/ 按阶段分组为 cases/ exec/ report/ spec/ static/ 五个子目录，全部交叉引用同步
-- cases.md 新格式：用例总览表（结果/spec/BUG 状态唯一权威）+ TC 独立小节；存量表格文件就地兼容不重排
-- exec-log 模板升级：结果总览预填表（断点续跑锚点）、证据按页面/接口/落库/console 四类分行、五态图标仅用于 exec-log、G-xx 组合并执行口径
-- exec-interaction 姿势手册补两条实测：el-date-picker 非法值拒绝判定（文本进框但模型回退=输入层整体拒绝）、el-select 多选计数核对滞后（点后必读已选 tags 明细）
-
-## v0.1.1 (2026-09-14)
-
-sdlc-test 新增 spec 资产化与 exec 派发两大机制，官方 best-practices 复核修复。
-
-- 阶段 3.5 spec 资产化：通过且口径拍板的用例转 Playwright spec，回归轮由 runner 执行（零 agent token），agent 只诊断红色项（新增 spec-guide.md：粒度/前置复用/失败三向/生命周期）
-- exec 派发协议（新增 exec-dispatch.md）：切批派发全新上下文子 agent，证据采集/判定/留档在子 agent 完成，主上下文只收每用例一行压缩结论
-- runner 命令统一为绝对路径二进制形态（红线，禁 `cd`+`npx` 形态分裂）
-- 新增 eval-5（token 效率）/ eval-6（spec 回归）评估场景；官方 best-practices 三度复核修 10 处
-
-## v0.1.0 (2026-09-12)
-
-首个公开版本。
-
-- 5 个 skill：sdlc-intent（需求梳理+六层体检）、sdlc-test（AI 测试四阶段编排）、sdlc-gate（对抗式评审关口）、sdlc-doubt（决策对抗复查）、sdlc-config-review（发版配置 Key 扫描）
-- 大需求三段式方法论：docs/large-req-playbook.md + templates/ 三模板
-- 文档：workflow（全流程叙述）、example-walkthrough（产物走查）、faq（降级矩阵+术语表）、sdlc-test-design（测试方案 ADR）
-- 双渠道分发：npx skills add / Claude Code plugin marketplace
-
-口径说明：技能均在真实 Java 项目经多轮需求验证；未经外部用户环境验证，欢迎 issue 反馈适配问题。
+> v0.9.0 及更早的历史版本记录见 [docs/changelog-archive.md](docs/changelog-archive.md)。

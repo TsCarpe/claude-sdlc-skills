@@ -1,6 +1,6 @@
 # sdlc-doubt 评估场景
 
-对齐官方 Agent Skills best-practices 的评估驱动开发。三个场景覆盖剥离结论红线、3 轮上限、RECONCILE 四分类三条主线。
+对齐官方 Agent Skills best-practices 的评估驱动开发。三个场景覆盖剥离结论红线、3 轮上限、RECONCILE 四分类三条主线。全部为官方 JSON 结构形态（2026-09-30 自 md 勾选清单迁移，断言语义不变）。
 
 - eval-1：EXTRACT 产物混入 CLAIM/推理 → 应重做 EXTRACT，而非把结论传给审查者
 - eval-2：第 3 轮 DOUBT 仍有实质发现 → 应停止迭代升级用户，不磨第 4 轮
