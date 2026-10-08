@@ -36,7 +36,7 @@
 │    sdlc-guardrails/engine/audit_profiles.py OVAL 分组跨文件对账    │
 │    scripts/check_runner_form.py 文档命令形态自检                   │
 │    sdlc-test/scripts/guard_exec.py   关卡守卫（含开发完成验证反查） │
-│    sdlc-test/scripts/verify_dev.py   开发完成验证编排（四件套留档）│
+│    sdlc-test/scripts/verify_dev.py   开发完成验证编排（三件套留档）│
 │    sdlc-gate/scripts/check_trace.py  产物链追溯校验                 │
 │    sdlc-gate/scripts/guard_dev.py    开发放行守卫（ack≠放行）      │
 │    sdlc-guardrails/templates/ hook 段 / pre-commit 模板           │
@@ -82,7 +82,7 @@
 | 评审关口 | 4 子代理 | 2 子代理（数据模型+交叉） | 主会话自查（仍走裁决+放行，保互认链） |
 | 用例生成（按 FR 级） | 全技术 + P0/P1/P2 | P0+P1+闭环不变量 | P0+闭环不变量 |
 | spec 资产化 | 强制 | 默认做 | 跳过 |
-| 开发完成验证（verify_dev） | 全量（+冒烟+回归） | 全量（同 A：+冒烟+回归） | compile+boot |
+| 开发完成验证（verify_dev） | 全量（+冒烟） | 全量（同 A：+冒烟） | compile+boot |
 | **不分级项** | guardrails / config-review / 人工关卡 / check 脚本 / guard_dev 开发放行守卫——任何级全量 | 同左 | 同左 |
 
 分级落库（sdlc-sync v1.3 `risk_tier`）后，按级统计泄漏率即可校准评分卡边界——分级与度量互为配套。
@@ -116,7 +116,7 @@
    child 任务：implement / check 子代理（curate 过的上下文注入）
    → 编码 ·············· 🔒 hook 拦
    → 自检 ·············· 判断类复查
-   → 开发完成验证 ······ verify_dev：compile/boot/冒烟/回归 → 留档（/sdlc-test dev）
+   → 开发完成验证 ······ verify_dev：compile/boot/冒烟 → 留档（/sdlc-test dev）
    → sdlc-test static ·· 代码 ↔ 用例一致性（三态结论；入口反查 verify 留档）
    → exec ·············· 🔒 guard_exec 守卫（关卡1 / 互认 / 开发完成验证 / 资产一致性）
         派发子代理执行 + 回归轮两步（spec 先跑 runner）

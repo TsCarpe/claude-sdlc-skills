@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.19.0 (2026-10-08)
+
+sdlc-test dev 验证去回归环节 + v3.7.2 复盘优化项沉淀。背景：源项目 v3.7.2 dev 验证中，回归环节（mvn test 存量套件）因本地无 Apollo 配置连环缺占位符不可跑，返工三轮后以「通过(人工降级)」收尾——dev 验证的完成口径收敛为 **compile/boot/冒烟三件套**，存量测试回归移交 CI。概念边界红线：exec 阶段回归轮/回归档（Playwright runner 资产：run_regression.sh、spec-guide、round-rules、env-template「回归档」节）全部不动。
+
+- **verify_dev.py**：删「回归/命令」必填前置校验、「回归/超时秒」键校验、regress_to/regress_cmd 读取与步 4 回归执行块；执行范围文案 `compile+boot+冒烟+回归(全量)`→`compile+boot+冒烟(A/B 级)`（C 级分支不动）；docstring 五节→四节、步骤编号 0-6 重排为 0-5、正文步号注释同步；顺带回传 v3.7.2 期间装目录侧热修（带 JSON 体的请求显式补 `Content-Type: application/json`——urllib 默认 form 编码会被 @RequestBody 拒收），仓库与装目录恢复同源
+- **guard_exec.py**：仅 2 处注释措辞（strip_fences docstring 与冒烟计数注释「构建/回归日志」→「构建日志」）；检查 5 逻辑零改动——对执行范围只做 C 级负向校验（`"C 级" in vscope`），新文案天然兼容，实测通过
+- **SKILL.md**：description/DoD 引用/分级措辞/降级边界（四件套→三件套）四处；阶段 1.5 新增**环境三问开场纪律**（服务谁供给 / 已有服务是否加载新代码（进程时间 vs 提交时间、日志含新代码特征为证）/ DDL·token 类操作第一选项请用户出手）——防自作主张起服务或修基建；反合理化计数 12→11 同步
+- **env-template.md**：开发验证档五节→四节（模板删「## 回归」节、说明表删回归命令行、超时覆盖措辞）；同文件「回归档 Playwright runner」节零改动
+- **anti-rationalization.md**：删「占位回归空转」条（其载体回归环节已移除，12→11 条）
+- **smoke-template.md**：填写规则补 4 条坑位（v3.7.2 复盘沉淀）——鉴权文件逐行解析不识别 `#` 注释（注释行含 `：`/`:` 会被当鉴权头送出）；`包含"<文本>"` 勿含引号字符（DSL 分隔符写入即截断）；实参勿用假 id 占位（业务前置校验先于目标逻辑拦截，生成清单时即取真实 id）；「包含」勿选 data/status 等通用键（错误响应同样含这些键，SM-04 假阳性教训）
+- **evals**：eval-8 三处（files 去回归、执行编排去回归步+字段数六→七顺手修正、判负红线删占位回归条）+ README 索引同步
+- **跨 skill 与仓库文档**：sdlc-design design-template/trellis-handoff 四件套→三件套；docs 4 文件 10 处（faq 2 / workflow 3 含 mermaid / large-req-playbook mermaid / sdlc-workflow-landscape 3 / project-setup 五节→四节）+ templates 2 文件 4 处（stage2 ×2、stage3-child ×2）——两处 `·`/`五节` 形态为计划外 grep 补捞（原计划排查范围仅 skill 目录）
+- **源项目收尾**：listen dev.md 删「## 回归」节；三件套重跑 r7 留档「通过(2026-10-08)」机器判定（替代 r4 人工降级形态），guard_exec static 通过且无降级警示；期间三次网络层超时误诊为服务端卡死（jstack 查到一半用户澄清为网络问题），r5（调用姿势错误：未在项目根跑构建）r6（网络超时）两份失败留档按纪律保留
+- **官方 best-practices 对照复查**（platform.claude.com Skill 编写最佳实践，逐清单项核对本批改动）：修 3 处——① 术语冲突：SKILL.md「三件套」两义（L42 等 6 处 intake 三件套 vs 降级边界新改的 dev 验证三件套，原「四件套」时代唯一定义不冲突，改后撞名）→ 降级边界写全「compile/boot/冒烟三件套」；② 脚本把脆弱前提推给调用方（「解决问题而非推给 Claude」违例）：`run_step`/`boot_service` 不传 `cwd`，隐式依赖调用方 shell 恰在项目根——r5 实测踩中（他目录调用 mvn 无 POM 秒败留档）→ 两函数显式传 `cwd=root`，实证从错误目录调用构建正常执行 71s 全绿（r8）；③ 时效性：smoke-template「SM-04 假阳性教训」内部案例编号 →「实测假阳性教训」。其余清单项（description 372 字符/行数 137/一层引用/渐进披露/巫术常量/evals 同批）全过
+- **验证**：全仓（skills+docs+templates+装目录）dev 回归概念 grep 零残留（exec 概念/CHANGELOG 历史记录/声明保留原文的快照除外）；两脚本 py_compile + 实跑通过；仓库与 `~/.claude/skills` diff 一致（除 `__pycache__`）；脱敏红线零命中；`npx skills add --list` 全列；marketplace.json 合法（skill 集合无增删，marketplace 数组不动）
+
 ## v0.18.0 (2026-09-30)
 
 全仓符号体系视觉优化（~40 种符号审计后按「一符号一义 / 色彩语义一致 / 重量分级」三原则收敛），权威版约定见 `docs/workflow.md` §8。改前摸底：核心 15 种符号占 95% 用量，三类缺陷——红色被 🔴/❌/❓ 三义占用（❓ 渲染为红色重 emoji 但语义是中性「信息缺失」）、⏸(14处)与 🔒(34处) 同义两符（example-walkthrough 同文档混用）、三色等级图例只在 intent 的 report-template（design/stage1 模板裸用，违反单独安装自包含）。

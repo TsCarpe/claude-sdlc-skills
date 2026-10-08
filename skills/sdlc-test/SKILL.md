@@ -1,6 +1,6 @@
 ---
 name: sdlc-test
-description: "AI 测试智能体编排：开发完成验证（compile/boot/冒烟/回归）→ 用例生成 → 静态代码一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡（用例审核、报告复验）；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report <需求名>"
+description: "AI 测试智能体编排：开发完成验证（compile/boot/冒烟）→ 用例生成 → 静态代码一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡（用例审核、报告复验）；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report <需求名>"
 ---
 
 # AI 测试智能体
@@ -54,19 +54,21 @@ Cases 进度：
 
 ## 阶段 1.5 dev：开发完成验证
 
-> 开发阶段验「能不能跑」，测试阶段验「跑得对不对」——compile/boot/冒烟/回归是开发的完成定义（DoD），后置到 exec 才发现则修复要换上下文重来。冒烟清单是「计划-验证-执行」的中间产物：agent 推导落盘，脚本确定性校验并执行；复杂业务断言（落库/权限）留 exec 四类证据。
+> 开发阶段验「能不能跑」，测试阶段验「跑得对不对」——compile/boot/冒烟是开发的完成定义（DoD），后置到 exec 才发现则修复要换上下文重来。冒烟清单是「计划-验证-执行」的中间产物：agent 推导落盘，脚本确定性校验并执行；复杂业务断言（落库/权限）留 exec 四类证据。
 
 ```text
 Dev 进度：
+- [ ] 环境三问开场（见下）——服务供给 / 新代码加载 / DB·鉴权通道，避免自作主张起服务或修基建
 - [ ] 读 cases.md 筛 P0/核心链路用例；smoke.md 缺失或口径过期 → 按 [smoke-template.md](references/dev/smoke-template.md) 生成/更新落盘
 - [ ] 运行 `python3 <skill 目录>/scripts/verify_dev.py <项目根> <需求名>`（环境配置按 [env-template.md](references/env-template.md)「开发验证档」）
 - [ ] 失败 → 按留档失败步定向修复，同上下文重跑（新轮次留档）
 ```
 
+- **环境三问（动手前开场纪律）**：① 服务谁供给——已有本地服务（unmanaged 优先，看启动命令与端口）或需验证器起（local）；② 已有服务是否加载新代码——进程启动时间 vs 最近提交时间，或查服务日志含新代码特征（新 SQL 列名/新接口路径）为证；③ DB/鉴权通道——DDL 与 token 类凭据操作第一选项是请用户出手（harness 权限也会拦），非自行提取
 - **smoke.md 重生成口径**：P0/核心用例集合变化，或可适用集合变化（child（任务框架的子任务/切片）交付让「不适用」变可适用）才重生成；用例结果回填不算。清单缺失/断言语法非法/来源引用不在 cases.md → 脚本前置拒（构建前快失败）
-- **分级**：读 cases 头「风险分级」——C 级 compile+boot；A/B 级全量（+冒烟+回归）。启动模式 local | unmanaged（本地起不了服务时 unmanaged 仍是机器验证，非人工声明）
+- **分级**：读 cases 头「风险分级」——C 级 compile+boot；A/B 级全量（+冒烟）。启动模式 local | unmanaged（本地起不了服务时 unmanaged 仍是机器验证，非人工声明）
 - **留档反查**：最新留档头部「验证状态」= 通过才可进 static/exec（guard_exec 检查5，含 HEAD 比对/boot 日志/冒烟条数交叉校验，防伪造留档）；「通过(人工降级,日期)」形态会被显式 ⚠️ 警示
-- **降级边界**：脚本不可得（无 python3）时人工跑四件套，留档头部手写「验证状态：通过(人工降级,日期)」——guard_exec 会警示降级形态
+- **降级边界**：脚本不可得（无 python3）时人工跑 compile/boot/冒烟三件套，留档头部手写「验证状态：通过(人工降级,日期)」——guard_exec 会警示降级形态
 
 ## 阶段 2 static：静态代码检测（前后端）
 
@@ -128,7 +130,7 @@ Exec 进度：
 
 ### 反合理化
 
-高频三条（全表 12 条见 [references/anti-rationalization.md](references/anti-rationalization.md)；exec 派发时全表随 prompt 原文携带）：
+高频三条（全表 11 条见 [references/anti-rationalization.md](references/anti-rationalization.md)；exec 派发时全表随 prompt 原文携带）：
 
 - "console 有 error 但页面表现正常，算通过" → error 是缺陷线索，必查；无法解释就标"疑似"，不判通过
 - "四类证据差一类，其余都对，直接下结论" → 缺一即标"疑似"，证据底线不因多数通过而放松

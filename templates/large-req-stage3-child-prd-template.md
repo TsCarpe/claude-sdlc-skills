@@ -35,10 +35,10 @@
 
 ## 验证命令
 
-开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟/回归按风险分级，命令承载于 `sdlc/env/dev.md`）：
+开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟按风险分级，命令承载于 `sdlc/env/dev.md`）：
 
 - C 级：compile + boot
-- A/B 级：+ 冒烟（smoke.md 核心链路）+ 回归
+- A/B 级：+ 冒烟（smoke.md 核心链路）
 
 ```bash
 <单模块快速自检示例：mvn clean compile -pl <module> -am -DskipTests>

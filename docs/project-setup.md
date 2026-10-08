@@ -98,7 +98,7 @@ sdlc-test 的 spec 资产化与回归轮依赖一套 Playwright runner，全部�
 | `sdlc/env/repos.local.md` | static 首跑引导（gitignore） | 前后端仓库本地路径与索引状态 |
 | `sdlc/env/accounts.local.md` | exec 首跑引导（gitignore） | 角色 → 账号密码 |
 | `sdlc/env/ui-recipe.md` | exec 首条用例侦察后沉淀（入库） | 项目特有 UI 配方：路由清单 / 环境检查恢复动作 / 鉴权直调头 / 项目特有坑；跨需求复用，持续增量回写 |
-| `sdlc/env/dev.md` | dev 首跑引导（入库） | 开发验证档：模式 / 构建 / 启动 / 冒烟 / 回归五节固定（`/sdlc-test dev` 按此编排；C 级最轻可只留构建、启动两节） |
+| `sdlc/env/dev.md` | dev 首跑引导（入库） | 开发验证档：模式 / 构建 / 启动 / 冒烟四节固定（`/sdlc-test dev` 按此编排；C 级最轻可只留构建、启动两节） |
 | `sdlc/env/dev-auth.local.md` | dev 首跑引导（gitignore） | 开发验证冒烟需鉴权时的本机头值供给（鉴权真值只进 local 文件，不入库） |
 
 ## 4. 最小配置阶梯（按需逐级上）

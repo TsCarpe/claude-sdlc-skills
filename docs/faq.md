@@ -53,7 +53,7 @@ A：sdlc-intent（把 PRD 消化成结构化共识）、sdlc-doubt（决策前�
 **Q：任务框架（如 Trellis）/飞书里已经 ack 了设计文档，为什么还不能开发？**
 A：ack 是**流程性定稿信号**（设计「做完了」），不是质量确认（「对不对」）。放行唯一口径 = sdlc-gate 裁决闭环（issues 头部「评审状态=已放行」，含 --release 落改闭环校验全绿）。guard_dev 守卫拦截的正是「ack 被当成放行信号直接开码」——飞书技术文档的评阅是设计产物的下游发布通道（配套规范见 [feishu-tech-review-guide.md](dev-standards-reference/details/feishu-tech-review-guide.md)；产出该文档的 sdlc-doc 为源项目全局 skill，不在本仓），同样不构成放行。时序：确认点② ack（定稿）→ sdlc-gate 评审+裁决 → 放行 → 确认点③ child prd → 开发。
 
-**Q：开发完成验证（compile/boot/冒烟/回归）为什么前置到开发侧，不全留给 sdlc-test？**
+**Q：开发完成验证（compile/boot/冒烟）为什么前置到开发侧，不全留给 sdlc-test？**
 A：静态检查查不了「起不起得来」；开发阶段验证失败在**同一上下文内修复**最便宜，后置到 exec 才发现则要换会话重载全部背景，且整轮测试编排（关卡+环境+派发）报废。业界同构：DoD「code compiles」是开发完成定义、冒烟是进入深度测试的准入门槛而非替代——开发阶段验「能不能跑」，测试阶段验「跑得对不对」。机制：`/sdlc-test dev` 产 verify 留档，static/exec 入口（guard_exec 检查5）反查留档倒逼，漏跑会被测试入口拦下。
 
 **Q：产物为什么都写成 Markdown 文件而不是对话里输出？**
@@ -83,7 +83,7 @@ A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 /
 | fresh-context 子代理 | 无历史会话记忆的独立 AI 实例——对抗式审查的前提，避免被主会话结论带偏 |
 | 关卡1 / 关卡2 | sdlc-test 的两道**人工**关口：用例审核、报告复验（状态持久化在用例文件头部） |
 | 开发放行守卫 | **机器**守卫（guard_dev.py）：开发入口校验 review 最新一份 issues「评审状态=已放行」——ack≠放行。与关卡1/2 是两条轴：机器守卫 vs 人工关口 |
-| 开发完成验证 | **机器**验证（verify_dev.py，/sdlc-test dev）：compile/boot/冒烟/回归按风险分级执行并留档（C 级 compile+boot；A/B 级全量）；static/exec 入口反查留档 |
+| 开发完成验证 | **机器**验证（verify_dev.py，/sdlc-test dev）：compile/boot/冒烟按风险分级执行并留档（C 级 compile+boot；A/B 级全量）；static/exec 入口反查留档 |
 | 冒烟清单 | `sdlc/<需求名>/dev/smoke.md`：agent 从 cases.md P0/核心用例推导落盘的 API 直调清单（四种断言 DSL，计划-验证-执行） |
 | 关卡互认 | sdlc-gate 放行后代改 sdlc-test 关卡1 状态——裁决已覆盖人工用例审核 |
 | RECONCILE 四分类 | 子代理输出的过滤框架：契约误读（不进清单）/ 有效可行动（进）/ 有效权衡（进，标权衡）/ 噪音（不进） |

@@ -55,7 +55,7 @@ def fail(msgs: list[str], hints: list[str] | None = None) -> int:
 
 def strip_fences(text: str) -> str:
     """剥离四反引号围栏块(verify_dev 留档用 ```` 包命令/日志输出尾部,围栏行固定
-    无缩进):围栏内形如 `| SM-xx | … |` 的构建/回归日志引用行不参与留档反查计数。"""
+    无缩进):围栏内形如 `| SM-xx | … |` 的构建日志引用行不参与留档反查计数。"""
     return re.sub(r"(?ms)^````\n.*?\n````$", "", text)
 
 
@@ -175,7 +175,7 @@ def main() -> int:
                     msgs.append("A/B 级冒烟清单缺失：dev/smoke.md 不存在——先跑 /sdlc-test dev 生成")
                 else:
                     # 条目标题口径经 _shared.SM_HEAD，与 verify_dev.parse_smoke 同源（改口径须两侧同步）；
-                    # 留档正文围栏(构建/回归日志输出尾部)内的 `| SM-xx |` 引用行剥离后再计数
+                    # 留档正文围栏(构建日志输出尾部)内的 `| SM-xx |` 引用行剥离后再计数
                     n_smoke = len(_shared.SM_HEAD.findall(
                         smoke.read_text(encoding="utf-8", errors="replace")))
                     n_rows = len(re.findall(r"^\|\s*SM-\d+\s*\|", strip_fences(vtext), re.M))

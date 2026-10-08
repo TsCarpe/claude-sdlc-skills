@@ -85,7 +85,7 @@
 | C1 | 骨架 | — | 无 | 创建：…；他人锚点：… |
 | C2 | … | F03/F04 | C1 | 复用：C1 枚举/常量 |
 
-**每个 child 验证口径（开发完成验证四件套）**：compile/boot/冒烟/回归——命令承载于 `sdlc/env/dev.md`，走 `/sdlc-test dev <需求名>` 留档；对照各 child 技术级验收标准。
+**每个 child 验证口径（开发完成验证三件套）**：compile/boot/冒烟——命令承载于 `sdlc/env/dev.md`，走 `/sdlc-test dev <需求名>` 留档；对照各 child 技术级验收标准。
 
 **7.2 横切功能点核验矩阵**（横切功能点不单独建 child）：
 
@@ -121,7 +121,7 @@
 
 ## 验证方式（每个 child 验证口径与 design.md §7 同源，以 design.md 为权威）
 
-- 每个 child：开发完成验证四件套（compile/boot/冒烟/回归，命令承载于 `sdlc/env/dev.md`，走 `/sdlc-test dev <需求名>` 留档） / 对照技术级验收标准
+- 每个 child：开发完成验证三件套（compile/boot/冒烟，命令承载于 `sdlc/env/dev.md`，走 `/sdlc-test dev <需求名>` 留档） / 对照技术级验收标准
 
 ## 回滚点
 

@@ -25,7 +25,7 @@ flowchart TB
     C2 --> G["sdlc-gate 评审关口<br/>用例与设计并行产出 · 独立推导<br/>逐条裁决 → 放行（guard_dev 拦开发）"]
     G --> S3["第三段 · 逐功能点切片<br/>骨架 child 先行（公共资产）→ 业务 child 逐个放行<br/>产物：child prd（内联瘦身 + 上游注入）"]
     S3 --> C3{"🔒 确认点③<br/>契约符合度 / 注入完整性 / AC 可测性<br/>＋ gate 已放行"}
-    C3 --> DEV["实现 + 质量核验 + 完成验证<br/>（compile/boot/冒烟/回归留档）"]
+    C3 --> DEV["实现 + 质量核验 + 完成验证<br/>（compile/boot/冒烟留档）"]
 
     DEV -->|"局部偏差：child 内记录即改"| S3
     DEV -->|"影响 ER / 契约 / 公共资产：<br/>回写 parent design，仅重审受影响 child（§4）"| S2

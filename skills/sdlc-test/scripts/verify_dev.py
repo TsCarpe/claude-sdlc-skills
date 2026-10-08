@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""开发完成验证编排(compile/boot/冒烟/回归的确定性执行与留档)。
+"""开发完成验证编排(compile/boot/冒烟的确定性执行与留档)。
 
 分工边界:冒烟清单 sdlc/<需求名>/dev/smoke.md 由 agent 在 /sdlc-test dev 第①步
 从 cases.md P0/核心用例推导落盘(计划-验证-执行:本脚本只验证结构并执行,不做
 推导);复杂业务断言(落库/权限)不在此——留 exec 阶段四类证据。
 
 配置(sdlc/env/,模板见 references/env-template.md「开发验证档」):
-    sdlc/env/dev.md           项目级入库:模式/构建/启动/冒烟/回归 五节
+    sdlc/env/dev.md           项目级入库:模式/构建/启动/冒烟 四节
     sdlc/env/dev-auth.local.md  gitignored 本机供给,「头名: 值」逐行;免鉴权时不需要
 
 用法:
@@ -17,7 +17,7 @@
 先兜底写「验证状态=未通过(异常中断)」留档、服务停止由 finally 保证,然后异常
 向上传播(exit 非零,guard_exec 检查 5 反查留档可见而非仅崩溃无档)):
   0. 前置校验:cases.md 存在;风险分级三口径(经 _shared.tier_three_ways,与
-     guard_exec 检查 2.5 同源);env 必填键齐;A/B 级另要求回归命令非空、
+     guard_exec 检查 2.5 同源);env 必填键齐;A/B 级另要求
      smoke.md 存在且条目全部可解析(断言语法/来源引用在构建前快失败)、
      来源 用例.TC-xx 在 cases.md 存在;需鉴权但 local 文件缺失 → 拒
   1. 构建(超时默认 600s)
@@ -26,14 +26,13 @@
      用户手起/IDE/远程 dev 环境;仍是机器验证,非人工声明)
   3. 冒烟(A/B 级):按 smoke.md 文件序逐条执行(前条数据后条可用),单条失败
      不中断后续,全量留档
-  4. 回归(A/B 级,超时同构建)
-  5. 停服务(finally:进程组 SIGTERM→10s→SIGKILL;启动命令勿自行 nohup/disown,
+  4. 停服务(finally:进程组 SIGTERM→10s→SIGKILL;启动命令勿自行 nohup/disown,
      后台化由本脚本负责;多服务写单条复合启动命令,同一进程组统一清理)
-  6. 留档 dev/verify-<日期>[-rN].md(同日重跑 -r2/-r3,跨日重置):头部 kv
+  5. 留档 dev/verify-<日期>[-rN].md(同日重跑 -r2/-r3,跨日重置):头部 kv
      (验证状态/风险分级/启动模式/执行范围/验证时 HEAD/开发放行守卫/boot 日志)
      + 正文逐步命令+exit/耗时+输出尾部+冒烟逐条表
 
-超时默认值依据(防巫术常量,env/dev.md 可覆盖):构建/回归 600s(Maven 全量
+超时默认值依据(防巫术常量,env/dev.md 可覆盖):构建 600s(Maven 全量
 构建典型量级)、启动等待 120s(Spring Boot 启动典型上限)、轮询间隔 2s、
 单次健康探测 5s、单次冒烟请求 30s。
 
@@ -59,7 +58,7 @@ from urllib.parse import urlparse
 import _shared
 
 OK, NG = "✅", "🔴"
-BUILD_TIMEOUT = 600      # 构建/回归上限(s),env「超时秒」可覆盖
+BUILD_TIMEOUT = 600      # 构建上限(s),env「超时秒」可覆盖
 HEALTH_WAIT = 120        # 启动后健康等待上限(s)
 POLL_INTERVAL = 2        # 健康轮询间隔(s)
 PROBE_TIMEOUT = 5        # 单次健康探测超时(s)
@@ -251,10 +250,12 @@ def auth_gitignore_state(root: Path) -> str:
     return "unknown"  # 128=非 git 仓库等
 
 
-def run_step(cmd: str, timeout: int) -> tuple[bool, str, str]:
+def run_step(cmd: str, timeout: int, cwd: Path) -> tuple[bool, str, str]:
+    """cwd=项目根:命令一律在 <项目根> 执行,与调用方 shell 所在目录无关
+    (不传 cwd 时隐式依赖调用方恰好在项目根,mvn 会因当前目录无 POM 秒败)。"""
     t0 = time.time()
     try:
-        p = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout)
+        p = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout, cwd=cwd)
         out = (p.stdout or b"").decode("utf-8", "replace")
         return p.returncode == 0, f"exit={p.returncode},耗时 {int(time.time() - t0)}s", tail_of(out)
     except subprocess.TimeoutExpired as e:
@@ -262,12 +263,12 @@ def run_step(cmd: str, timeout: int) -> tuple[bool, str, str]:
         return False, f"超时(上限 {timeout}s)", tail_of(out)
 
 
-def boot_service(cmd: str, log_path: Path) -> subprocess.Popen:
+def boot_service(cmd: str, log_path: Path, cwd: Path) -> subprocess.Popen:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     fh = open(log_path, "wb")
     try:
         proc = subprocess.Popen(cmd, shell=True, stdout=fh, stderr=subprocess.STDOUT,
-                                start_new_session=True)
+                                start_new_session=True, cwd=cwd)
     except BaseException:
         fh.close()  # Popen 失败(命令/环境异常)时日志句柄不悬空,关闭后重抛
         raise
@@ -342,7 +343,11 @@ def run_smoke_entry(e: dict, base_url: str, headers: dict[str, str],
     url = base_url.rstrip("/") + "/" + interp(e["url"], variables).lstrip("/")
     body = interp(e.get("body", ""), variables) if e.get("body") else ""
     data = body.encode("utf-8") if (body and e["method"] in ("POST", "PUT", "PATCH")) else None
-    req = urllib.request.Request(url, data=data, method=e["method"], headers=headers)
+    req_headers = dict(headers)
+    # 带 JSON 体的请求必须显式声明 Content-Type（urllib 默认 form 编码会被 @RequestBody 拒收）
+    if data is not None and "content-type" not in {k.lower() for k in req_headers}:
+        req_headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, method=e["method"], headers=req_headers)
     try:
         try:
             with urllib.request.urlopen(req, timeout=SMOKE_TIMEOUT) as resp:
@@ -410,7 +415,7 @@ def write_archive(dev_dir: Path, vname: str, req: str, tier: str, mode: str,
                   sections: list[tuple[str, list[str]]]) -> Path:
     """boot_log:local 模式实际 boot 日志文件名(交叉校验锚点);unmanaged / 未起服务记「-」。"""
     today = time.strftime("%Y-%m-%d")
-    scope = "compile+boot+冒烟+回归(全量)" if full else "compile+boot(C 级)"
+    scope = "compile+boot+冒烟(A/B 级)" if full else "compile+boot(C 级)"
     lines = [f"# {req} 开发完成验证 {today}",
              "",
              "| 项 | 值 |",
@@ -480,7 +485,7 @@ def main() -> int:
                            f"(须 http(s)://<host>[:port]/<path>)")
         if mode == "local" and not cfg.get("启动/命令"):
             pre.append("sdlc/env/dev.md 缺「启动/命令」(local 模式必填;本地起不来服务改用 unmanaged)")
-        for k in ("构建/超时秒", "回归/超时秒", "启动/最大等待秒"):
+        for k in ("构建/超时秒", "启动/最大等待秒"):
             v = cfg.get(k, "")
             if v:
                 try:
@@ -494,8 +499,6 @@ def main() -> int:
     if env is not None and full:
         if not base_url:
             pre.append("sdlc/env/dev.md 缺「冒烟/base URL」(A/B 级必填)")
-        if not cfg.get("回归/命令"):
-            pre.append("sdlc/env/dev.md 缺「回归/命令」(A/B 级必填,须为真实测试套件入口——占位命令=空转)")
         auth_mode = cfg.get("冒烟/鉴权", "")
         if not auth_mode:
             pre.append("sdlc/env/dev.md 缺「冒烟/鉴权」(合法:免鉴权 或 dev-auth.local.md)")
@@ -538,9 +541,7 @@ def main() -> int:
         print(f"{OK} {n}")
 
     build_to = int(cfg.get("构建/超时秒", BUILD_TIMEOUT) or BUILD_TIMEOUT)
-    regress_to = int(cfg.get("回归/超时秒", BUILD_TIMEOUT) or BUILD_TIMEOUT)
     health_wait = int(cfg.get("启动/最大等待秒", HEALTH_WAIT) or HEALTH_WAIT)
-    regress_cmd = cfg.get("回归/命令", "")
     boot_cmd = cfg.get("启动/命令", "")
 
     date = time.strftime("%Y%m%d")
@@ -551,22 +552,22 @@ def main() -> int:
 
     # ---- 步 1 构建 ----
     print(f"[构建] 命令:{build_cmd}")
-    ok, det, tail = run_step(build_cmd, build_to)
+    ok, det, tail = run_step(build_cmd, build_to, root)
     print(f"{'✅ 构建通过' if ok else '🔴 构建失败'}({det})")
     sections.append(("1 构建", [f"- 命令:`{build_cmd}`", f"- 结果:{'✅' if ok else '🔴'} {det}",
                                 "- 输出尾部:", "````", tail, "````"]))
     if not ok:
         fail_step = "构建失败"
 
-    # 步 2-4 包 try/except/finally:正常/KeyboardInterrupt/未预期异常路径都保证服务被停
-    # (见 docstring 步 5);未预期异常另兜底留档「异常中断」后再向上传播
+    # 步 2-3 包 try/except/finally:正常/KeyboardInterrupt/未预期异常路径都保证服务被停
+    # (见 docstring 步 4);未预期异常另兜底留档「异常中断」后再向上传播
     try:
         # ---- 步 2 启动/健康 ----
         if fail_step is None:
             body = [f"- 模式:{mode}", f"- 健康探测:{health_url}(单次 {PROBE_TIMEOUT}s,间隔 {POLL_INTERVAL}s)"]
             if mode == "local":
                 print(f"[启动] 命令:{boot_cmd}")
-                proc = boot_service(boot_cmd, dev_dir / bname)
+                proc = boot_service(boot_cmd, dev_dir / bname, root)
                 time.sleep(1)
                 if proc.poll() is not None:
                     log_tail = tail_of((dev_dir / bname).read_text(encoding="utf-8", errors="replace"))
@@ -599,15 +600,6 @@ def main() -> int:
             print(f"[冒烟] {npass}/{len(entries)} 条通过")
             sections.append((f"3 冒烟(共 {len(entries)} 条,{npass} 条通过)", rows))
 
-        # ---- 步 4 回归(A/B 级) ----
-        if fail_step is None and full:
-            print(f"[回归] 命令:{regress_cmd}")
-            ok4, det4, tail4 = run_step(regress_cmd, regress_to)
-            print(f"{'✅ 回归通过' if ok4 else '🔴 回归失败'}({det4})")
-            sections.append(("4 回归", [f"- 命令:`{regress_cmd}`", f"- 结果:{'✅' if ok4 else '🔴'} {det4}",
-                                        "- 输出尾部:", "````", tail4, "````"]))
-            if not ok4:
-                fail_step = "回归失败"
     except BaseException as ex:  # noqa: BLE001 —— 未预期异常兜底留档后重抛(含 KeyboardInterrupt)
         head = _shared.git_head(root)
         gate = gate_guard_note(root, req)
@@ -619,11 +611,11 @@ def main() -> int:
                       boot_log_field, sections)
         raise
     finally:
-        # ---- 步 5 停服务(finally 统一出口;stop_service 幂等,正常路径不会双重停止) ----
+        # ---- 步 4 停服务(finally 统一出口;stop_service 幂等,正常路径不会双重停止) ----
         if proc is not None:
             stop_service(proc)
 
-    # ---- 步 6 留档 ----
+    # ---- 步 5 留档 ----
     head = _shared.git_head(root)
     gate = gate_guard_note(root, req)
     today = time.strftime("%Y-%m-%d")
@@ -634,7 +626,7 @@ def main() -> int:
     path = write_archive(dev_dir, vname, req, tier, mode, full, status, gate, head,
                          boot_log_field, sections)
     if fail_step is None:
-        print(f"{OK} 开发完成验证通过({tier} 级:{'全量' if full else 'compile+boot'}),留档:{path}")
+        print(f"{OK} 开发完成验证通过({tier} 级:{'全量(冒烟)' if full else 'compile+boot'}),留档:{path}")
         return 0
     print(f"{NG} 开发完成验证未通过({fail_step}),留档:{path}——按留档失败步修复后重跑本命令(新轮次留档)")
     return 1

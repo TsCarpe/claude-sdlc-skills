@@ -99,6 +99,6 @@ sdlc-design 产 design.md
 | 接入点 | 行为 |
 |---|---|
 | subtask 开发启动前 | 运行 `python3 <sdlc-gate 安装目录>/scripts/guard_dev.py <项目根> <需求名>`，exit≠0 不进入开发态（命令与三态语义见 sdlc-gate SKILL.md） |
-| subtask 完成声明时 | 开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟/回归四件套，C 级 compile+boot），留档 `sdlc/<需求名>/dev/verify-*.md`；完成后以 dev/ 最新一份留档头部「验证状态＝通过」为准 |
+| subtask 完成声明时 | 开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟三件套，C 级 compile+boot），留档 `sdlc/<需求名>/dev/verify-*.md`；完成后以 dev/ 最新一份留档头部「验证状态＝通过」为准 |
 
 挂接方式（任务启动钩子 / DoD 清单条目）的完整接入表以仓库 `docs/large-req-playbook.md` §7「源项目（Trellis）侧接入点」为权威（同仓安装时可对照；单独安装时按本节行为约定接入即可，两处语义一致）。
