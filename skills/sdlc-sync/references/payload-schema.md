@@ -83,7 +83,7 @@
 ```
 
 - `items[].level`: `red | yellow | blue`
-- `items[].seq` 是平台答复唯一键；重推按 seq 保留平台已答内容
+- `items[].seq` 是平台答复唯一键；重推按 seq 保留平台已答内容（同 seq 同问题文本才携带，P 编号漂移不携带）。**v4 起重推按来源合并**：删机器行（origin=skill/incremental）、保留 local 行（评论升级的 L 系，见平台 v4-8）——`L` 前缀编号由平台分配，skill 清单不携带
 - `items[].theme` **v1.1 起必填**（缺失 400）；取值 = 需求域，与 `audit.items[].group` 同一体系、同一顺序
 - `fr_points[].id` 全局命名空间（`需求.FR-xx`），作为用例追溯外键与表单软校验数据源
 - `fr_points[].group` = 出处分组组头（注册表分组），`source` = 行级出处，`module` = 归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）
@@ -172,6 +172,13 @@
 - `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
 
 ## 历史变更
+
+> v4 变更（平台需求权威化·二期，DESIGN-v4 §6.3/§9）：push-artifacts 的澄清清单从「全量替换」
+> 精确化为「按来源合并」——重推删机器行（origin=`skill`/`incremental`），保留 `local` 行（评论升级
+> 产生的 L 系澄清项，仅人工删）；已答保留规则不变（同 seq 同文本携带）。出参面：澄清项列表
+> （detail `items[]` 与 `/answers`）行增 `origin` 键（`skill`|`incremental`|`local`），P/L 两族呈现
+> 区分；L 系行计入发布守卫的「澄清全处置」。旧 payload 不变（skill 清单不含 L 行，推送行为除
+> local 行幸存外与 v1.x 一致）。
 
 > v1.3 变更（需求风险分级上平台）：建卡与 push-artifacts 的 `digest` 增可选 `risk_tier`（`"A"|"B"|"C"`，来源梳理文档头「风险分级」；命名避开已占用的问题严重度 `level`）；仅需求级，FR 级不上平台。建卡早于定级时以 push-artifacts 携带值为准（后到覆盖，同 `domains[]` 缺省保留语义）。详情返回 `card.riskTier`（平台 v2.1 起）。v1.2 及以前全部字段与红线不变，无 `risk_tier` 即旧行为。
 
