@@ -1,13 +1,23 @@
 ---
 name: sdlc-sync
-description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, test cases) to a team-facing web platform and pulls PM clarification answers back into local markdown files. Bridges the single-developer local workflow with multi-role collaboration: submit creates the requirement card for daily use; push-artifacts / pull-answers / publish / push-cases are local fallback channels for when the platform's online flow (task queue + runner, platform v2.0) is unavailable. Use when the user wants to 推送产物到平台 / 同步到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、推送需求、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|publish|push-cases <需求名>"
+description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases) when the platform is unavailable. The platform is the single source of truth for requirements and artifacts (v4); local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases <需求名>"
 ---
 
 # 产物同步桥（sdlc-sync）
 
-本地 markdown 是**工作权威**（六个 sdlc skill 的消费链不经过平台），平台是**共享权威与交互面**。本 skill 是两者之间唯一的桥：只做搬运与回写，不做任何体检/生成决策。
+**平台是需求与产物的唯一权威**（v4 起正式翻转）：原文块表、质检产物、澄清答复、变更单都在平台；
+本地 markdown 退化为 **skill 过程工作区 / 离线兜底**。本 skill 是两者之间唯一的桥：只做搬运与
+回写，不做任何体检/生成决策。
 
-> **平台 v2.0 起的定位变化（2026-09-20）**：平台已上线「任务队列 + Runner」全流程线上化——体检生成、澄清答复、标准文档发布、用例登记在平台完成（AI 产物走草稿人审两态，`pushArtifacts`/`publish` 守卫自动继承）。本 skill 的 `push-artifacts` / `pull-answers` / `publish` / `push-cases` 降级为**平台不可用时的本地兜底通道**（降级 = v1 全流程可用），`submit` 建卡仍可日常使用。
+> **平台 v4 起的定位变化（需求平台权威化，2026-10-14）**：原文以块表关系化入库（锚点 = 块 ID）、
+> 建卡自动导入、质检纯分析读块模型；已发布需求的变更走**变更单**（draft → confirm → changed →
+> 增量质检合并 → 重新发布），不再开新卡；评论系统上平台（可升级澄清项）。兜底子命令的新守卫面：
+> `push-artifacts` 在 changed 卡收到 409（原文消化走平台增量通道，本地重算需先等回 published）；
+> `publish` 在 changed 卡受**影响面已消化 + 草稿一致性**双重守卫（changed 卡重算在平台完成，
+> 本地合成的文档与平台草稿哈希不一致会被拒）；`pull-answers` 遇 changed 卡建议语：「该卡处于
+> 变更中，重开项以平台为准，本地 digest 请等待增量合并后再拉取（pull-artifacts）」。
+> `pull-artifacts`（新增）：把平台权威的 digest/audit markdown 与答复拉回本地 intake——本地
+> sdlc-design / sdlc-test 兜底链的输入源与平台权威对齐。
 
 ## 前置
 
@@ -22,6 +32,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 | 意图 | 子命令 |
 |---|---|
+| 「拉取产物到本地 / 同步 digest 到本地 / 平台上最新的梳理拉下来」 | pull-artifacts |
 | 「把这个需求发到平台 / PM 要看体检结果」 | push-artifacts |
 | 「拉一下 PM 的答复 / 看看平台上答了没」 | pull-answers |
 | 「澄清完了，发布标准需求文档」 | publish |
@@ -40,7 +51,22 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 `sourceType=text` 时用 `sourceText` 代替 `sourceUrl`。梳理文档头有「风险分级」时建卡带上 `risk_tier`；建卡早于定级时由 push-artifacts 的 `digest.risk_tier` 后到覆盖（契约见 payload-schema v1.3）。返回的 `reqId` 写入 `sdlc/<需求名>/.platform`。
 
-### 2. push-artifacts —— 推体检三件套（需求进入待澄清）
+### 2. pull-artifacts —— 拉平台权威产物到本地（输入源对齐）
+
+`GET /api/requirements/<reqId>`（detail 含 digest/audit 视图与 items 答复）+ `GET …/answers`，
+渲染回本地 `sdlc/<需求名>/intake/`：
+
+1. `intake/digest-<日期>.md`：digest 视图（summary/roles/features/fr_points/flows/states）渲染为
+   markdown（v4 后平台 md 本就是重渲染的展示物——权威在结构行，本地拿到的即平台口径）。
+2. `intake/audit-<日期>.md`：audit 视图（分级计数 + items 明细含 relatedCases）。
+3. `intake/pm-checklist-<日期>.md`：澄清清单与答复（含 origin——P 系机器行 / L 系评论升级行）。
+4. changed 卡（`card.status == "changed"`）：只拉不推——提示「该卡处于变更中，增量合并完成后
+   digest 会刷新，届时重新拉取」。
+
+**红线**：只写 intake（过程工作区），不改 `standard-*.md`（发布物在平台）；本地已有同名文件
+先比对再覆盖，差异向用户报告。
+
+### 3. push-artifacts —— 推体检三件套（需求进入待澄清；changed 卡 409）
 
 读本地 `sdlc/<需求名>/intake/` 三件套，结构化为 payload（字段规范见 [references/payload-schema.md](references/payload-schema.md)）：
 
@@ -56,9 +82,11 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 **红线**：
 - seq 是平台答复的唯一键，重推时不得改变已有问题的 seq；新增允许，删除需用户确认。
 - 平台按 seq 自动保留已答内容（重推不冲掉 PM 人工作答）；本地已有答复照常带上。
+- changed 卡收到 409「全量重推已关闭」= 平台有未消化的变更单——不要重试，提示用户走平台增量
+  通道或放弃变更后再推（rebaseline 变更单例外）。
 - 推送前向用户报告条数与差异：问题数、需求点数、是否刷新快照。
 
-### 3. pull-answers —— 拉回 PM 答复（回写本地）
+### 4. pull-answers —— 拉回 PM 答复（回写本地）
 
 `GET /api/requirements/<reqId>/answers`，回写本地：
 
@@ -67,9 +95,12 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 3. 完成后**提示用户重跑 sdlc-intent** 更新 digest——平台不替代 digest 重算。
 4. **漏检比对（可选，用户同意后做）**：把 PM 答复揭示的问题与体检命中清单对照——答复里出现"体检本该查出而没查出"的口径/缺口时，按 `../sdlc-intent/references/missed-patterns.md` 的条目格式归因记录一条漏检模式（单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条跳过即可）。只记模式不记个案，含真实业务词的内容不入库。
 
+changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中，重开项以平台为准，本地 digest
+请等待增量合并后再拉取（pull-artifacts）」。
+
 **红线**：只回写答复与状态，不改问题原文、不删问题。
 
-### 4. publish —— 发布标准需求文档（重写版）
+### 5. publish —— 发布标准需求文档（重写版；changed 卡双重守卫）
 
 仅当平台显示全部问题已答复（`answered == totalQ`）：
 
@@ -81,7 +112,7 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 **红线**：发布是终态动作（平台锁定答复、拒绝产物重推、快照冻结），必须用户显式确认；合成只整合不发明——发现的空白进遗留假设，不得静默决策。
 
-### 5. push-cases —— 推测试用例登记表
+### 6. push-cases —— 推测试用例登记表
 
 读 `sdlc/<需求名>/test/cases.md`：
 
@@ -111,3 +142,13 @@ description: "Syncs local SDLC artifacts (requirement digest/audit/checklist, te
 
 - 上游：sdlc-intent（三件套）、sdlc-test（cases.md）
 - 横切定位：产物出口/入口，与 guardrails 同属横切层；平台不可用时本地工作流完整可用（降级 = 现状）
+
+## 定位变化历史（归档，现行行为见顶部）
+
+- **v1（2026-09 初）**：本地 md 工作权威，平台是共享面——push → 澄清 → pull-answers → 本地
+  重算 digest → 再 push 的双向回环；六个 skill 的本地读写路径不经过平台。
+- **v2.0（2026-09-20）**：平台上线任务队列 + Runner 全流程线上化（体检/答复/发布/用例在平台完成，
+  AI 产物草稿人审两态）；push/pull/publish/push-cases 降级为平台不可用时的本地兜底通道。
+- **v4（2026-10-14，现行）**：平台唯一权威正式翻转——原文块表关系化（锚点即主键）、变更单
+  （draft→confirm→changed→增量合并→重新发布）、评论系统（L 系升级）、本地 md = 过程工作区/
+  离线兜底；新增 pull-artifacts 使本地兜底链输入源与平台权威对齐。
