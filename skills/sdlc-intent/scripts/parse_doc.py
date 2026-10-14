@@ -10,6 +10,9 @@
   - 媒体（图片/附件/画板缩略图）经 lark-cli docs +media-download 落盘，mediaId=内容哈希
   - 评论：宿主块 comment-refs="cN" + reference_map.comments[cN].data 完整评论串 → comment 块
   - 内容守恒自检（conservation-v1，v0.5）：解析产物与原文字符流对账，失败 exit 2 不落盘
+  - 退出码约定：0 成功 / 1 媒体下载失败（产物照常落盘）/ 2 守恒自检失败（不落盘）/
+    3 用法错误（argparse 默认 error 亦 exit 2、与守恒失败撞码，故子类覆写分离——见 _ArgParser；
+    消费方 runner.mjs / prompts.py 的码表已同步补 exit 3）
 
 用法：
   parse_doc.py --xml content.xml --refmap refmap.json --out doc.json \
@@ -938,8 +941,19 @@ def self_test():
 
 
 # ---------------------------------------------------------------- main
+class _ArgParser(argparse.ArgumentParser):
+    """用法错误 exit 3——argparse 默认 error() 同样 exit 2，与守恒自检失败（exit 2）撞码，
+    消费方按码路由会把用法错误误分类为守恒失败。退出码约定见文件头：
+    0 成功 / 1 媒体下载失败 / 2 守恒失败 / 3 用法错误。"""
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(3, f"{self.prog}: error: {message}\n"
+                    "（exit 3 = 用法错误；退出码约定 0 成功/1 媒体下载失败/2 守恒失败/3 用法错误）\n")
+
+
 def main():
-    ap = argparse.ArgumentParser()
+    ap = _ArgParser()  # 用法错误 exit 3（与守恒失败 exit 2 分离，码表见文件头）
     ap.add_argument("--xml", help="DocxXML content（jq -r '.data.document.content' 的产物）")
     ap.add_argument("--refmap", help="reference_map.comments JSON 文件")
     ap.add_argument("--md", help="纯 markdown 回退模式")
@@ -979,7 +993,8 @@ def main():
 
     media_list = list(p.media.values())
 
-    # 守恒自检（第一道门）：失败 exit 2 且不写 --out（与媒体下载失败 exit 1 产物照常落盘区分）
+    # 守恒自检（第一道门）：失败 exit 2 且不写 --out（退出码约定：0 成功 / 1 媒体下载失败——
+    # 产物照常落盘 / 2 守恒失败——不落盘 / 3 用法错误——_ArgParser，与守恒失败撞码已分离）
     if md_mode:
         guard = {"algo": "markdown-fallback"}
     else:

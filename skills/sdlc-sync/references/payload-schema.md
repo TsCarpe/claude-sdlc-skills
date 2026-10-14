@@ -84,7 +84,7 @@
 ```
 
 - `items[].level`: `red | yellow | blue`
-- `items[].seq` 是平台答复唯一键；重推按 seq 保留平台已答内容（同 seq 同问题文本才携带，P 编号漂移不携带）。**v4 起重推按来源合并**：删机器行（origin=skill/incremental）、保留 local 行（评论升级的 L 系，见平台 v4-8）——`L` 前缀编号由平台分配，skill 清单不携带
+- `items[].seq` 是平台答复唯一键；平台校验 `[A-Za-z0-9._-]{1,32}`（fullmatch，非法 400——seq 进 REST 路径段），且 (req_id, seq) 唯一（payload 内 seq 重复 400）；重推按 seq 保留平台已答内容（同 seq 同问题文本才携带，P 编号漂移不携带）。**v4 起重推按来源合并**：删机器行（origin=skill/incremental）、保留 local 行（评论升级的 L 系，见平台 v4-8）——`L` 前缀编号由平台分配，skill 清单不携带
 - `items[].theme` **v1.1 起必填**（缺失 400）；取值 = 需求域，与 `audit.items[].group` 同一体系、同一顺序
 - `fr_points[].id` 全局命名空间（`需求.FR-xx`），作为用例追溯外键与表单软校验数据源
 - `fr_points[].group` = 出处分组组头（注册表分组），`source` = 行级出处，`module` = 归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）
@@ -96,8 +96,9 @@
 - `doc`（v1.2 可选顶层，v1.5 增 `guard`）：`{blocks,media,source,generator,guard}`，由 sdlc-intent 的 parse_doc.py（≥0.4）产出、顶层原样透传（guard 不得手工增删改）；推送前需先完成媒体上传（见下两节）。**仅用于外部导入**（sdlc-sync 首推）；质检/增量质检 payload **不含 doc**——原文块表权威已落库，草稿采纳时平台剥除 doc 透传（带 guard 的外部导入走守恒终检，回环数据不落 artifact）
 - `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）
 - 副作用：状态 → `clarifying`；重复推送 = 覆盖（version+1）；`published` 后拒绝（快照随之冻结）
+- **changed 卡行为**：409「该需求处于变更中（changed），全量重推已关闭」——已发布需求的原文消化走平台增量通道（变更单 confirm → 增量质检合并 → 重新发布回 published 后全量通道重开；全量重推既会隐式吞掉 changed 态、又会按来源合并删掉增量接编的已答澄清项）；rebaseline 变更单例外，单放行一次
 - 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N}`
-- `missingMedia` = 引用了未上传媒体 id 的**条数**（int 计数，非媒体 id 列表）；**v1.5 起阻断**：missingMedia>0 → 409，doc 不落库（媒体须全部上传成功后再推）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
+- `missingMedia` 字段保留仅为出参形状兼容，**v1.5 阻断语义下成功响应恒为 0**——媒体缺失即 409 拒收（缺失计数与前若干个 mediaId 见错误文案），doc 不落库，不再有宽松计数落库（媒体须全部上传成功后再推）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
 
 ## doc.guard 内容守恒契约（v1.5）
 
@@ -131,7 +132,7 @@
 
 - body = 文件 raw bytes；query `name=<文件名>`、`mediaId=<doc.media[].id>`
 - 头 `X-Media-Mime` 传 MIME 类型
-- mediaId 必须与 doc.media[].id 一致；**须在推 artifacts（带 doc）之前完成全部上传**，未上传成功的条数以返回 `missingMedia`（int 计数）回传；v1.5 起 missingMedia>0 平台直接 409 拒收 doc（见上节）
+- mediaId 必须与 doc.media[].id 一致；**须在推 artifacts（带 doc）之前完成全部上传**——媒体未传齐时推 artifacts 直接 409 拒收（错误文案含缺失计数与前若干个 mediaId），出参 `missingMedia` 仅为形状兼容保留、成功响应恒为 0（v1.5 阻断语义，见 artifacts 节）
 
 ## GET /api/requirements/{id}/answers —— 拉答复
 
@@ -139,15 +140,25 @@
 
 ```json
 [
-  {"seq":"P19","level":"red","theme":"修改比赛","question":"…","answer":"允许随时修改…","answeredAt":"2026-09-18 10:00:00"}
+  {"seq":"P19","level":"red","theme":"修改比赛","question":"…","answer":"允许随时修改…","answeredAt":"2026-09-18 10:00:00",
+   "status":"answered","note":"","origin":"skill","srcCommentId":null}
 ]
 ```
 
+- `status`：处置状态 `pending | answered | rejected | deferred`（answered 计数口径 = 已处置，含驳回/挂起）
+- `note`：驳回/挂起理由（空串 = 无）
+- `origin`：`skill | incremental`（机器行，重推按来源合并删除）| `local`（评论升级的 L 系，仅人工删）
+- `srcCommentId`：评论升级回链（该 L 系行由哪条评论升级而来，非升级行为 `null`）
+
 含未答复条目（`answer` 为空串），sync 自行筛选。
 
-## PUT /api/requirements/{id}/answers/{seq} —— 平台侧作答（前端用）
+changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + 新增项），但消费方应提示：重开项以平台为准，本地 digest 待平台增量合并后再拉取——合并前本地 digest 与平台口径不一致。
 
-`{"answer":"…"}`；空串 = 撤销答复。仅 `clarifying` 状态可用。
+## PUT /api/requirements/{id}/answers/{seq} —— 平台侧处置（作答/驳回/挂起/重开，前端用）
+
+`{"answer":"…","status":"rejected|deferred|pending","note":"驳回必填理由"}`；`answer` 空串 = 撤销答复；`status` 缺省即作答（answered），`rejected`/`deferred` = 驳回/挂起（驳回必须带 `note`），`pending` = 显式重开（answer 保留）。
+
+状态守卫（v4-15 起）：`clarifying` / `changed` 可用（changed 只面对重开 + 新增项，未受影响项保留已答）；`published` 卡仅评论升级的 L 系（`origin=local`）行可处置（升级不出死巷，机器行维持终态锁定）；其余状态 409。
 
 ## POST /api/requirements/{id}/publish —— 发布
 
@@ -156,7 +167,8 @@
 ```
 
 - **v1.1 语义：重写版**（合成规范见 [standard-doc-spec.md](standard-doc-spec.md)）——**以原始需求全文快照为底稿**，逐条消化体检定论与已答复澄清结论，整合出完整可用的需求定稿：元信息头（编号/迭代/合成时间/质检依据快照时间/答复进度）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案处 + 废弃条款删除线说明 + ⚠️ 假设口径，逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录：澄清结论表（裁决记录）。目标：开发/AI 只读这一份文档即可获得需求全貌、边界与逻辑，无需回飞书。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台自动链接化）
-- payload 形状不变；仅 `clarifying` 且全部问题已答复；否则 400
+- payload 形状不变；`clarifying`（须至少一问且全部已处置：答复/驳回/挂起）或 `changed`（全部已处置；0 问 = 纯 digest/FR 变更可发布）状态可用，否则 400/409
+- **changed 卡双重守卫**（v4-15 起，仅 changed 分支；clarifying 分支零新增校验）：①**影响面已消化**——不存在「影响面 digest/FR 非空且未合并」的 confirmed 变更单，否则 409「变更单影响面未消化（先完成增量质检与合并）」；②**草稿一致（哈希比对）**——提交的 `standardMd` 须与平台 standard 草稿 sha256 一致，否则 409「发布内容与最新草稿不符」；changed 发布前必须先经平台重合成生成 standard 草稿（堵旧草稿趁增量刚合并发布过时文档）
 - 副作用：状态 → `published`（终态，答复锁定、产物拒绝重推）
 
 ## POST /api/cases —— 用例批量 upsert
@@ -215,4 +227,4 @@
 
 > v1.2 变更（原文预处理与块级引用）：push-artifacts 顶层新增可选 `doc`（原文块结构，由 sdlc-intent 的 parse_doc.py 产出）；`fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（飞书原生块 ID，非空时前端按 id 直达原文，缺省回退 needle 文本定位）；新增媒体上传端点 `POST /api/requirements/{id}/media?name=x&mediaId=m-xx`（raw bytes，头 `X-Media-Mime`；mediaId 须与 doc.media[].id 一致，需在推 doc 前完成上传）。v1.1 全部字段与红线不变，v1/v1.1 payload 依旧兼容（无 doc/anchor 即旧行为）。
 
-> v1.1 变更（全程可追溯，REQ/DESIGN 见 sdlc-platform 仓 docs/）：push-artifacts 顶层新增 `snapshot`/`domains`；`fr_points[]` 增 `source/group/module`；`features[]` 增 `src`；`audit.items[]` 增 `group/quote`；澄清 `items[]` 增 `quote` 且 **`theme` 升为必填**；push-cases `items[]` 增 `verifyRefs/defectRefs`；publish 的 `standardMd` 语义变重写版（payload 形状不变）。除注明必填外全部可选，旧 v1 payload 中新字段缺省即为空。
+> v1.1 变更（全程可追溯，REQ/DESIGN 见 sdlc-platform 仓 docs/——旧仓，历史归档；现行设计文档在 sdlc-platform-server 仓 docs/）：push-artifacts 顶层新增 `snapshot`/`domains`；`fr_points[]` 增 `source/group/module`；`features[]` 增 `src`；`audit.items[]` 增 `group/quote`；澄清 `items[]` 增 `quote` 且 **`theme` 升为必填**；push-cases `items[]` 增 `verifyRefs/defectRefs`；publish 的 `standardMd` 语义变重写版（payload 形状不变）。除注明必填外全部可选，旧 v1 payload 中新字段缺省即为空。

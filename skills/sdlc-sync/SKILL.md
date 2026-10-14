@@ -24,7 +24,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8080`
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
 - 需求对应关系记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001"}`），首次 push 后写入
-- 平台本体与验收脚本在独立仓库 `~/IdeaProjects/sdlc-platform/`（连接拒绝时先确认服务已启动：`scripts/dev.sh`）
+- 平台本体与验收脚本在独立仓库 `~/IdeaProjects/sdlc-platform-server/`（连接拒绝时先确认服务已启动：`scripts/dev.sh`）
 
 ## 选择子命令
 
@@ -134,7 +134,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 | 症状 | 处置 |
 |---|---|
-| 连接拒绝 | 平台未启动：sdlc-platform 仓库 `scripts/dev.sh` |
+| 连接拒绝 | 平台未启动：sdlc-platform-server 仓库 `scripts/dev.sh` |
 | 404 需求不存在 | `.platform` 里 reqId 错误或卡片被删，向用户确认 |
 | 409 版本冲突 | 展示 conflicts 明细，等用户裁决 |
 | 401 | 平台启用了 X-Token（write-token），向用户要 token 并加请求头 |
