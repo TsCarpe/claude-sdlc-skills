@@ -2,7 +2,7 @@
 
 ## v0.20.0 (2026-10-14)
 
-sdlc-intent parse_doc 0.4：修 4 类静默内容丢失 + 内置内容守恒自检门（conservation-v1），sdlc-sync 契约同步 guard 字段（v1.5）。背景：REQ-2026-1062 的 source_import 暴露真实飞书文档解析丢内容——分栏 grid/column 内整棵块丢失（两张 H5 原型图）、含图单元格夹注文本被弃（原型链接行）、li 裸文本前缀丢失（「活动链接：」「生效范围：」等，污染下游质检条款）、图 caption 未读；同步链路纯确定性解析无 LLM 兜底，丢失即静默进平台。
+sdlc-intent parse_doc 0.4→0.5：修 4 类静默内容丢失 + 内置内容守恒自检门（conservation-v1）+ 表格层级还原（表头推断/内容格拆段/行内子块），sdlc-sync 契约同步 guard 字段（v1.5）。背景：REQ-2026-1062 的 source_import 暴露真实飞书文档解析丢内容——分栏 grid/column 内整棵块丢失（两张 H5 原型图）、含图单元格夹注文本被弃（原型链接行）、li 裸文本前缀丢失（「活动链接：」「生效范围：」等，污染下游质检条款）、图 caption 未读；同步链路纯确定性解析无 LLM 兜底，丢失即静默进平台。
 
 - **sdlc-intent/scripts/parse_doc.py（0.3 → 0.4）**：
   - 修 ① `parse_table`：单元格内嵌子块提取改为 `grid`/`column` 递归展平 + `dispatch` 通用分发（列内 p/hN/table 均可成块，挂行块 parent）；② `cell_direct_text`：删「cell 含图即弃全部直接文本」，非 KEEP 子元素文本全保留，段落连接符空格 → `\n`（恢复 PC端/H5端 分段，前端 DocBlock.vue 按 `\n` 分段渲染）；③ `walk_list`：li 裸文本直接收（`li_inline_text`，与 inline_text 同构无缝拼接，保留 b→\*\*/del→~~/cite→@/br→\\n 规则），删 `inline_text(li)` fallback（嵌套子列表不再折进父 li 双计），纯子列表 li 仍发 `text:""` 空块保锚点；④ `emit_image`：读 `caption` 属性（strip 尾部 `&#xA;`）写入 image 块
@@ -16,6 +16,11 @@ sdlc-intent parse_doc 0.4：修 4 类静默内容丢失 + 内置内容守恒自�
 - **sdlc-intent/evals/eval-5-doc-pipeline.md**：增守恒断言条目（self-test 通过、guard 字段存在、exit 2 不落盘不回传、盲区已知）
 - **CI（.github/workflows/validate.yml）**：py_compile 后新增一步跑 `parse_doc.py --self-test`
 - **验证**：`--self-test` exit 0（12 块/3 媒体 fixture 全断言过）；真实文档（V3.7.3 跨校区教研）离线回归 exit 0——media 7 张含 grid 内两 token、活动链接/生效范围前缀/原型链接/caption/`\n` 分段全部命中、guard=conservation-v1；变异验证：0.3 解析行为跑原文被守恒门抓住（文本差 164 字符 + mediaTokens 缺两图，对应 exit 2 不落盘）；对称删输入 grid 段后两侧同变、守恒正确通过（守恒门抓解析丢失，不误报输入变化）
+- **0.5 增量（表格层级还原）**：
+  - **sdlc-intent/scripts/parse_doc.py（0.4 → 0.5）**：① 表头推断——thead 优先；无 thead 表行数 ≥2（扣除表头后仍剩 ≥1 数据行，单行表永不判）且首行每格「非空、单段无换行、≤30 字、非纯数字、无 KEEP 块级嵌套」→ 判为表头：文本进各行 `head`、该行不成数据块（仍消耗一次合成 ID，保数据行 `x-` 编号不漂；首行纯数字序号不判——数据行常见此形态）；② 内容格拆段——多段落/含列表图片的格 `cells` 存空串 `""`（与列数等长），文本由行内子块承载（挪格不挪字符，守恒指纹不变）；③ 行内子块——内容格逐段发 `paragraph`（可选 `subheading:true`=原文整段粗体、`cell:<列下标 int>`）挂 table-row 下（parent=行块 id、紧随行块），list-item/image 等保持原类型同带 `cell` 戳；列表一律挂行块不挂段落（平台编辑面「行内子块紧随其行」拓扑约束，从属由前端按块序相邻做视觉挂靠）；行内段落子块用 p 原生 ID（锚点直达）；④ 守恒门原文侧排除无 thead 表推断表头行子树（判定与解析器同函数 `_table_header`，双侧确定性）
+  - **sdlc-intent/references/doc-pipeline.md**：§3 守恒节补表头推断与推断行双侧排除、产物侧口径（cells 含内容格空串/head 不收）；§4 块模型补 0.5 表格语义与行内子块说明；控制台输出行说明更新
+  - **sdlc-sync/references/payload-schema.md（v1.5 内）**：guard 归一化伪码同步 ≥0.5 口径（原文侧排除推断表头行、产物侧 cells 含空串）
+  - **self-test fixture 扩表格用例**：thead 与推断表头对称排除、内容格拆段/subheading/行内列表/空段丢弃/尾随空段标量逐项断言
 
 ## v0.19.0 (2026-10-08)
 

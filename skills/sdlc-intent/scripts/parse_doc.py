@@ -9,7 +9,7 @@
   - 结构切分纯确定性（html.parser），无 LLM 参与
   - 媒体（图片/附件/画板缩略图）经 lark-cli docs +media-download 落盘，mediaId=内容哈希
   - 评论：宿主块 comment-refs="cN" + reference_map.comments[cN].data 完整评论串 → comment 块
-  - 内容守恒自检（conservation-v1，v0.4）：解析产物与原文字符流对账，失败 exit 2 不落盘
+  - 内容守恒自检（conservation-v1，v0.5）：解析产物与原文字符流对账，失败 exit 2 不落盘
 
 用法：
   parse_doc.py --xml content.xml --refmap refmap.json --out doc.json \
@@ -30,7 +30,7 @@ from collections import Counter
 from html import unescape
 from html.parser import HTMLParser
 
-GENERATOR = "sdlc-intent/parse_doc.py 0.4"
+GENERATOR = "sdlc-intent/parse_doc.py 0.5"
 VOID_TAGS = {"img", "source", "col", "br", "hr", "colgroup"}
 # 单元格内由子块承载的结构（文本不进 cells，防双计）：list/图/附件/画板 + 分栏容器 + 嵌套表
 KEEP_IN_TABLE_CELL = {"ol", "ul", "img", "figure", "whiteboard", "grid", "column", "table"}
@@ -137,24 +137,74 @@ def plain_text(node):
 # 守恒契约（双仓共享，平台侧落库终检复算同口径）：
 #   归一化 = 字符流剔除 * ~ 与全部空白 → 排序 → sha256（字符多重集合的规范指纹，顺序无关）
 #   原文侧 = 树上全部 text 节点 + cite 展开（_cite_name 同款）+ img@caption（strip；figure/source/
-#            whiteboard 无 caption 不收）+ 排除 thead 子树
+#            whiteboard 无 caption 不收）+ 排除 thead 子树与无 thead 表的推断表头行
+#            （_table_header 判定，与产物侧进 head 不收对称）
 #   产物侧 = 全部块 text、cells 全列、image 块 caption；comment 块（来自 refmap，原文无正文）与
 #            table-row 的 head（每行重复挂载，收则多重计数）不收；path/rowLabel/ordinal/marker/
 #            media name/alt 不收
 #   agent 门 = textSha 相等 + mediaTokens 与产物 media[].token 双向相等；不查 media status
 #   （离线免 --download 跑时 status 恒 pending）；media status 全 ok 由平台落库终检把关
 #   守恒盲区（双侧恒 0 或对称排除，声明而非缺陷）：评论内容（thread/quote 来自 refmap）、
-#   字面 * ~ 字符、thead/head 文本、media name/alt
+#   字面 * ~ 字符、thead/head 文本（含推断表头行）、media name/alt
 CONSERVATION_ALGO = "conservation-v1"
+
+
+# ---- table header inference（parse_table 与 source_text_stream 双侧共用，保证守恒对称）
+def _has_keep_descendant(node):
+    """子树内是否含 KEEP 块级后代（ol/ul/img/figure/whiteboard/grid/column/嵌套 table）"""
+    for c in node.children:
+        if c.tag in KEEP_IN_TABLE_CELL or _has_keep_descendant(c):
+            return True
+    return False
+
+
+def _cell_is_header_like(td):
+    """表头格特征（纯结构驱动，不过拟合模板）：plain_text 非空、单一文本段（无 \\n，即
+    cell_direct_text 不分段）、≤30 字、非纯数字（数据行常见 1/2/3 序号）、子树无 KEEP 后代"""
+    txt = plain_text(td)
+    if not txt or len(txt) > 30 or re.fullmatch(r"\d+", txt):
+        return False
+    if "\n" in DocParser.cell_direct_text(td):
+        return False
+    return not _has_keep_descendant(td)
+
+
+def _table_header(table):
+    """表头推断：thead 有 tr → (head, None)（thead 子树由调用方按既有规则跳过）；
+    无 thead 且 tbody 行数 ≥2（首行作表头后仍至少 1 数据行）、首行每个 td/th 都
+    header-like → (首行文本列表, 首行 tr)；否则 ([], None)。
+    colspan/rowspan 维持既有行为：无视（doc-pipeline.md 声明不处理）"""
+    thead = next((c for c in table.children if c.tag == "thead"), None)
+    if thead is not None:
+        tr = next((c for c in thead.children if c.tag == "tr"), None)
+        if tr is not None:
+            return [plain_text(th) for th in tr.children if th.tag in ("th", "td")], None
+    body = next((c for c in table.children if c.tag == "tbody"), table)
+    rows = [c for c in body.children if c.tag == "tr"]
+    if len(rows) >= 2:
+        first = [c for c in rows[0].children if c.tag in ("td", "th")]
+        if first and all(_cell_is_header_like(td) for td in first):
+            return [plain_text(td) for td in first], rows[0]
+    return [], None
 
 
 def source_text_stream(root):
     """原文侧字符流（见上方契约注释）"""
     buf = []
 
-    def walk(n):
+    def walk(n, skip=None):
         if n.tag == "thead":
             return  # 与产物侧不收 head 对称排除
+        if n is skip:
+            return  # 无 thead 表的推断表头行：与产物侧进 head 不收对称排除
+        if n.tag == "table":
+            # 推断表头行子树整体排除（_table_header 与 parse_table 同源，双侧确定性）
+            _, header_tr = _table_header(n)
+            if n.text:
+                buf.append(n.text)
+            for c in n.children:
+                walk(c, header_tr)
+            return
         if n.tag == "cite":
             buf.append(_cite_name(n.attrs))
             return  # 名字来自属性；cite 子树不收（与 inline_text 同款）
@@ -164,7 +214,7 @@ def source_text_stream(root):
         if n.text:
             buf.append(n.text)
         for c in n.children:
-            walk(c)
+            walk(c, skip)
 
     walk(root)
     return "".join(buf)
@@ -276,12 +326,11 @@ class DocParser:
         return " › ".join(segs)
 
     # ---- top-level walk
-    def walk(self, node, parent_id=None, in_table_cell=False, marker_chain=()):
+    def walk(self, node, parent_id=None, marker_chain=()):
         for c in node.children:
-            self.dispatch(c, parent_id=parent_id, in_table_cell=in_table_cell,
-                          marker_chain=marker_chain)
+            self.dispatch(c, parent_id=parent_id, marker_chain=marker_chain)
 
-    def dispatch(self, node, parent_id=None, in_table_cell=False, marker_chain=()):
+    def dispatch(self, node, parent_id=None, marker_chain=()):
         tag = node.tag
         if tag in ("title",):
             self.emit({"id": self.block_id(node) or self.new_id(), "type": "title",
@@ -328,12 +377,10 @@ class DocParser:
             # 容器/表格内部细节由专门逻辑处理；此处兜底递归
             if tag in ("td", "th", "tr", "li", "thead", "tbody"):
                 return  # 已由 parse_table / walk_list 处理
-            self.walk(node, parent_id=parent_id, in_table_cell=in_table_cell,
-                      marker_chain=marker_chain)
+            self.walk(node, parent_id=parent_id, marker_chain=marker_chain)
             return
         # 未知标签：递归兜底
-        self.walk(node, parent_id=parent_id, in_table_cell=in_table_cell,
-                  marker_chain=marker_chain)
+        self.walk(node, parent_id=parent_id, marker_chain=marker_chain)
 
     # ---- lists
     @staticmethod
@@ -407,27 +454,112 @@ class DocParser:
     @staticmethod
     def _cell_subblocks(td):
         """单元格内嵌块级子元素：grid/column 递归展平（容器不自身成块，列内 p/hN/table 走通用
-        dispatch）；KEEP 白名单成员由子块承载；其余（p/内联）文本走 cell_direct_text，不发块"""
+        dispatch）；KEEP 白名单成员由子块承载；其余（p/内联）文本走 cell_direct_text，不发块。
+        v0.5：parse_table 不再逐格分发，仅被 _is_scalar_cell 复用（展平后有无 KEEP 子块）"""
         for c in td.children:
             if c.tag in ("grid", "column"):
                 yield from DocParser._cell_subblocks(c)
             elif c.tag in KEEP_IN_TABLE_CELL:
                 yield c
 
+    @staticmethod
+    def _cell_children_flat(td):
+        """单元格直接子元素视图：grid/column 递归展平（容器自身透明，不算子元素）"""
+        for c in td.children:
+            if c.tag in ("grid", "column"):
+                yield from DocParser._cell_children_flat(c)
+            else:
+                yield c
+
+    @staticmethod
+    def _keep_descendants(node):
+        """子树内顶层 KEEP 成员（不钻入 KEEP 子树——dispatch 已处理其内部，防双发）"""
+        for c in node.children:
+            if c.tag in KEEP_IN_TABLE_CELL:
+                yield c
+            else:
+                yield from DocParser._keep_descendants(c)
+
+    @staticmethod
+    def _whole_bold(p):
+        """整段粗体：唯一子元素是单个 <b>、b 前后无裸文本（HTMLParser 把裸文本聚合进
+        p.text，存在性可判）、b 文本非空 → 该段是小标题"""
+        if len(p.children) != 1 or p.children[0].tag != "b":
+            return False
+        if (p.text or "").strip():
+            return False
+        return bool(plain_text(p.children[0]))
+
+    @staticmethod
+    def _is_scalar_cell(td):
+        """标量格：展平 grid/column 后无 KEEP 子块、有效子元素 ≤1（有效 = 非 KEEP 且
+        inline_text 非空；空 p/span 计 0，与空段丢弃同口径——飞书 cell 惯有尾随空段
+        `<td><p>P0</p><p/></td>` 不误判内容格）、直接文本 ≤120 字。
+        标量 → 文本进 cells；否则内容格（cells 置空串，子块树承载）"""
+        if next(DocParser._cell_subblocks(td), None) is not None:
+            return False
+        effective = sum(1 for c in DocParser._cell_children_flat(td) if inline_text(c))
+        if effective > 1:
+            return False
+        return len(DocParser.cell_direct_text(td)) <= 120
+
+    def _emit_cell_paragraph(self, p, row_id):
+        """单元格内段落：空文本且无 KEEP 后代 → 丢弃；空文本但带 KEEP 后代 → 只承载
+        KEEP 成员；非空 → paragraph 子块（原生 id 直用，整段粗体标 subheading）"""
+        text = inline_text(p)
+        if not text:
+            for k in self._keep_descendants(p):
+                self.dispatch(k, parent_id=row_id)
+            return
+        block = {"id": self.block_id(p) or self.new_id(), "type": "paragraph",
+                 "text": text, "path": self.path_of(), "parent": row_id,
+                 "comments": p.attrs.get("comment-refs")}
+        if self._whole_bold(p):
+            block["subheading"] = True
+        self.emit(block)
+
+    def _emit_cell_tree(self, td, row_id):
+        """内容格子块树（仅内容格调用，与 cells 置空互斥防双计）：裸文本/段落逐个成块、
+        ol/ul 与 KEEP 成员挂行块（li.parent = 行块 id——平台「行内子块紧随其行」约束所限，
+        从属还原交前端渲染层）、空段丢弃；grid/column 容器透明展平；其余非 KEEP 子元素
+        （b/blockquote/div 等）折为 paragraph。cell 列下标戳由 parse_table 统一补"""
+        if td.text and td.text.strip():
+            self.emit({"id": self.new_id(), "type": "paragraph",
+                       "text": td.text.strip(), "path": self.path_of(),
+                       "parent": row_id, "comments": None})
+        for c in td.children:
+            if c.tag in ("grid", "column"):
+                self._emit_cell_tree(c, row_id)
+            elif c.tag == "p":
+                self._emit_cell_paragraph(c, row_id)
+            elif c.tag in ("ol", "ul"):
+                self.walk_list(c, parent_id=row_id)
+            elif c.tag in KEEP_IN_TABLE_CELL:
+                self.dispatch(c, parent_id=row_id)
+            else:
+                t = inline_text(c)
+                if t:
+                    self.emit({"id": self.block_id(c) or self.new_id(),
+                               "type": "paragraph", "text": t, "path": self.path_of(),
+                               "parent": row_id, "comments": c.attrs.get("comment-refs")})
+
     def parse_table(self, table, parent_id=None):
-        table_head = []
-        thead = next((c for c in table.children if c.tag == "thead"), None)
-        if thead is not None:
-            tr = next((c for c in thead.children if c.tag == "tr"), None)
-            if tr is not None:
-                table_head = [plain_text(th) for th in tr.children if th.tag in ("th", "td")]
+        table_head, header_tr = _table_header(table)
+        if header_tr is not None:
+            # 推断表头行：占位消耗一次 ID 计数但不发块——数据行 x-NNNN 与旧版逐行编号一致
+            self.block_id(header_tr) or self.new_id()
         body = next((c for c in table.children if c.tag == "tbody"), table)
-        for idx, tr in enumerate([c for c in body.children if c.tag == "tr"], 1):
+        data_rows = [c for c in body.children if c.tag == "tr" and c is not header_tr]
+        for idx, tr in enumerate(data_rows, 1):
             tds = [c for c in tr.children if c.tag in ("td", "th")]
-            cells = []
+            cells, content_cols = [], []
             row_label = ""
             for ci, td in enumerate(tds):
-                cells.append(self.cell_direct_text(td))
+                if self._is_scalar_cell(td):
+                    cells.append(self.cell_direct_text(td))
+                else:
+                    cells.append("")  # 内容格置空串（非 null）：文本由行内子块承载
+                    content_cols.append((ci, td))
                 if ci == 0 and not row_label:
                     first = re.sub(r"\s+", "", plain_text(td))
                     row_label = (first or f"#{idx}")[:24]
@@ -437,10 +569,13 @@ class DocParser:
                        "cells": cells, "rowLabel": row_label, "path": path,
                        "parent": parent_id,
                        "comments": tr.attrs.get("comment-refs") or None})
-            # 单元格内嵌块（list/img/figure/whiteboard/嵌套 table + 分栏内任意块级元素）挂行块
-            for td in tds:
-                for sub in self._cell_subblocks(td):
-                    self.dispatch(sub, parent_id=row_bid)
+            # 内容格子块树挂行块（标量格文本已进 cells 不再发块——互斥防双计）；
+            # 切片内新块补 cell 列下标戳（前端按列分组；旧数据无戳归 -1 组）
+            for ci, td in content_cols:
+                mark = len(self.blocks)
+                self._emit_cell_tree(td, row_bid)
+                for b in self.blocks[mark:]:
+                    b.setdefault("cell", ci)
 
     # ---- media
     def emit_image(self, node, parent_id=None):
@@ -637,10 +772,13 @@ FIXED_VECTOR_INPUT = ('[{"type":"paragraph","text":"活动链接：必填"},'
                       '{"type":"image","caption":"PC端原型图"}]')
 FIXED_VECTOR_SHA = "61be48ea05d60cc30664afae48879306f5504495306cadaf48ec0d324c4716d9"
 
-# 脱敏 mini fixture（虚构内容；真实文档不入仓）。覆盖面 = v0.4 四修复 + 守恒对称口径：
+# 脱敏 mini fixture（虚构内容；真实文档不入仓）。覆盖面 = v0.4 四修复 + v0.5 表格升级 + 守恒对称口径：
 # thead 表格（表头不进指纹、行文本进）/ grid 两 column 各含一图（图成块挂行块 + media + caption）/
 # li 裸文本+span 混排（前缀不丢）/ li 内只有子列表（父 text 空、子项不双计）/ 含图 cell 正文保留 /
-# caption 进块 / cite 展开（含 cite 子树不收）
+# caption 进块 / cite 展开（含 cite 子树不收）/
+# v0.5：无 thead 表·表头命中（首行短文本进 head 不成块、占位计数保数据行 ID、原文侧对称排除）/
+# 表头不命中四反例（单行表/首行长文本/首行含 ol/首行纯数字）/ 内容格拆段（cells 空串 + paragraph
+# 子块带 cell 戳与原生 id）/ 整段粗体 subheading / 行内列表挂行块 / 空段丢弃 / 尾随空段标量格
 _SELF_TEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <body>
 <h1>需求标题</h1>
@@ -657,6 +795,25 @@ _SELF_TEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <tr id="tr2"><td><p>含图单元格局部说明</p><img id="im1" name="i.png" caption="图一说明&#xA;" src="tok1"/></td><td><grid id="g1"><column id="c1"><img id="im2" name="j.png" caption="图二说明&#xA;" src="tok2"/></column><column id="c2"><img id="im3" name="k.png" caption="图三说明" src="tok3"/></column></grid></td></tr>
 </tbody>
 </table>
+<table>
+<tbody>
+<tr><td>版本</td><td>日期</td></tr>
+<tr><td><p><b>小标题</b></p><p>正文段一</p><p/><p>  </p><ol><li>行内列表项</li></ol></td><td><p>P0</p><p/></td></tr>
+</tbody>
+</table>
+<table><tbody><tr id="b1"><td>单行表内容</td></tr></tbody></table>
+<table><tbody>
+<tr id="b2"><td>这一格的文本长度明显超过三十个字符的上限因此不符合表头格判定条件</td><td>次格</td></tr>
+<tr id="b3"><td>d一</td><td>d二</td></tr>
+</tbody></table>
+<table><tbody>
+<tr id="b4"><td>标题甲<ol><li id="bn1">嵌套列表项</li></ol></td><td>次格二</td></tr>
+<tr id="b5"><td>数据一</td><td>数据二</td></tr>
+</tbody></table>
+<table><tbody>
+<tr id="b6"><td>1</td><td>2</td></tr>
+<tr id="b7"><td>aa</td><td>bb</td></tr>
+</tbody></table>
 </body>
 """
 
@@ -681,16 +838,53 @@ def self_test():
     assert by_id["li2a"]["text"] == "子项甲" and by_id["li2a"]["parent"] == "li2"
     assert by_id["li2b"]["text"] == "子项乙" and by_id["li2b"]["parent"] == "li2"  # 不折进父块
     assert by_id["li3"]["text"] == "**加粗项**", by_id["li3"]["text"]  # b→** 规则保留
+
+    # ---- v0.5 表格：thead 表（既有 case 按新语义改写）
     tr1, tr2 = by_id["tr1"], by_id["tr2"]
-    assert tr1["cells"] == ["单元格A1\n单元格A2", "纯文本B1"], tr1["cells"]  # 段落 \n 连接 + td 裸文本
     assert tr1["head"] == ["列一", "列二"]  # thead 进 head（展示层），不进指纹
-    assert tr2["cells"][0] == "含图单元格局部说明", tr2["cells"]  # 含图 cell 文本不弃
-    assert tr2["cells"][1] == "", tr2["cells"]  # grid cell 直接文本为空（内容由子块承载）
+    assert tr1["cells"] == ["", "纯文本B1"], tr1["cells"]  # 多段格=内容格置空；裸文本格仍标量
+    kids = [b for b in blocks if b.get("parent") == "tr1"]
+    assert [b["text"] for b in kids] == ["单元格A1", "单元格A2"]  # 拆段：两段各成 paragraph 子块
+    assert all(b["type"] == "paragraph" and b["cell"] == 0 for b in kids)
+    assert kids[0]["id"] == "x-0002" and kids[1]["id"] == "x-0003"  # 无原生 id 的 p 用 new_id
+    assert tr2["cells"] == ["", ""], tr2["cells"]  # 含图格与 grid 格均为内容格
+    assert by_id["x-0004"]["text"] == "含图单元格局部说明"  # 含图 cell 文本不弃：成段落子块
+    assert by_id["x-0004"]["cell"] == 0 and by_id["x-0004"]["parent"] == "tr2"
     assert by_id["im1"]["caption"] == "图一说明", by_id["im1"]["caption"]  # caption 进块去尾换行
     assert by_id["im2"]["caption"] == "图二说明" and by_id["im3"]["caption"] == "图三说明"
     assert by_id["im2"]["parent"] == "tr2" and by_id["im3"]["parent"] == "tr2"  # grid 内图挂行块
+    assert by_id["im1"]["cell"] == 0 and by_id["im2"]["cell"] == 1 and by_id["im3"]["cell"] == 1
     assert {b["id"] for b in blocks if b["type"] == "image"} == {"im1", "im2", "im3"}
     assert set(p.media) == {"tok1", "tok2", "tok3"}  # grid 两图成为 media
+
+    # ---- v0.5 表格：无 thead 表·表头命中（a）
+    hdr = by_id["x-0006"]  # 推断表头行占位计数（x-0005）后首个数据行 = 与旧版逐行编号一致
+    assert hdr["type"] == "table-row" and hdr["head"] == ["版本", "日期"], hdr["head"]
+    assert hdr["cells"] == ["", "P0"], hdr["cells"]  # 内容格空串 + 尾随空段标量格（g）
+    assert hdr["rowLabel"].startswith("小标题")
+    # 表头行不成块：无 rowLabel 为「版本」的行块；表头文本不进原文侧指纹（与 head 不收对称）
+    assert not [b for b in blocks if b["type"] == "table-row" and b["rowLabel"] == "版本"]
+    assert "版本" not in re.sub(r"\s", "", source_text_stream(root))
+
+    # 内容格拆段（c）：cells 空、paragraph 子块带 cell 戳；粗体整段 subheading（d）
+    sub1 = by_id["x-0007"]
+    assert sub1["type"] == "paragraph" and sub1["parent"] == "x-0006" and sub1["cell"] == 0
+    assert sub1["subheading"] is True and sub1["text"] == "**小标题**"
+    assert by_id["x-0008"]["text"] == "正文段一" and "subheading" not in by_id["x-0008"]
+    # 行内列表挂行块（e）：li.parent = 行块 id（平台「行内子块紧随其行」约束），不挂段落
+    assert by_id["x-0009"]["type"] == "list-item" and by_id["x-0009"]["parent"] == "x-0006"
+    assert by_id["x-0009"]["cell"] == 0
+    # 空段丢弃（f）：<p/> 与 <p>  </p> 不产块——行内子块恰为 段落×2 + li×1
+    kids6 = [b for b in blocks if b.get("parent") == "x-0006"]
+    assert [b["id"] for b in kids6] == ["x-0007", "x-0008", "x-0009"], kids6
+
+    # ---- v0.5 表格：无 thead 表·表头不命中四反例（b）：单行/首行长文本/首行含 ol/首行纯数字
+    for bid in ("b1", "b2", "b3", "b4", "b5", "b6", "b7"):
+        assert by_id[bid]["type"] == "table-row" and by_id[bid]["head"] == [], bid
+    assert by_id["b6"]["cells"] == ["1", "2"]  # 首行纯数字 → 全部行为数据行
+    assert by_id["b4"]["cells"] == ["", "次格二"]  # 首行含 ol → 数据行；td 裸文本成段
+    assert by_id["x-0010"]["text"] == "标题甲" and by_id["x-0010"]["cell"] == 0
+    assert by_id["bn1"]["parent"] == "b4" and by_id["bn1"]["cell"] == 0
 
     # ---- 守恒通过 + thead 对称排除直接锁定
     guard, problems = verify_conservation(root, blocks, media_list)
@@ -735,7 +929,7 @@ def self_test():
             doc = json.load(f)
         assert doc["guard"]["algo"] == CONSERVATION_ALGO
         assert doc["guard"]["textSha"] == guard["textSha"]
-        assert doc["generator"].startswith("sdlc-intent/parse_doc.py 0.4")
+        assert doc["generator"].startswith("sdlc-intent/parse_doc.py 0.5")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"self-test 全部通过（blocks={len(blocks)} media={len(media_list)} "

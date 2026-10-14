@@ -57,21 +57,22 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 | `--url` / `--document-id` / `--revision-id` | 写入 doc.json source 字段，供溯源 |
 
 - `--md` 回退模式合成 `x-` 前缀 ID（无原生锚点、平台不可直达），仅调试/补位用，正常飞书输入不走；产物 `generator` 标注 `markdown-fallback`，并在 stderr 打警告——该模式下 list-item 的 `ordinal`=marker、`parent`=None，resolve_anchors 条款级解析与 list_clauses 全量列表不可用。
-- 控制台输出四行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`conservation ok … textSha=… mediaTokens=N` 守恒自检结果（`--md` 模式为 `conservation fallback`）；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
+- 控制台输出四行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`conservation ok … textSha=… mediaTokens=N` 守恒自检结果（`--md` 模式为 `conservation fallback`）；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误；0.5 内容格段落子块用 p 原生 ID，占比会随层级还原上升）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
 - 媒体下载逐项容错：lark-cli 不可得（PATH / nvm / 默认安装路径均未命中）或单项失败时该条目 `status=failed` 带原因，不阻断其他条目与产物落盘（§7）。
 
-### 内容守恒自检（conservation-v1，parse_doc ≥0.4）
+### 内容守恒自检（conservation-v1，parse_doc ≥0.4；表头推断排除为 0.5 增强）
 
 解析产物与原文的字符流对账，防解析静默丢失（历史上踩过：分栏 grid/column 内整棵块丢失、含图单元格夹注文本被弃、li 裸文本前缀丢失、图 caption 未读）。解析器组装 doc 后、写 `--out` 前自检，guard 写入 doc 顶层：
 
-- **原文侧**：content.xml 树上全部 text 节点 + `cite` 展开（`@user-name`，无则 `@user-id`）+ `img@caption`（去尾换行；figure/source/whiteboard 无 caption 不收）+ **排除 thead 子树**。
-- **产物侧**：全部块 `text`、`table-row` 的 `cells` 全列、image 块 `caption`；`head`（每行重复挂载，收则多重计数）、`path`/`rowLabel`/`ordinal`/`marker`、media `name`/`alt` 不收；comment 块不收（见盲区）。
-- **归一化**：字符流剔除 `*`、`~` 与全部空白 → 剩余字符排序 → sha256（字符多重集合的规范指纹，顺序无关——解析器的内联顺序不可恢复，排序指纹对此免疫）。
+- **原文侧**：content.xml 树上全部 text 节点 + `cite` 展开（`@user-name`，无则 `@user-id`）+ `img@caption`（去尾换行；figure/source/whiteboard 无 caption 不收）+ **排除 thead 子树** + **排除无 thead 表中判定为表头的首行 tr 子树**（0.5 推断表头；判定与解析器同函数 `_table_header`，双侧确定性）。
+- **产物侧**：全部块 `text`、`table-row` 的 `cells` 全列（内容格为空串，其文本由行内子块 `text` 承载——挪格不挪字符，指纹不变）、image 块 `caption`；`head`（每行重复挂载，收则多重计数）、`path`/`rowLabel`/`ordinal`/`marker`、media `name`/`alt` 不收；comment 块不收（见盲区）。
+- **表头推断（0.5）**：thead 优先；无 thead 时 tbody 行数 ≥2（扣除表头后仍剩 ≥1 数据行；单行表永不判表头）且首行每个 td/th 满足「非空、单段无换行、≤30 字、非纯数字、无 KEEP 块级嵌套」→ 判为表头：文本进各行 `head`、该行不成数据块（仍消耗一次合成 ID 计数，保数据行 `x-` 编号不漂）。首行为纯数字（如序号 1/2/3）不判——数据行常见此形态而表头格几乎不会。合并单元格（colspan/rowspan）维持既有展平口径，不做特殊处理。
+- **归一化**：字符流剔除 `*`、`~` 与全部空白 → 剩余字符排序 → sha256（字符多重集合的规范指纹，顺序无关——解析器的内联顺序不可恢复，排序指纹对此免疫；也因此 cells↔子块 text 之间的文本挪移不影响指纹）。
 - **guard 结构**：`{"algo":"conservation-v1","source":"xml","mediaTokens":[树上全部媒体 token 去重排序],"textSha":"<原文侧指纹>"}`；`--md` 回退模式 guard 为 `{"algo":"markdown-fallback"}`，不做文本守恒。
 - **判定口径（agent 门与平台门分离）**：agent 侧（本脚本，exit 2 门）= 产物侧指纹 == guard.textSha，且 mediaTokens 与产物 `media[].token` 集合双向相等，**不查 media status**（离线免 `--download` 跑时 status 恒 pending）；平台落库终检（第二道门）另加 media status 全 ok、missingMedia=0 阻断与 guard 复算。
 - **exit 2 处置**：产物**不落盘**（`--out` 不写）、不得回传平台；stderr 给出字符计数差/差集样本与 mediaTokens 差集（含 caption 提示），人工 diff content.xml 与既有 doc.json 定位后重跑。
-- **守恒盲区（声明而非缺陷）**：评论内容（thread/quote 来自 refmap，content.xml 正文无对应，双侧恒 0）；字面 `*`/`~` 字符（归一化剔除，产物含纯 `*` 字面量会漏检）；thead/head 文本（双侧对称排除）；media name/alt。
-- CI：`python3 skills/sdlc-intent/scripts/parse_doc.py --self-test`（脱敏 mini fixture：thead 对称排除、grid 分栏图、混排 li、纯子列表 li、含图 cell、caption、cite 展开逐项断言 + 变异必败 + 双仓固定向量）。
+- **守恒盲区（声明而非缺陷）**：评论内容（thread/quote 来自 refmap，content.xml 正文无对应，双侧恒 0）；字面 `*`/`~` 字符（归一化剔除，产物含纯 `*` 字面量会漏检）；thead/head 文本（双侧对称排除，含 0.5 推断表头行文本）；media name/alt。
+- CI：`python3 skills/sdlc-intent/scripts/parse_doc.py --self-test`（脱敏 mini fixture：thead 与推断表头对称排除、grid 分栏图、混排 li、纯子列表 li、含图 cell、caption、cite 展开、内容格拆段/subheading/行内列表/空段丢弃/尾随空段标量逐项断言 + 变异必败 + 双仓固定向量）。
 
 ## 4. doc.json 块模型
 
@@ -82,11 +83,12 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 | heading | level, text, path | 标题层级与路径 |
 | paragraph | text, path, comments | 正文段；comments = comment-refs（如 "c3 c11"） |
 | list-item | marker, ordinal, depth, text, parent | 条款；ordinal 即序数（如 1.a） |
-| table-row | head, cells, rowLabel, parent | 表行；rowLabel 取首格文本，即「详述N」的 N 对应物；行块本身多为 `x-` 合成 ID（DocxXML 行元素不带 id），行级锚点常不可直达——条款级出处（list-item 原生 ID）才是直达路径 |
+| table-row | head, cells, rowLabel, parent | 表行；rowLabel 取首格文本，即「详述N」的 N 对应物；行块本身多为 `x-` 合成 ID（DocxXML 行元素不带 id），行级锚点常不可直达——条款级出处（list-item 原生 ID）才是直达路径。**0.5 表格语义**：`head` 可由无 thead 表推断（见 §3）；`cells` 与列数等长——标量格存文本，内容格存空串 `""`（多段落/含列表图片的格，内容见行内子块） |
 | image / attachment / whiteboard | media, name | 媒体块，media 指向 media[] 条目 id |
 | comment | ref, anchorBlockId, quote, thread | 评论块；id = 飞书 comment-id |
 
-- **锚点语义**：块 `id` = 飞书原生块 ID（唯一例外：无 ID 时合成 `x-NNNN`，平台不可直达）。payload 条目的 `anchor` 填此 ID，前端按 id 直达原文条款。
+- **行内子块（0.5，挂 table-row 下、parent=行块 id、紧随行块）**：内容格逐段发 `paragraph`（可选 `subheading: true` = 原文整段粗体，可选 `cell: <列下标 int>` = 所属列）；list-item/image 等保持原类型，同样带 `cell` 戳。列表一律挂行块（不挂段落——平台编辑面「行内子块紧随其行」拓扑约束），「PC端/H5端 段落后跟列表」的从属由前端按块序相邻做视觉挂靠。
+- **锚点语义**：块 `id` = 飞书原生块 ID（唯一例外：无 ID 时合成 `x-NNNN`，平台不可直达）。payload 条目的 `anchor` 填此 ID，前端按 id 直达原文条款。行内段落子块用 p 元素原生 ID（直达）。
 - media 条目：`{id: "m-<sha256[:12]>", token, kind, name, mime, file, bytes, sha256, status}`，status ∈ pending / ok / failed。
 
 ## 5. 条款级出处约定（list_clauses.py）

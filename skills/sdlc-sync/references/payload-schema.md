@@ -110,21 +110,22 @@
 | `mediaTokens` | string[] | 原文树上全部媒体 token（img@src、figure 内 source@token、whiteboard@token）去重排序 |
 | `textSha` | string | 原文侧字符流的归一化 sha256（hex）；markdown-fallback 时缺省 |
 
-归一化规则（原文侧与产物侧同款，伪码）：
+归一化规则（原文侧与产物侧同款，伪码；parse_doc ≥0.5 起原文侧另排除无 thead 表中判定为表头的首行 tr 子树——判定函数与解析器共用，双侧确定性）：
 
 ```
 原文侧流 = 树上全部 text 节点 + cite 展开（"@" + (user-name 或 user-id))
-         + img@caption（strip 空白）                 # thead 子树整体排除
+         + img@caption（strip 空白）
+         # thead 子树整体排除；无 thead 表推断表头行（_table_header）子树同款排除（≥0.5）
 产物侧流 = 全部块 text + table-row.cells 全列 + image 块 caption
          # comment 块与 head 不收（head 每行重复挂载）
+         # cells 含内容格空串 ""（≥0.5：多段落/含列表图片的格文本由行内子块 text 承载，
+         #   挪格不挪字符，指纹不变）
 指纹 = sha256( sort( 剔除(流, {"*","~"} ∪ 全部空白) ) )
 ```
 
 平台拒绝行为（push-artifacts 与 source_import 落库终检同口径，均为 409）：`guard` 缺失（提示升级 parse_doc ≥0.4 重产）；`algo` 未知；`textSha` 与产物复算不符；media `status` 非 ok（含 failed/pending——pending = 媒体未下载）；`missingMedia>0`（块引用媒体未上传）。
 
-守恒盲区（双侧恒 0 或对称排除，声明而非缺陷）：评论内容（来自 refmap）、字面 `*`/`~` 字符、thead/head 文本、media name/alt。
-
-## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
+守恒盲区（双侧恒 0 或对称排除，声明而非缺陷）：评论内容（来自 refmap）、字面 `*`/`~` 字符、thead/head 文本（含推断表头行文本）、media name/alt。
 
 ## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 
