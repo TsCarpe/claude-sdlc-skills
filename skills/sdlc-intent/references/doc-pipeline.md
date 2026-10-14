@@ -57,12 +57,25 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 | `--url` / `--document-id` / `--revision-id` | 写入 doc.json source 字段，供溯源 |
 
 - `--md` 回退模式合成 `x-` 前缀 ID（无原生锚点、平台不可直达），仅调试/补位用，正常飞书输入不走；产物 `generator` 标注 `markdown-fallback`，并在 stderr 打警告——该模式下 list-item 的 `ordinal`=marker、`parent`=None，resolve_anchors 条款级解析与 list_clauses 全量列表不可用。
-- 控制台输出三行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
+- 控制台输出四行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`conservation ok … textSha=… mediaTokens=N` 守恒自检结果（`--md` 模式为 `conservation fallback`）；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
 - 媒体下载逐项容错：lark-cli 不可得（PATH / nvm / 默认安装路径均未命中）或单项失败时该条目 `status=failed` 带原因，不阻断其他条目与产物落盘（§7）。
+
+### 内容守恒自检（conservation-v1，parse_doc ≥0.4）
+
+解析产物与原文的字符流对账，防解析静默丢失（历史上踩过：分栏 grid/column 内整棵块丢失、含图单元格夹注文本被弃、li 裸文本前缀丢失、图 caption 未读）。解析器组装 doc 后、写 `--out` 前自检，guard 写入 doc 顶层：
+
+- **原文侧**：content.xml 树上全部 text 节点 + `cite` 展开（`@user-name`，无则 `@user-id`）+ `img@caption`（去尾换行；figure/source/whiteboard 无 caption 不收）+ **排除 thead 子树**。
+- **产物侧**：全部块 `text`、`table-row` 的 `cells` 全列、image 块 `caption`；`head`（每行重复挂载，收则多重计数）、`path`/`rowLabel`/`ordinal`/`marker`、media `name`/`alt` 不收；comment 块不收（见盲区）。
+- **归一化**：字符流剔除 `*`、`~` 与全部空白 → 剩余字符排序 → sha256（字符多重集合的规范指纹，顺序无关——解析器的内联顺序不可恢复，排序指纹对此免疫）。
+- **guard 结构**：`{"algo":"conservation-v1","source":"xml","mediaTokens":[树上全部媒体 token 去重排序],"textSha":"<原文侧指纹>"}`；`--md` 回退模式 guard 为 `{"algo":"markdown-fallback"}`，不做文本守恒。
+- **判定口径（agent 门与平台门分离）**：agent 侧（本脚本，exit 2 门）= 产物侧指纹 == guard.textSha，且 mediaTokens 与产物 `media[].token` 集合双向相等，**不查 media status**（离线免 `--download` 跑时 status 恒 pending）；平台落库终检（第二道门）另加 media status 全 ok、missingMedia=0 阻断与 guard 复算。
+- **exit 2 处置**：产物**不落盘**（`--out` 不写）、不得回传平台；stderr 给出字符计数差/差集样本与 mediaTokens 差集（含 caption 提示），人工 diff content.xml 与既有 doc.json 定位后重跑。
+- **守恒盲区（声明而非缺陷）**：评论内容（thread/quote 来自 refmap，content.xml 正文无对应，双侧恒 0）；字面 `*`/`~` 字符（归一化剔除，产物含纯 `*` 字面量会漏检）；thead/head 文本（双侧对称排除）；media name/alt。
+- CI：`python3 skills/sdlc-intent/scripts/parse_doc.py --self-test`（脱敏 mini fixture：thead 对称排除、grid 分栏图、混排 li、纯子列表 li、含图 cell、caption、cite 展开逐项断言 + 变异必败 + 双仓固定向量）。
 
 ## 4. doc.json 块模型
 
-顶层结构：`{generator, source:{url,documentId,revisionId}, blocks:[], media:[]}`。
+顶层结构：`{generator, source:{url,documentId,revisionId}, blocks:[], media:[], guard:{…}}`（guard 见 §3 内容守恒自检；`--md` 回退模式为 `{"algo":"markdown-fallback"}`）。
 
 | type | 关键字段 | 说明 |
 |---|---|---|
@@ -111,6 +124,7 @@ python3 scripts/resolve_anchors.py --doc <doc.json> \
 ## 7. 失败回退与边界
 
 - **解析器整体失败 → 不阻塞梳理/体检**：出处回退章节级，向用户说明 doc.json 未生成，流程照常继续。
-- **媒体单项失败**：条目 `status=failed` 带原因，不阻断；失败清单如实告知用户（不重试，同评论区口径）。存在 failed 条目时 parse_doc.py 以 exit 1 结束——产物照常落盘、stdout 统计照常输出，仅退出码非零，便于调用方感知失败后处理。
+- **媒体单项失败**：条目 `status=failed` 带原因，不阻断其他条目；失败清单如实告知用户（不逐项重试，同评论区口径）。存在 failed 条目时 parse_doc.py 以 exit 1 结束——产物照常落盘、stdout 统计照常输出。**回传纪律：exit 1 的产物含 failed status，不得回传平台（平台终检将拒），须排查（lark-cli 可得性 / token 有效性 / 网络）后整体重跑重传。**
+- **守恒失败（exit 2）**：解析产物与原文内容不一致（分栏内块 / 含图单元格夹注 / li 前缀丢失，或产物被篡改）——产物**不落盘**（`--out` 未写）、不得回传平台，属阻断式失败；按 stderr 差集样本定位（高发区见 §3），修复后重跑。禁止绕过守恒门落盘。
 - **无评论/无 refmap**：省略 `--refmap` 正常运行，doc.json 无 comment 块。
 - **本地 markdown/text 输入**：不运行本管线（无 XML/refmap），出处按章节级约定写。

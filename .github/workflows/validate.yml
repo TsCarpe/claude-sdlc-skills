@@ -84,6 +84,9 @@ jobs:
           done
           exit $fail
 
+      - name: parse_doc 内容守恒自检（--self-test）
+        run: python3 skills/sdlc-intent/scripts/parse_doc.py --self-test
+
       - name: 文档 skill 计数与 skills/ 目录一致（README 矩阵 + CLAUDE.md）
         run: |
           python3 - <<'EOF'

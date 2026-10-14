@@ -75,7 +75,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 - `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）、流程步骤表 flows（§5 主流程，`{role,step,next,gap,src}`）与状态机流转边表 states（§6 边表直投，`{obj,from,on,to,gap,src}`；两表 `gap:true` 为原文断点行、next/to 填 `?`，可选 anchor 同 features）
 - `audit`：分级计数 + 问题明细（`{id:"体检.P01", level, title, where, go, group:"<需求域>", quote:"「完整冲突原文」"}`，go = 处理状态/去向）
 - `items`：澄清清单，**seq 必须用原始编号**（如 `P19`），`theme` 必填（需求域，与 audit group 同体系），`quote` 带原文摘引（可空），`answer` 带上本地已有的答复内容
-- v1.2（可选，本地存在 `sdlc/<需求名>/intake/doc-*.json` 时推送）：先把 doc.media 逐个上传 `POST /api/requirements/<reqId>/media?name=…&mediaId=…`（raw bytes），再在 payload 顶层带 `doc:{blocks,media,source,generator}` 与各条目 `anchor`（由 `../sdlc-intent/scripts/resolve_anchors.py` 批量附加——脚本与 doc.json 均随 sdlc-intent 分发，单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条不生效）；上传/推送返回含 `docUpdated/missingMedia`
+- v1.2（可选，本地存在 `sdlc/<需求名>/intake/doc-*.json` 时推送）：先把 doc.media 逐个上传 `POST /api/requirements/<reqId>/media?name=…&mediaId=…`（raw bytes），再在 payload 顶层带 `doc:{blocks,media,source,generator,guard}`（v1.5 起含 guard，原样透传 intake/doc-*.json 顶层，不得手工增删改——平台按其做守恒终检）与各条目 `anchor`（由 `../sdlc-intent/scripts/resolve_anchors.py` 批量附加——脚本与 doc.json 均随 sdlc-intent 分发，单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条不生效）；上传/推送返回含 `docUpdated/missingMedia`
 
 `POST /api/requirements/<reqId>/artifacts`。
 
@@ -85,6 +85,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 - changed 卡收到 409「全量重推已关闭」= 平台有未消化的变更单——不要重试，提示用户走平台增量
   通道或放弃变更后再推（rebaseline 变更单例外）。
 - 推送前向用户报告条数与差异：问题数、需求点数、是否刷新快照。
+- 带 doc 推送时媒体必须**全部上传成功**后再推——v1.5 起平台将拒（missingMedia>0 → 409，doc 不落库）。
 
 ### 4. pull-answers —— 拉回 PM 答复（回写本地）
 

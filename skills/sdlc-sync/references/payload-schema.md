@@ -1,6 +1,6 @@
-# sdlc-sync payload 契约（v1.4）
+# sdlc-sync payload 契约（v1.5）
 
-> v1.4 变更（流程/状态机结构化上平台）：push-artifacts 的 `digest` 增可选 `flows[]`（§5 主流程步骤表）与 `states[]`（§6 状态机流转边表直投）——`gap:true` 行为原文断点（🤔），`flows[].next` / `states[].to` 填 `"?"`；行级 `src` 出处 + 可选 `anchor`（resolve_anchors.py 附加，同 features）。平台摘要 tab 新增两表展示（平台 v2.3 起）。v1.3 及以前全部字段与红线不变，无该字段即旧行为。
+> v1.5 变更（doc 守恒终检收紧）：push-artifacts 顶层 `doc` 增 `guard` 字段（parse_doc ≥0.4 产出的内容守恒指纹，契约见「doc.guard 内容守恒契约」节）；带 doc 推送时 **missingMedia>0 → 409 拒绝**（doc 不落库，由宽松计数改为阻断），且平台按 guard 复算 textSha / 对账 mediaTokens / 校验 media status 全 ok。v1.4 及以前全部字段与红线不变。
 
 所有请求 `Content-Type: application/json`；写接口在平台启用 write-token 时需带头 `X-Token: <token>`。
 
@@ -8,6 +8,7 @@
 
 - POST /api/requirements —— 建卡
 - POST /api/requirements/{id}/artifacts —— 推体检产物（三件套）
+- doc.guard 内容守恒契约（v1.5）
 - POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 - GET /api/requirements/{id}/answers —— 拉答复
 - PUT /api/requirements/{id}/answers/{seq} —— 平台侧作答（前端用）
@@ -92,17 +93,44 @@
 - `digest.flows[]` / `digest.states[]`（v1.4 可选）：§5 主流程步骤表 `{role,step,next,gap,src,anchor}` 与 §6 流转边表直投 `{obj,from,on,to,gap,src,anchor}`；`gap:true` = 原文断点行（`next`/`to` 填 `"?"`）；`states[].obj` 取自 §6 图题「图 N：<对象名> 状态机」的对象名；anchor 均可由 sdlc-intent 的 resolve_anchors.py 附加（同 features）
 - `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：体检与澄清的依据；发布后冻结）；缺省保留旧快照
 - `quote` 平台侧无长度限制，取完整冲突/依据原文，渲染为引用块并作快照定位锚
-- `doc`（v1.2 可选顶层）：`{blocks,media,source,generator}`，由 sdlc-intent 的 parse_doc.py 产出；推送前需先完成媒体上传（见下节）
+- `doc`（v1.2 可选顶层，v1.5 增 `guard`）：`{blocks,media,source,generator,guard}`，由 sdlc-intent 的 parse_doc.py（≥0.4）产出、顶层原样透传（guard 不得手工增删改）；推送前需先完成媒体上传（见下两节）。**仅用于外部导入**（sdlc-sync 首推）；质检/增量质检 payload **不含 doc**——原文块表权威已落库，草稿采纳时平台剥除 doc 透传（带 guard 的外部导入走守恒终检，回环数据不落 artifact）
 - `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）
 - 副作用：状态 → `clarifying`；重复推送 = 覆盖（version+1）；`published` 后拒绝（快照随之冻结）
 - 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N}`
-- `missingMedia` = 引用了未上传媒体 id 的**条数**（int 计数，非媒体 id 列表；宽松策略：doc 仍落库，前端渲染占位）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
+- `missingMedia` = 引用了未上传媒体 id 的**条数**（int 计数，非媒体 id 列表）；**v1.5 起阻断**：missingMedia>0 → 409，doc 不落库（媒体须全部上传成功后再推）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
+
+## doc.guard 内容守恒契约（v1.5）
+
+`doc.guard` 由 sdlc-intent 的 parse_doc.py（≥0.4）在解析时生成，是「产物与原文内容一致」的机器可验指纹；平台落库前按同口径复算比对（防解析丢失 / 版本漂移 / 篡删产物；不防恶意伪造——平台无原文，prompt 红线「产物=且仅=parse_doc 输出」继续兜底）。
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `algo` | string | `conservation-v1`（XML 源）或 `markdown-fallback`（`--md` 回退，仅结构校验、不做文本守恒） |
+| `source` | string | `"xml"`；markdown-fallback 时缺省 |
+| `mediaTokens` | string[] | 原文树上全部媒体 token（img@src、figure 内 source@token、whiteboard@token）去重排序 |
+| `textSha` | string | 原文侧字符流的归一化 sha256（hex）；markdown-fallback 时缺省 |
+
+归一化规则（原文侧与产物侧同款，伪码）：
+
+```
+原文侧流 = 树上全部 text 节点 + cite 展开（"@" + (user-name 或 user-id))
+         + img@caption（strip 空白）                 # thead 子树整体排除
+产物侧流 = 全部块 text + table-row.cells 全列 + image 块 caption
+         # comment 块与 head 不收（head 每行重复挂载）
+指纹 = sha256( sort( 剔除(流, {"*","~"} ∪ 全部空白) ) )
+```
+
+平台拒绝行为（push-artifacts 与 source_import 落库终检同口径，均为 409）：`guard` 缺失（提示升级 parse_doc ≥0.4 重产）；`algo` 未知；`textSha` 与产物复算不符；media `status` 非 ok（含 failed/pending——pending = 媒体未下载）；`missingMedia>0`（块引用媒体未上传）。
+
+守恒盲区（双侧恒 0 或对称排除，声明而非缺陷）：评论内容（来自 refmap）、字面 `*`/`~` 字符、thead/head 文本、media name/alt。
+
+## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 
 ## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 
 - body = 文件 raw bytes；query `name=<文件名>`、`mediaId=<doc.media[].id>`
 - 头 `X-Media-Mime` 传 MIME 类型
-- mediaId 必须与 doc.media[].id 一致；**须在推 artifacts（带 doc）之前完成全部上传**，未上传成功的条数以返回 `missingMedia`（int 计数）回传
+- mediaId 必须与 doc.media[].id 一致；**须在推 artifacts（带 doc）之前完成全部上传**，未上传成功的条数以返回 `missingMedia`（int 计数）回传；v1.5 起 missingMedia>0 平台直接 409 拒收 doc（见上节）
 
 ## GET /api/requirements/{id}/answers —— 拉答复
 
@@ -172,6 +200,8 @@
 - `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
 
 ## 历史变更
+
+> v1.5 变更（doc 守恒终检）：push-artifacts 顶层 `doc` 增 `guard`（`{algo,source,mediaTokens,textSha}`，parse_doc ≥0.4 产出）；missingMedia 从宽松计数（doc 照常落库、前端占位）改为 **>0 即 409 阻断**；平台落库前按同口径归一化复算 textSha、对账 mediaTokens 与 media status（契约详见「doc.guard 内容守恒契约」节）。v1.4 及以前 payload 不变；缺 guard 的旧 doc 在平台启用终检后将被 409 拒（提示升级 parse_doc ≥0.4 重产）。
 
 > v4 变更（平台需求权威化·二期，DESIGN-v4 §6.3/§9）：push-artifacts 的澄清清单从「全量替换」
 > 精确化为「按来源合并」——重推删机器行（origin=`skill`/`incremental`），保留 `local` 行（评论升级

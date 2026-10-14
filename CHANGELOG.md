@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.20.0 (2026-10-14)
+
+sdlc-intent parse_doc 0.4：修 4 类静默内容丢失 + 内置内容守恒自检门（conservation-v1），sdlc-sync 契约同步 guard 字段（v1.5）。背景：REQ-2026-1062 的 source_import 暴露真实飞书文档解析丢内容——分栏 grid/column 内整棵块丢失（两张 H5 原型图）、含图单元格夹注文本被弃（原型链接行）、li 裸文本前缀丢失（「活动链接：」「生效范围：」等，污染下游质检条款）、图 caption 未读；同步链路纯确定性解析无 LLM 兜底，丢失即静默进平台。
+
+- **sdlc-intent/scripts/parse_doc.py（0.3 → 0.4）**：
+  - 修 ① `parse_table`：单元格内嵌子块提取改为 `grid`/`column` 递归展平 + `dispatch` 通用分发（列内 p/hN/table 均可成块，挂行块 parent）；② `cell_direct_text`：删「cell 含图即弃全部直接文本」，非 KEEP 子元素文本全保留，段落连接符空格 → `\n`（恢复 PC端/H5端 分段，前端 DocBlock.vue 按 `\n` 分段渲染）；③ `walk_list`：li 裸文本直接收（`li_inline_text`，与 inline_text 同构无缝拼接，保留 b→\*\*/del→~~/cite→@/br→\\n 规则），删 `inline_text(li)` fallback（嵌套子列表不再折进父 li 双计），纯子列表 li 仍发 `text:""` 空块保锚点；④ `emit_image`：读 `caption` 属性（strip 尾部 `&#xA;`）写入 image 块
+  - 顺手修：`_collect`/`plain_text` 的 cite 展开统一为 `@user-name‖user-id`（user-name 优先，与 inline_text 四处同款）；`KEEP_IN_TABLE_CELL` 增 grid/column/table（table 为守恒自洽必需：嵌套表由子块承载，防 cell 文本与行块双计）；`cell_direct_text` 补收 td 裸文本；markdown 回退模式 image 块补 `caption:""` 保持形状一致
+  - **守恒自检（conservation-v1）**：组装 doc 后、写 `--out` 前对账原文侧（树上全部 text 节点 + cite 展开 + img@caption，排除 thead 子树）与产物侧（全部块 text + cells 全列 + image caption，不收 head/comment），归一化 = 剔除 `*`/`~`/空白后排序 sha256（字符多重集合指纹，顺序无关——解析器内联顺序不可恢复的免疫设计）；guard `{algo,source,mediaTokens,textSha}` 写 doc 顶层；agent 门 = textSha 相等 + mediaTokens 与 media[].token 双向相等（不查 status，离线免 --download 可跑）；失败 stderr 报字符计数差/差集样本/mediaTokens 差集，**exit 2 且不写 --out**（与媒体失败 exit 1 产物照常落盘区分）；`--md` 模式 guard=`{algo:"markdown-fallback"}`
+  - `--self-test`：内嵌脱敏 mini fixture（thead 对称排除、grid 两 column 各含一图、li 裸文本+span 混排、li 内纯子列表、含图 cell 正文保留、caption 进块、cite 展开逐项断言）+ 变异必败（删块/改文本/缺媒体）+ 双仓固定向量（输入与期望 sha256 硬编码，平台仓测试同源断言）；mkdtemp 隔离跑 main 全路径（exit 0 + 落盘 + guard）
+- **sdlc-intent/references/doc-pipeline.md**：§3 新增「内容守恒自检」节（双侧口径/归一化/guard 结构/agent 与平台门判定分离/exit 2 处置/守恒盲区声明/CI）；控制台输出三行 → 四行说明；§4 顶层结构补 guard；§7 补 exit 1 不得带病回传与 exit 2 阻断处置
+- **sdlc-intent/SKILL.md**：原文预处理条目补守恒门一句（保持精瘦）
+- **sdlc-sync/SKILL.md**：push-artifacts 的 doc 形状枚举补 `guard`（原样透传，不得手工增删改）；红线补「媒体未传齐平台将拒（missingMedia 阻断）」
+- **sdlc-sync/references/payload-schema.md（v1.4 → v1.5)**：新增「doc.guard 内容守恒契约」节（字段表 + 归一化伪码 + 平台拒绝行为：缺 guard/algo 未知/textSha 不符/media status 非 ok/missingMedia>0 → 409）；missingMedia 从宽松计数改阻断；历史变更记 v1.5
+- **sdlc-intent/evals/eval-5-doc-pipeline.md**：增守恒断言条目（self-test 通过、guard 字段存在、exit 2 不落盘不回传、盲区已知）
+- **CI（.github/workflows/validate.yml）**：py_compile 后新增一步跑 `parse_doc.py --self-test`
+- **验证**：`--self-test` exit 0（12 块/3 媒体 fixture 全断言过）；真实文档（V3.7.3 跨校区教研）离线回归 exit 0——media 7 张含 grid 内两 token、活动链接/生效范围前缀/原型链接/caption/`\n` 分段全部命中、guard=conservation-v1；变异验证：0.3 解析行为跑原文被守恒门抓住（文本差 164 字符 + mediaTokens 缺两图，对应 exit 2 不落盘）；对称删输入 grid 段后两侧同变、守恒正确通过（守恒门抓解析丢失，不误报输入变化）
+
 ## v0.19.0 (2026-10-08)
 
 sdlc-test dev 验证去回归环节 + v3.7.2 复盘优化项沉淀。背景：源项目 v3.7.2 dev 验证中，回归环节（mvn test 存量套件）因本地无 Apollo 配置连环缺占位符不可跑，返工三轮后以「通过(人工降级)」收尾——dev 验证的完成口径收敛为 **compile/boot/冒烟三件套**，存量测试回归移交 CI。概念边界红线：exec 阶段回归轮/回归档（Playwright runner 资产：run_regression.sh、spec-guide、round-rules、env-template「回归档」节）全部不动。
