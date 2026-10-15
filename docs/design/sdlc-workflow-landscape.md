@@ -27,7 +27,7 @@
 │    sdlc-gate      评审关口（4 角色扇出 + RECONCILE + 人工裁决）      │
 │    sdlc-test      测试五阶段（dev / cases / static / exec / report） │
 │    sdlc-doubt     决策对抗复查                                      │
-│    sdlc-config-review  发版配置审计                                 │
+│    sdlc-release-check  发版配置审计                                 │
 │    （另有 sdlc-doc / sdlc-yapi：飞书技术设计文档与接口文档同步，      │
 │      依赖个人全局环境，暂不在本仓库——见 Roadmap）                    │
 │                                                                   │
@@ -83,7 +83,7 @@
 | 用例生成（按 FR 级） | 全技术 + P0/P1/P2 | P0+P1+闭环不变量 | P0+闭环不变量 |
 | spec 资产化 | 强制 | 默认做 | 跳过 |
 | 开发完成验证（verify_dev） | 全量（+冒烟） | 全量（同 A：+冒烟） | compile+boot |
-| **不分级项** | guardrails / config-review / 人工关卡 / check 脚本 / guard_dev 开发放行守卫——任何级全量 | 同左 | 同左 |
+| **不分级项** | guardrails / release-check / 人工关卡 / check 脚本 / guard_dev 开发放行守卫——任何级全量 | 同左 | 同左 |
 
 分级落库（sdlc-sync v1.3 `risk_tier`）后，按级统计泄漏率即可校准评分卡边界——分级与度量互为配套。
 
@@ -122,7 +122,7 @@
         派发子代理执行 + 回归轮两步（spec 先跑 runner）
    → spec 资产化 ······· 已通过用例 → Playwright spec（零 token 回归）
    → 报告 + 🔒 关卡2 复验
-   → 上线前 sdlc-config-review（Apollo key 清单）
+   → 上线前 sdlc-release-check（Apollo key 清单）
 
    之后随手回归：runner 一键回归脚本（人工触发，不占轮次号；
    模板见 sdlc-test/templates/run_regression.sh）

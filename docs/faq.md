@@ -39,7 +39,7 @@ A：不必须。8 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目�
 ### 使用建议
 
 **Q：从哪个 skill 开始用？**
-A：按依赖重量渐进（详见 README「按需采用，不必全装」）：sdlc-intent（零依赖）→ sdlc-config-review（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
+A：按依赖重量渐进（详见 README「按需采用，不必全装」）：sdlc-intent（零依赖）→ sdlc-release-check（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
 
 **Q：sdlc-test 适用什么技术栈？**
 A：按「Java 后端 + MySQL + Web 前端（Element Plus 系组件库）」打磨；static 阶段的前后端代码定位可适配任意栈（codegraph/grep），exec 阶段的交互姿势手册以 Element Plus 为锚点，其他组件库需自行沉淀姿势（手册结构可直接复用）。
@@ -90,6 +90,6 @@ A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 /
 | 三类分歧 | 交叉审查发现的设计↔用例口径不一致，按去向分三类：一补用例、二回查设计、三升级用户拍板 |
 | 三去向 | 执行中发现口径冲突的处置：实现偏离=BUG / 需求未定=转 Q / 用例写错=修用例留档；禁止静默按实现校正 |
 | 证据降级 | 外部依赖缺失时退而求其次的取证方式，须在产物中注明（不许静默放行） |
-| 基线 | 双义注意：guardrails 的存量违规基线（`--check` 扫出的旧账报告，不阻塞编辑）≠ config-review 的基线分支（diff 对比的 master/main） |
+| 基线 | 双义注意：guardrails 的存量违规基线（`--check` 扫出的旧账报告，不阻塞编辑）≠ release-check 的基线分支（diff 对比的 master/main） |
 | 反合理化表 | sdlc-test 的「借口 vs 现实」表（references/anti-rationalization.md 全量，SKILL.md 留高频三条），拦截执行 AI 的自我合理化路径 |
 | evals | skill 的评估场景文件：规范格式 = 官方 JSON 结构（skills/query/files/expected_behavior）+ 判负红线节，新场景一律此格式；存量场景为 md 勾选清单形态，按批次迁移中。手动回归用、红线判负（规范见 [CONTRIBUTING.md](../CONTRIBUTING.md)） |

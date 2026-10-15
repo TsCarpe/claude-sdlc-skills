@@ -5,7 +5,7 @@
 ## 仓库结构
 
 ```
-skills/<name>/SKILL.md        # 8 个 skill（生命周期序：sdlc-intent/design/test/gate/doubt/config-review/sync + 横切引擎 sdlc-guardrails）
+skills/<name>/SKILL.md        # 8 个 skill（生命周期序：sdlc-intent/design/test/gate/doubt/release-check/sync + 横切引擎 sdlc-guardrails）
   references/                  # skill 的详细参考文档（模板/维度表/姿势手册），SKILL.md 只留精瘦主干+指针
   evals/                       # 评估场景（新场景官方 JSON 结构，存量 md 勾选清单，见下「evals 约定」）
   scripts/ · engine/           # 守卫与阶段脚本用 scripts/；随 skill 分发、跨项目唯一份的引擎用 engine/（现仅 sdlc-guardrails）

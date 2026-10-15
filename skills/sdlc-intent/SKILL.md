@@ -9,7 +9,7 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 
 ## 选择工作流
 
-用户说「评审 / 梳理 / 找问题」时先确认宾语：对象是**需求文档**才进本 skill；是设计/用例走 sdlc-gate，是技术方案走 sdlc-doubt，是上线配置走 sdlc-config-review。
+用户说「评审 / 梳理 / 找问题」时先确认宾语：对象是**需求文档**才进本 skill；是设计/用例走 sdlc-gate，是技术方案走 sdlc-doubt，是上线前检查走 sdlc-release-check。
 
 按用户意图选择分支：
 

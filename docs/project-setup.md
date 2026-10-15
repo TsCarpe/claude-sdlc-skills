@@ -105,7 +105,7 @@ sdlc-test 的 spec 资产化与回归轮依赖一套 Playwright runner，全部�
 
 | 想跑什么 | 项目侧需要的配置 |
 |---|---|
-| sdlc-intent / sdlc-doubt / sdlc-config-review | **零配置**，装 skill 即用 |
+| sdlc-intent / sdlc-doubt / sdlc-release-check | **零配置**，装 skill 即用 |
 | sdlc-test cases | 零硬配置（YApi / lark-cli 为可选增强） |
 | sdlc-design | digest 三件套（C 级跳过）；codegraph / mysql MCP 可选（均带降级） |
 | /sdlc-test dev | `sdlc/env/dev.md` + `dev-auth.local.md`（dev 首跑引导生成） |

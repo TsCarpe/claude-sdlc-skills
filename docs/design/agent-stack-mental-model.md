@@ -139,7 +139,7 @@ hook 与 CI 不互斥，分工：
 | 五大注解 / ResultJson / 禁手算 offset | 写文件瞬间 | PostToolUse hook + CI 兜底 |
 | 用例文件头关卡状态合法 / spec 必须带元数据 | 流程步骤（cases/exec 入口） | CLI 守卫 |
 | 分层依赖违规（controller 依赖 mapper） | 编译/提交时 | CI（或测试期 ArchUnit） |
-| 上线 Apollo key 清单 | 发版前 | CI（sdlc-config-review 脚本现成） |
+| 上线 Apollo key 清单 | 发版前 | CI（sdlc-release-check 脚本现成） |
 
 ### 4.3 hook 机制速查
 

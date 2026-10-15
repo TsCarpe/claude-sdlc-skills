@@ -38,7 +38,7 @@ flowchart TB
     subgraph SIDE["旁路机制（任意阶段随时介入）"]
         direction LR
         S1["sdlc-doubt<br/>对抗式独立复查"]
-        S2["sdlc-config-review<br/>发版配置 Key 扫描"]
+        S2["sdlc-release-check<br/>上线前检查"]
         S3["教训回写规范<br/>（宿主项目机制）"]
         S4["文档与接口同步<br/>（生态扩展，见 Roadmap）"]
     end
@@ -112,7 +112,7 @@ flowchart TB
 | | sdlc-test | AI 测试编排（dev 完成验证 → cases → static → exec → report），子命令独立可重跑 | 📦 | 自创 |
 | | sdlc-gate | 评审关口：全新上下文子代理按风险分档（A＝4/B＝2/C＝自查）互查设计与用例，放行后解锁开发（guard_dev） | 📦 | 自创 |
 | | sdlc-doubt | 非平凡决策剥离结论，交全新上下文审查者「找问题」 | 📦 | skills→D2 决策 |
-| | sdlc-config-review | 发版前扫描 diff 提取三类配置 Key | 📦 | 自创 |
+| | sdlc-release-check | 发版前扫描 Java+SQL diff：配置 Key / 平台注册操作 / DDL·DML 变更分级，汇总发布时刻表 | 📦 | 自创 |
 | | sdlc-guardrails | 横切引擎：写时红线拦截（PostToolUse hook + pre-commit 兜底 + `--check` 基线扫描），引擎一份全局、规则按项目 | 📦 | 自创 |
 | | sdlc-sync | 横切 · 产物出口/入口：三件套与用例上团队平台、拉回 PM 澄清答复闭环（平台本体为独立仓 sdlc-platform） | 📦 | 自创 |
 | **产物层** | sdlc/<需求名>/ | 每需求一目录：intake 三件套 / design 技术设计（轻量链路；大需求随 parent 任务目录）/ review issues / test cases+reports / dev 完成验证留档 | 📦（约定随 skill） | playbook+自创 |
@@ -207,7 +207,7 @@ flowchart TB
 2. **色彩语义一致**——红=阻断/失败（🔴❌⛔）、黄=不确定（🟡 等级严重 / ⚠️ 发现疑点 / 🤔 信息不足，形状区分子类）、蓝=建议（🔵）、绿=通过（✅）
 3. **重量分级**——状态列用 emoji，行内高频标注用轻符号（✓、①、→）
 
-另有各 skill 局部符号在各自模板内自带图例：📦🏠（发布渠道，见本文 §4）、🆕（config-review 新增标记）；⭐ 为 sdlc-sync payload 的业务数据格式（菜单名前缀），不是文档符号。
+另有各 skill 局部符号在各自模板内自带图例：📦🏠（发布渠道，见本文 §4）、🆕（release-check 新增标记）；⭐ 为 sdlc-sync payload 的业务数据格式（菜单名前缀），不是文档符号。
 
 ---
 

@@ -36,7 +36,7 @@ flowchart LR
     F --> G[sdlc-test<br/>静态比对 → 浏览器执行 → 报告]
     G --> H{{人 · 复验缺陷}}
     DB[sdlc-doubt<br/>决策对抗复查] -. 任意阶段旁路 .-> F
-    CR[sdlc-config-review<br/>发版配置扫描] -. 发版前旁路 .-> G
+    CR[sdlc-release-check<br/>上线前检查] -. 发版前旁路 .-> G
 ```
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
@@ -50,7 +50,7 @@ flowchart LR
 | [sdlc-test](skills/sdlc-test/SKILL.md) | 用例与测试期 | 用例生成 → 静态代码一致性比对 → test 环境浏览器执行 → 报告；通过用例资产化为 Playwright spec，回归交给 runner。`/sdlc-test cases\|dev\|static\|exec\|spec\|report <需求名>` |
 | [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计+用例定稿后 | 按风险分级分档对抗评审（A=4 / B=2 个全新上下文子代理，C=主会话自查）产出 issue 清单，人工逐条裁决后放行开发与测试执行。`/sdlc-gate <需求名>` |
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 对刚做出的非平凡技术决策发起对抗式独立复查。「这个判断我不放心，帮我质疑一下」 |
-| [sdlc-config-review](skills/sdlc-config-review/SKILL.md) | 旁路 · 发版前 | 扫描分支 diff，提取发版前需人工处理的事项：Apollo/Nacos 配置 Key、xxl-job 任务、MQ 订阅、知会项。「梳理上线配置清单」 |
+| [sdlc-release-check](skills/sdlc-release-check/SKILL.md) | 旁路 · 发版前 | 扫描 Java+SQL diff，提取发版前需人工处理的事项：Apollo/Nacos 配置 Key、xxl-job 任务、MQ 订阅、DDL/DML 变更分级，汇总成发布时刻表。「跑上线前检查」 |
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | PostToolUse hook 按项目 guardrails.yaml 机械拦截违规写入，pre-commit 兜底 + 存量基线扫描。「给这个项目接红线拦截」 |
 | [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复（平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复」 |
 
@@ -91,7 +91,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 按依赖重量逐级上，每一级都独立可用（论证见 [workflow.md §7.3](docs/workflow.md)）：
 
 1. **sdlc-intent**（5 分钟）——零依赖，梳理+体检立即可用
-2. **sdlc-config-review**（5 分钟）——零 MCP，任意 git 仓库即用
+2. **sdlc-release-check**（5 分钟）——零 MCP，任意 git 仓库即用
 3. **sdlc-doubt**（观念转变）——关键决策落定前多一道对抗复查
 4. **sdlc-design**（半小时上手）——digest 确认后产 design.md；B 级 mini / C 级跳过
 5. **sdlc-gate**（1 天上手）——需要先有「设计+用例并行产出」的习惯，收益最大
@@ -113,7 +113,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 - **sdlc-intent** 的飞书/评论区集成是可选增强，本地 markdown 输入完全等价
 - **sdlc-test** 方法论栈无关，按「Java 后端 + MySQL + Element Plus 系前端」预置姿势；其他栈按 [stack-profile](skills/sdlc-test/references/stack-profile.md) 五面清单接入
 - **sdlc-gate** 的前提是设计与用例**独立产出**（用例不读设计）——读过则交叉审查退化为一致性检查，产物中会如实标注
-- 单人开发即可用 intent / doubt / config-review；gate / test 在有两份产物、有 test 环境时收益最大
+- 单人开发即可用 intent / doubt / release-check；gate / test 在有两份产物、有 test 环境时收益最大
 - 强制层（hook 拦截）建成时间尚短，未经大量真实任务检验（[热力图自评](docs/design/sdlc-workflow-landscape.md)）
 
 ## 深入阅读
