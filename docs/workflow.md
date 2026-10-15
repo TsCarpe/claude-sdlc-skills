@@ -41,6 +41,7 @@ flowchart TB
         S2["sdlc-release-check<br/>上线前检查"]
         S3["教训回写规范<br/>（宿主项目机制）"]
         S4["文档与接口同步<br/>（生态扩展，见 Roadmap）"]
+        S5["sdlc-ui-visual<br/>设计稿视觉还原（开发后）"]
     end
 
     CTX -. 每轮注入规范 .-> B5
@@ -90,7 +91,7 @@ flowchart TB
 | 2. 规划（金字塔顶层） | 业务主线串联（角色×状态×功能点）→ 功能点从主线推导 → ER 后置；Q 表硬阻塞 | **确认点①** 逐行核对 | parent prd.md + design.md 上半（ER） |
 | 3. 评审（关口） | 技术设计（sdlc-design 产 design.md：备选/契约分级/D 表/公共资产/切分约束；C 级跳过，B 级 mini）与测试用例并行独立产出 → sdlc-gate（A＝4/B＝2/C＝自查分档扇出）+ RECONCILE（对账过滤，剔除误报） | **确认点②** 设计逐行定稿（框架 ack＝定稿信号，非放行）；**逐条裁决**（分歧类必须人拍板）→ 放行 | design.md（sdlc-design）、review/issues-日期.md（宽表含场景白话+原文摘引+裁决列，头部业务背景+代号速查） |
 | 4. 切片开发（金字塔中/底层） | 🔒 guard_dev 开发放行守卫（gate 已放行才可开发）；骨架 child 先行、child prd 内联瘦身；或轻量任务主会话直做 | **确认点③** child prd 评审后才开发 | child prd、代码变更 |
-| 5. 质量核验 | 规范合规 / 跨层数据流 / 复用检查 + verify_dev 开发完成验证（C 级 compile+boot；A/B 级＋冒烟） | 🔴 问题人工介入 | 检查报告、dev/verify-*.md（完成验证留档） |
+| 5. 质量核验 | 规范合规 / 跨层数据流 / 复用检查 + verify_dev 开发完成验证（C 级 compile+boot；A/B 级＋冒烟）；有设计稿基准的 UI 变更走 sdlc-ui-visual 视觉还原（截图比对→分级修复轮→功能回归，产物 `.ui-check/`） | 🔴 问题人工介入 | 检查报告、dev/verify-*.md（完成验证留档） |
 | 6. AI 测试 | sdlc-test：cases → static（用例↔代码比对）→ exec（浏览器）→ report | **🔒关卡1** 用例审核；**🔒关卡2** 报告复验 | cases.md、reports/ |
 | 7. 收尾沉淀 | 归档 + 教训回写判断 + 文档同步 | — | 归档任务、规范增量、文档 |
 

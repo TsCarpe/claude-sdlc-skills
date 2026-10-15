@@ -44,6 +44,9 @@ A：按依赖重量渐进（详见 README「按需采用，不必全装」）：
 **Q：sdlc-test 适用什么技术栈？**
 A：按「Java 后端 + MySQL + Web 前端（Element Plus 系组件库）」打磨；static 阶段的前后端代码定位可适配任意栈（codegraph/grep），exec 阶段的交互姿势手册以 Element Plus 为锚点，其他组件库需自行沉淀姿势（手册结构可直接复用）。
 
+**Q：sdlc-ui-visual 必须配 Figma MCP 和浏览器自动化吗？**
+A：不必须。①基准图模式零 figma 依赖：用户给设计稿截图即可走完整比对闭环，期望值清单靠图像分析/人工读数（只是少了结构化数据自动提取与原版 SVG 图标下载）；②自动截图不可用时，用户手动截图同样能喂给 `scripts/compare.py --actual` 跑像素比对；③栈无关：方法论通用，Vue2/element-ui 姿势在 references/stack-vue2-element.md，换栈重写该文件即可。所有降级都要求**显式声明证据降级**，不得假称完成比对（判负红线，见该 skill evals）。
+
 **Q：jev-ultrafast（目标驱动浏览器 agent）会接入 sdlc-test exec 吗？**
 A：暂缓。评估结论（2026-09-20）：阶段 A 通过、阶段 B 有条件通过——盲区可静态预判（无 role 弹层控件分诊 fallback）、verify 拦截有效、6.5s/任务，建议双通道（jev 主跑 + agent fallback）而非单通道替代；但接入前置条件「置信门槛规则（DONE 且 confidence<0.5 → 转 fallback）」尚未代码化。详见 [poc/jev-ultrafast/README.md](../poc/jev-ultrafast/README.md)。
 

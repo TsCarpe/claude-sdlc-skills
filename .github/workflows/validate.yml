@@ -87,14 +87,17 @@ jobs:
       - name: parse_doc 内容守恒自检（--self-test）
         run: python3 skills/sdlc-intent/scripts/parse_doc.py --self-test
 
+      - name: compare.py 视觉比对自检（--self-test）
+        run: python3 skills/sdlc-ui-visual/scripts/compare.py --self-test
+
       - name: 文档 skill 计数与 skills/ 目录一致（README 矩阵 + CLAUDE.md）
         run: |
           python3 - <<'EOF'
           import os, re
           actual = len([d for d in os.listdir('skills') if os.path.isdir(f'skills/{d}')])
-          m1 = re.search(r'Skill 矩阵（(\d+) 个）', open('README.md', encoding='utf-8').read())
+          m1 = re.search(r'## (\d+) 个 skill 一览', open('README.md', encoding='utf-8').read())
           m2 = re.search(r'(\d+) 个可安装 skill', open('CLAUDE.md', encoding='utf-8').read())
-          assert m1, "README.md 未找到「Skill 矩阵（N 个）」锚点（标题被改？）"
+          assert m1, "README.md 未找到「## N 个 skill 一览」锚点（标题被改？）"
           assert m2, "CLAUDE.md 未找到「N 个可安装 skill」锚点（首段被改？）"
           assert int(m1.group(1)) == actual, f"README「Skill 矩阵」计数 {m1.group(1)} ≠ skills/ 目录数 {actual}"
           assert int(m2.group(1)) == actual, f"CLAUDE.md 计数 {m2.group(1)} ≠ skills/ 目录数 {actual}"

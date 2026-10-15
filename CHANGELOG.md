@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.21.0 (2026-10-15)
+
+新增第 9 个 skill：**sdlc-ui-visual**——设计稿到代码的视觉还原闭环（基准获取 → 代码对照 → 稳定截图 → 多道比对 → 分级修复轮 → 功能回归 → 汇报）。背景：源项目两次 UI 视觉对齐实战（页面级 + 弹窗组件级）验证了完整流水线，其中弹窗案例暴露「字体图标与设计稿 SVG 几何数值全等但视觉墨迹仅 29%，两道自动裁判均判过、用户肉眼识破」的系统性漏检——防漏检规则（小元素强制元素级验证）成为本 skill 与裸 prompt 的核心差异。方案经全新上下文代理对抗式评审（3 blocker + 12 should-fix 全部吸收：状态落盘 run.md、小元素验证独立成关、frame 选择策略写死、references 零互引、compare.py 暗像素计数与 stats 落盘、evals 补隐藏作弊/共用组件回归两个判负场景、description 与 sdlc-test 以「有设计稿基准且允许改代码」分界等）。
+
+- **skills/sdlc-ui-visual/SKILL.md**：步骤 0（环境与可达性，登录墙人工+自动化分工）~ 步骤 7（六要素汇报）单命令线性主干；run.md 全程状态落盘（进度/差异台账/待用户问题/轮次指标，中断续跑唯一依据）；红线 5 条（不得假称完成比对/不为视觉破坏业务/基准不可改/模糊反馈先确认/坑先查表）+ 反合理化 5 条
+- **references/ 五件（零互引，SKILL.md 单层指针）**：pipeline.md（稳定化检查单/锚定对齐/DOM 几何提取模板/降级链/交互断言模板）、triage.md（比对产物读法+热区读法+不可判定升级路径+差异分类决策表 8 类）、pitfalls.md（栈无关坑 12 条现象→根因→解法）、stack-vue2-element.md（全局 !important 对抗/SVG 原版替换/组件实例直调/复用影响面）、templates.md（run.md 与汇报模板）
+- **scripts/compare.py**：纯 PIL 比对三件套参数化——锚点/全图双模式（尺寸不符 exit 2 拒绝拉伸）、overlay-50/diff×6/热区网格（附格中心坐标供 elementFromPoint 映射）/mean diff/>30 占比/`--box` 小元素裁剪放大拼图+暗像素计数（两侧均 <10 输出「不可判定」WARNING）、stats.txt 落盘；`--self-test` 内嵌合成图断言（热区分级/暗像素/尺寸守卫）
+- **evals/ 7 场景（官方 JSON 结构）**：全流程纪律、无浏览器诚实声明、小元素防漏检、超范围差异问用户、轮次停机（双指标连续 2 轮不降）、隐藏作弊判负、共用组件调用方回归
+- **同步**：marketplace.json（skills 数组 + nine + keywords 加 figma/visual-regression）、README（9 个 skill 一览/mermaid 旁路节点/按需采用第 6 级/顶部简介）、CLAUDE.md（8→9）、docs/workflow.md（§1 SIDE 旁路节点 + §3 阶段 5）、docs/faq.md（figma MCP/浏览器自动化降级 Q）、validate.yml（compare.py --self-test 入 CI；**顺手修既有漂移**：文档计数守卫正则 `Skill 矩阵（N 个）` 在 main 上已无此锚点会必挂，改为匹配现行标题「## N 个 skill 一览」）
+- **验证**：compare.py --self-test 通过（含尺寸守卫 exit 2 分支）；脱敏中性化（虚构 fileKey/商品中心示例，敏感词扫描零命中 + 临时扩充词表 estudy/鸿儒/真实 fileKey/真实组件名/真实端口扫描零命中）；references 零互引、evals 双向对账、frontmatter kebab-case、行数 93<500、marketplace 与目录一致均本地预跑通过
+
 ## v0.20.0 (2026-10-14)
 
 sdlc-intent parse_doc 0.4→0.5：修 4 类静默内容丢失 + 内置内容守恒自检门（conservation-v1）+ 表格层级还原（表头推断/内容格拆段/行内子块），sdlc-sync 契约同步 guard 字段（v1.5）。背景：REQ-2026-1062 的 source_import 暴露真实飞书文档解析丢内容——分栏 grid/column 内整棵块丢失（两张 H5 原型图）、含图单元格夹注文本被弃（原型链接行）、li 裸文本前缀丢失（「活动链接：」「生效范围：」等，污染下游质检条款）、图 caption 未读；同步链路纯确定性解析无 LLM 兜底，丢失即静默进平台。

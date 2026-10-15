@@ -4,7 +4,7 @@
 [![validate](https://github.com/TsCarpe/claude-sdlc-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/TsCarpe/claude-sdlc-skills/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**AI-native SDLC skills for Claude Code**（其他兼容 agent 经 [skills.sh](https://skills.sh) 亦可安装）——把 SDLC 里最耗人的重复劳动交给 AI：需求梳理、技术设计、测试用例与浏览器执行、对抗评审、发版审计；红线由脚本机械拦截；**人只在两处关口裁决**。不是 prompt 合集，是带关卡、留档、降级路径的完整工作流。
+**AI-native SDLC skills for Claude Code**（其他兼容 agent 经 [skills.sh](https://skills.sh) 亦可安装）——把 SDLC 里最耗人的重复劳动交给 AI：需求梳理、技术设计、测试用例与浏览器执行、对抗评审、设计稿视觉还原、发版审计；红线由脚本机械拦截；**人只在两处关口裁决**。不是 prompt 合集，是带关卡、留档、降级路径的完整工作流。
 
 文档以中文为主，skill 对中英文触发语均响应；在真实 Java 项目上端到端跑通后开源。
 
@@ -36,12 +36,13 @@ flowchart LR
     F --> G[sdlc-test<br/>静态比对 → 浏览器执行 → 报告]
     G --> H{{人 · 复验缺陷}}
     DB[sdlc-doubt<br/>决策对抗复查] -. 任意阶段旁路 .-> F
+    UV[sdlc-ui-visual<br/>设计稿视觉还原] -. 开发后旁路 .-> G
     CR[sdlc-release-check<br/>上线前检查] -. 发版前旁路 .-> G
 ```
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
 
-## 8 个 skill 一览
+## 9 个 skill 一览
 
 | skill | 阶段 | 干什么 · 触发示例 |
 |---|---|---|
@@ -50,6 +51,7 @@ flowchart LR
 | [sdlc-test](skills/sdlc-test/SKILL.md) | 用例与测试期 | 用例生成 → 静态代码一致性比对 → test 环境浏览器执行 → 报告；通过用例资产化为 Playwright spec，回归交给 runner。`/sdlc-test cases\|dev\|static\|exec\|spec\|report <需求名>` |
 | [sdlc-gate](skills/sdlc-gate/SKILL.md) | 设计+用例定稿后 | 按风险分级分档对抗评审（A=4 / B=2 个全新上下文子代理，C=主会话自查）产出 issue 清单，人工逐条裁决后放行开发与测试执行。`/sdlc-gate <需求名>` |
 | [sdlc-doubt](skills/sdlc-doubt/SKILL.md) | 旁路 · 任意阶段 | 对刚做出的非平凡技术决策发起对抗式独立复查。「这个判断我不放心，帮我质疑一下」 |
+| [sdlc-ui-visual](skills/sdlc-ui-visual/SKILL.md) | 旁路 · 开发后视觉验收 | 以 Figma 链接或基准图为唯一基准，真实截图比对（DOM 几何逐项 + 像素热区 + 小元素放大判读）驱动分级修复轮（≤5 轮）+ 功能回归，六要素汇报。「照这张设计稿把弹窗还原一下 / 跑个 ui check」 |
 | [sdlc-release-check](skills/sdlc-release-check/SKILL.md) | 旁路 · 发版前 | 扫描 Java+SQL diff，提取发版前需人工处理的事项：Apollo/Nacos 配置 Key、xxl-job 任务、MQ 订阅、DDL/DML 变更分级，汇总成发布时刻表。「跑上线前检查」 |
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | PostToolUse hook 按项目 guardrails.yaml 机械拦截违规写入，pre-commit 兜底 + 存量基线扫描。「给这个项目接红线拦截」 |
 | [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复（平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复」 |
@@ -95,8 +97,9 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 3. **sdlc-doubt**（观念转变）——关键决策落定前多一道对抗复查
 4. **sdlc-design**（半小时上手）——digest 确认后产 design.md；B 级 mini / C 级跳过
 5. **sdlc-gate**（1 天上手）——需要先有「设计+用例并行产出」的习惯，收益最大
-6. **sdlc-test**（持续投入）——需要 test 环境 + MCP 配套，建议 ①-⑤ 稳定后再上
-7. **sdlc-guardrails**（10 分钟）——改一次项目 settings.json + 写规则文件，红线从文档变机械拦截
+6. **sdlc-ui-visual**（10 分钟）——基准图模式零 MCP（python3 + Pillow 即可跑比对闭环）；Figma 结构化数据与自动截图需 figma / 浏览器 MCP
+7. **sdlc-test**（持续投入）——需要 test 环境 + MCP 配套，建议 ①-⑥ 稳定后再上
+8. **sdlc-guardrails**（10 分钟）——改一次项目 settings.json + 写规则文件，红线从文档变机械拦截
 
 ## 大需求三段式
 
