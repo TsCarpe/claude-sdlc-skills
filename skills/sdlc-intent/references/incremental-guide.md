@@ -11,7 +11,7 @@
 |---|---|---|
 | 编辑后原文 | `GET /api/requirements/{id}/doc.json` | 块表权威（变更已应用） |
 | 变更单 + 冻结影响面 | `GET /api/requirements/{id}/changes` / `…/changes/{cid}/impact` | 只处理最新 confirmed 单 |
-| digest/audit 结构行 + 澄清 | `GET /api/requirements/{id}`（detail） | 区间外行原样保留的基线 |
+| digest/audit 结构行 + 澄清 | `GET /api/requirements/{id}`（detail） | 区间外行原样保留的基线；已答澄清项的答复一律取 `items[].answerText`（平台解构后的纯文本——`answer` 原文可能是 `{"kind":...}` 结构化 JSON 串，不要直接消费） |
 | 评论 | `GET /api/requirements/{id}/comments.json` | 受影响章节内未解决评论纳入输入 |
 
 ## 产出面：incremental_bundle 增量包
