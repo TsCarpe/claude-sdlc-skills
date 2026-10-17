@@ -2,7 +2,7 @@
 
 > 适用：变更单 confirm 后的受影响章节局部重检（DESIGN-v4 §6）。平台任务 incremental_check 执行侧
 > 规范——规范在 skill 仓、执行在平台，与质检两段式（digest-template/dimensions）同源分工。
-> 全量语义（梳理 8 区块/六层维度）不变，本规范只约束「增量面」：哪些章节重做、哪些行作废、
+> 全量语义（梳理 8 区块/七层维度）不变，本规范只约束「增量面」：哪些章节重做、哪些行作废、
 > anchor 越界纪律。
 
 ## 输入面
@@ -34,10 +34,16 @@
   服务端校验非 heading block_id 即拒）。
 - `digestRows.*` 新版本行：结构与全量质检同（features/flows/states 带 anchor；auditItems 带
   id/level/title/where/go/anchor；frUpserts 带 id/name/anchor）。只覆盖受影响章节，不重写区间外。
+  **v1.6 新字段**：`auditItems` 带 `layer`（命中层号 "1"-"7"，判层纪律同全量——dimensions.md
+  「检查顺序与使用说明」第 8 条）；`flows` 新行可带 `pids[]`（字符串数组，断点直达）——
+  **仅允许引用存量已分配 seq**（detail `items[]` 可见的编号）：本包新问题编号由平台合并时分配、
+  合并不回填，引用本包新问题必然悬空（点击触发「未定位」提示）；无相关澄清的断点行不带 pids。
 - `invalidate`：作废清单——原文已删/口径已变导致失效的既有行（digest 行按 anchor、audit 条目
   按 id）；清单里的行必须真实存在，服务端校验不存在即拒。
 - `clarify.items`：新澄清问题（P 系编号由平台合并时分配——items **不携带 seq**）；受影响章节内
-  未解决平台评论应转化为澄清问题。
+  未解决平台评论应转化为澄清问题。**v1.6 新字段**：`options/module/layer` 纪律同全量质检
+  （冲突类/取舍类问题选项化 2-4 项、module 与功能点地图同体系、layer 1-7——契约与判层纪律
+  见 payload-schema.md 与 dimensions.md；纯缺失类/开放类不硬造选项）。
 - `summary` / `riskTier`：全局重算后覆写。
 
 ## anchor 越界纪律（硬红线）

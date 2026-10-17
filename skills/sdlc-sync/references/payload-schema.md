@@ -1,6 +1,6 @@
-# sdlc-sync payload 契约（v1.5）
+# sdlc-sync payload 契约（v1.6）
 
-> v1.5 变更（doc 守恒终检收紧）：push-artifacts 顶层 `doc` 增 `guard` 字段（parse_doc ≥0.4 产出的内容守恒指纹，契约见「doc.guard 内容守恒契约」节）；带 doc 推送时 **missingMedia>0 → 409 拒绝**（doc 不落库，由宽松计数改为阻断），且平台按 guard 复算 textSha / 对账 mediaTokens / 校验 media status 全 ok。v1.4 及以前全部字段与红线不变。
+> v1.6 变更（澄清选择题化，DESIGN-v5 §6）：澄清 `items[]` 增可选 `options/module/layer`、`audit.items[]` 增可选 `layer`、`digest.flows[]` 增可选 `pids[]`（引用完整性规则见各节）；`PUT /answers` 的 `answer` 宽进结构化 JSON（判别规则见该节）；读端点出参增 `answerText`（服务端解构单一出口）；新增「incremental_bundle 草稿契约（v1.6）」节；push-artifacts 与增量合并出参增 `danglingPids` 观测计数（纯信号非守卫）。v1.5 及以前全部字段与红线不变，新字段全可选宽进、缺省即旧行为。
 
 所有请求 `Content-Type: application/json`；写接口在平台启用 write-token 时需带头 `X-Token: <token>`。
 
@@ -9,6 +9,7 @@
 - POST /api/requirements —— 建卡
 - POST /api/requirements/{id}/artifacts —— 推体检产物（三件套）
 - doc.guard 内容守恒契约（v1.5）
+- incremental_bundle 草稿契约（v1.6）
 - POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 - GET /api/requirements/{id}/answers —— 拉答复
 - PUT /api/requirements/{id}/answers/{seq} —— 平台侧作答（前端用）
@@ -58,7 +59,7 @@
       {"role": "区域管理员", "step": "创建比赛（五步向导）", "next": "提交审核",
        "gap": false, "src": "详述6.2", "anchor": "（可选）"},
       {"role": "区域管理员", "step": "提交审核", "next": "?",
-       "gap": true, "src": "详述6.2", "anchor": "（可选）"}
+       "gap": true, "src": "详述6.2", "anchor": "（可选）", "pids": ["P06"]}
     ],
     "states": [
       {"obj": "比赛", "from": "草稿", "to": "报名中", "on": "发布",
@@ -72,13 +73,18 @@
     "red": 6, "yellow": 13, "blue": 12,
     "items": [
       {"id": "体检.P01", "level": "yellow", "title": "问题一句话", "where": "详述7.5.5",
-       "go": "✅已确认：同一集合", "group": "状态机与流转", "quote": "「完整冲突原文，可多段」"}
+       "go": "✅已确认：同一集合", "group": "状态机与流转", "quote": "「完整冲突原文，可多段」", "layer": "2"}
     ],
     "md": "（可选）audit 原文 markdown"
   },
   "items": [
     {"seq": "P19", "level": "red", "theme": "修改比赛", "question": "问题全文",
-     "ctx": "出处", "answer": "本地已有答复（可空）", "quote": "「原文摘引，可空」"}
+     "ctx": "出处", "answer": "本地已有答复（可空）", "quote": "「原文摘引，可空」"},
+    {"seq": "P06", "level": "yellow", "theme": "教研活动", "module": "教研活动", "layer": "5",
+     "question": "成果可见范围两处口径不一致，以哪个为准？", "ctx": "详述7.5.5", "quote": "「冲突摘引」",
+     "options": [
+       {"key": "A", "text": "仅教研组全员可见可收（选项全文快照，自包含）", "why": "与原文最小语义改动", "recommended": true},
+       {"key": "B", "text": "两校区全员可见可收"}]}
   ]
 }
 ```
@@ -86,19 +92,25 @@
 - `items[].level`: `red | yellow | blue`
 - `items[].seq` 是平台答复唯一键；平台校验 `[A-Za-z0-9._-]{1,32}`（fullmatch，非法 400——seq 进 REST 路径段），且 (req_id, seq) 唯一（payload 内 seq 重复 400）；重推按 seq 保留平台已答内容（同 seq 同问题文本才携带，P 编号漂移不携带）。**v4 起重推按来源合并**：删机器行（origin=skill/incremental）、保留 local 行（评论升级的 L 系，见平台 v4-8）——`L` 前缀编号由平台分配，skill 清单不携带
 - `items[].theme` **v1.1 起必填**（缺失 400）；取值 = 需求域，与 `audit.items[].group` 同一体系、同一顺序
+- `items[].options`（v1.6 可选）：选择题化选项数组 `[{key, text, why, recommended}]`——2-4 项；`key` 大写字母唯一（A-Z）；`text` 为**自包含选项全文快照**（前端作答时整段落库防重推再生成后 key 漂移，D5；不写「同上」类指代）；`why` 一句话理由；`recommended` 至多一项 `true`（AI 推荐项，前端常显理由）。冲突类/取舍类问题尽量选项化，纯缺失类/开放类不硬造选项（产出纪律见 sdlc-intent 的 report-template/dimensions）
+- `items[].module`（v1.6 可选）：问题归属功能模块，与 `fr_points[].module` 同体系（功能点地图的模块名）
+- `items[].layer`（v1.6 可选）：命中层号 `"1"-"7"` 字符串，层名与 sdlc-intent 的 dimensions.md 七层逐层对齐（1 概念 … 7 外部参照）；**不设 0 号**——维度外「补充」类命中不携带 layer（前端落「未分类」桶，不发明无出处层名）；平台宽进归一（数字 `"3"`/`3` → `"3"`，越界归空串）
+- `audit.items[].layer`（v1.6 可选）：同 `items[].layer` 的 1-7 体系（已定论卡同样可见维度，点亮就绪度覆盖地图）；存量 id 带「体检.」前缀，所有消费（已定论判定、data-pid、跳转匹配）一律剥前缀——v1.6 不强制规范化 id 形态
 - `fr_points[].id` 全局命名空间（`需求.FR-xx`），作为用例追溯外键与表单软校验数据源
 - `fr_points[].group` = 出处分组组头（注册表分组），`source` = 行级出处，`module` = 归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）
 - `domains[]` = 全局需求域顺序常量（平台级分组基准，体检/澄清共用）；缺省保留上次值
 - `digest.risk_tier`（v1.3 可选）：需求级风险分级 `"A"|"B"|"C"`，非空时覆盖建卡值（后到为准——建卡早于定级的时序兜底）；FR 级分级不上平台
 - `digest.flows[]` / `digest.states[]`（v1.4 可选）：§5 主流程步骤表 `{role,step,next,gap,src,anchor}` 与 §6 流转边表直投 `{obj,from,on,to,gap,src,anchor}`；`gap:true` = 原文断点行（`next`/`to` 填 `"?"`）；`states[].obj` 取自 §6 图题「图 N：<对象名> 状态机」的对象名；anchor 均可由 sdlc-intent 的 resolve_anchors.py 附加（同 features）
+- `digest.flows[].pids`（v1.6 可选）：断点直达——字符串**数组**（一律数组形态，字符串形态会以非空串绕过消费端 `(pids||[]).length` 降级判定），值为与该断点相关的澄清问题 P 编号。**引用完整性（D-L）**：全量 payload 中仅允许引用**本 payload `items[].seq` 或存量 `local`（L 系）seq**（push 是全量替换语义，机器行整族删除重建，引用其它存量机器 seq 重推后必悬空）；增量新行仅允许引用**存量已分配** seq（P 系编号平台合并时才分配、合并不回填，引用本包新问题必然悬空）。悬空 pid 平台不改写不拒收（宽进透传），点击时消费端「未定位」提示兜底；出参 `danglingPids` 计数是纪律失守的观测信号
 - `snapshot.md` 非空即刷新平台快照并更新时间戳（依据版本语义：体检与澄清的依据；发布后冻结）；缺省保留旧快照
 - `quote` 平台侧无长度限制，取完整冲突/依据原文，渲染为引用块并作快照定位锚
 - `doc`（v1.2 可选顶层，v1.5 增 `guard`）：`{blocks,media,source,generator,guard}`，由 sdlc-intent 的 parse_doc.py（≥0.4）产出、顶层原样透传（guard 不得手工增删改）；推送前需先完成媒体上传（见下两节）。**仅用于外部导入**（sdlc-sync 首推）；质检/增量质检 payload **不含 doc**——原文块表权威已落库，草稿采纳时平台剥除 doc 透传（带 guard 的外部导入走守恒终检，回环数据不落 artifact）
 - `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）
 - 副作用：状态 → `clarifying`；重复推送 = 覆盖（version+1）；`published` 后拒绝（快照随之冻结）
 - **changed 卡行为**：409「该需求处于变更中（changed），全量重推已关闭」——已发布需求的原文消化走平台增量通道（变更单 confirm → 增量质检合并 → 重新发布回 published 后全量通道重开；全量重推既会隐式吞掉 changed 态、又会按来源合并删掉增量接编的已答澄清项）；rebaseline 变更单例外，单放行一次
-- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N}`
+- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N,"danglingPids":N}`
 - `missingMedia` 字段保留仅为出参形状兼容，**v1.5 阻断语义下成功响应恒为 0**——媒体缺失即 409 拒收（缺失计数与前若干个 mediaId 见错误文案），doc 不落库，不再有宽松计数落库（媒体须全部上传成功后再推）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
+- `danglingPids`（v1.6，观察信号非守卫）：payload 内全部 `flows[].pids` 不属于（本 payload `items[].seq` ∪ 存量 `local` 行 seq）的计数——平台照常透传落库（宽进语义不变），前端点击悬空 pid 的「未定位」提示仍是交互兜底；持续 >0 说明生产端 pids 引用纪律失守，应查生成 prompt 遵循率而非平台行为
 
 ## doc.guard 内容守恒契约（v1.5）
 
@@ -128,6 +140,30 @@
 
 守恒盲区（双侧恒 0 或对称排除，声明而非缺陷）：评论内容（来自 refmap）、字面 `*`/`~` 字符、thead/head 文本（含推断表头行文本）、media name/alt。
 
+## incremental_bundle 草稿契约（v1.6）
+
+变更单 confirm 后局部质检的回传草稿（`PUT /api/requirements/{id}/drafts/incremental_bundle`），人审采纳后由平台机械合并。梳理规范见 sdlc-intent 的 incremental-guide.md（受影响章节切片、作废清单、anchor 越界纪律）；本节锁定结构契约：
+
+```json
+{
+  "changeId": 7,
+  "sections": ["fs-h-2-2"],
+  "digestRows": {
+    "features": [], "flows": [], "states": [],
+    "auditItems": [], "frUpserts": [], "frRemoves": []
+  },
+  "invalidate": {"digestAnchors": [], "auditIds": []},
+  "clarify": {"items": []},
+  "summary": "…", "riskTier": "A|B|C"
+}
+```
+
+- `sections`：受影响章节的 **heading block_id**（禁 seq 数值——平台整体重排会改写全表 seq，服务端校验非 heading block_id 即拒）
+- `digestRows.*` 新版本行：**行结构与全量质检同构**——features `{role,m,func,cov,src,anchor}`、flows `{role,step,next,gap,src,anchor,pids}`、states `{obj,from,on,to,gap,src,anchor}`、auditItems `{id,level,title,where,go,group,quote,anchor,layer}`（9 键含 v1.6 `layer`）。合并端对 new 行按上述键集白名单归一（剥未知键）；只覆盖受影响章节，不重写区间外；新行 anchor 必须全部 ∈ impact.blocks（越界即拒）
+- `digestRows.flows[].pids`：**仅允许引用存量已分配 seq**（平台 detail `items[]` 可见的编号）——本包新问题编号由平台合并时分配、合并不回填，引用本包新问题必然悬空（D-L）；采纳出参 `danglingPids` 仅计本次 new 行悬空（存量历史悬空不在本出参归因）
+- `invalidate`：作废清单（digest 行按 anchor、audit 条目按 id）；清单里的行必须真实存在，服务端校验不存在即拒
+- `clarify.items`：新澄清问题 `{level,theme,question,ctx,quote,anchor,options,module,layer}`——**不携带 seq**（平台合并时分配）；`options/module/layer` 纪律同全量 push（上文各节）；受影响章节内未解决平台评论应转化为澄清问题
+
 ## POST /api/requirements/{id}/media —— 媒体上传（v1.2）
 
 - body = 文件 raw bytes；query `name=<文件名>`、`mediaId=<doc.media[].id>`
@@ -140,12 +176,13 @@
 
 ```json
 [
-  {"seq":"P19","level":"red","theme":"修改比赛","question":"…","answer":"允许随时修改…","answeredAt":"2026-09-18 10:00:00",
-   "status":"answered","note":"","origin":"skill","srcCommentId":null}
+  {"seq":"P19","level":"red","theme":"修改比赛","question":"…","answer":"允许随时修改…","answerText":"允许随时修改…",
+   "answeredAt":"2026-09-18 10:00:00","status":"answered","note":"","origin":"skill","srcCommentId":null}
 ]
 ```
 
 - `status`：处置状态 `pending | answered | rejected | deferred`（answered 计数口径 = 已处置，含驳回/挂起）
+- `answerText`（v1.6）：`answer` 的服务端解构出口——结构化 option → `optionText`[＋`（补充：extra）`]、结构化 text → `text`、非/残缺结构化 → 原文透传（判别四条件见 PUT 节）。**本地回写（pull-answers）、合成输入、变更重开 note 一律消费 `answerText`**；原始 `answer` 仅透传给需要结构的一方（前端选项回显）
 - `note`：驳回/挂起理由（空串 = 无）
 - `origin`：`skill | incremental`（机器行，重推按来源合并删除）| `local`（评论升级的 L 系，仅人工删）
 - `srcCommentId`：评论升级回链（该 L 系行由哪条评论升级而来，非升级行为 `null`）
@@ -157,6 +194,15 @@ changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + �
 ## PUT /api/requirements/{id}/answers/{seq} —— 平台侧处置（作答/驳回/挂起/重开，前端用）
 
 `{"answer":"…","status":"rejected|deferred|pending","note":"驳回必填理由"}`；`answer` 空串 = 撤销答复；`status` 缺省即作答（answered），`rejected`/`deferred` = 驳回/挂起（驳回必须带 `note`），`pending` = 显式重开（answer 保留）。
+
+`answer` 字段仍为字符串（DB 列 TEXT），**内容可为结构化 JSON**（v1.6 选择题化作答，服务端宽进不校验内部结构）：
+
+```json
+{"kind":"option","optionKey":"A","optionText":"选项全文快照（点选时整段落库）","extra":"补充说明（可空）"}
+{"kind":"text","text":"自由文本答复"}
+```
+
+**判别规则（读端解构，四条件全过才算结构化）**：`json.loads` 成功 ∧ 含 `kind` 键 ∧ `kind ∈ {option,text}` ∧ 分支负载非空（option 含非空 `optionText`、text 含非空 `text`）；任一不满足一律按纯文本原样透传——残缺结构化（有 kind 无负载）不会产出空串 `answerText`（下游当未答、条款漏固化），也不在解构层外溢 JSON。`optionText` 取选项全文快照防重推 options 再生成后 key 漂移（D5）。
 
 状态守卫（v4-15 起）：`clarifying` / `changed` 可用（changed 只面对重开 + 新增项，未受影响项保留已答）；`published` 卡仅评论升级的 L 系（`origin=local`）行可处置（升级不出死巷，机器行维持终态锁定）；其余状态 409。
 
@@ -207,12 +253,14 @@ changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + �
 ## GET 端点（读）
 
 - `GET /api/requirements?iter=&status=` 需求列表（含 totalQ/answeredQ/caseCount 聚合）
-- `GET /api/requirements/{id}` 详情：card（v2.1 起含 riskTier）、items（含 quote）、digest（features 含 src；v1.4 起 flows/states 含 src/anchor/gap）、audit（items 含 group/quote/relatedCases）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、standard
+- `GET /api/requirements/{id}` 详情：card（v2.1 起含 riskTier）、items（含 quote；v1.6 起 `answerText`（同 /answers 口径）与 `options/module/layer`）、digest（features 含 src；v1.4 起 flows/states 含 src/anchor/gap；v1.6 起 flows 含 `pids` 数组）、audit（items 含 group/quote/relatedCases；v1.6 起含 `layer`）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、standard
 - `GET /api/fr-points?req_id=` 需求点编号集（表单软校验数据源）
 - `GET /api/cases?iter=&reqId=&status=&tool=&q=` 用例列表（含 verifyRefs/defectRefs 数组）
 - `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
 
 ## 历史变更
+
+> v1.6 变更（澄清选择题化，DESIGN-v5 §6）：push-artifacts 澄清 `items[]` 增可选 `options`（选项数组，key 大写唯一/text 全文快照/recommended 至多一项）、`module`、`layer`（"1"-"7"，与 dimensions.md 七层对齐、不设 0 号）；`audit.items[]` 增可选 `layer`；`digest.flows[]` 增可选 `pids[]`（数组，D-L 引用完整性：全量仅引用本 payload seq 或存量 L 系、增量新行仅引用存量已分配 seq）；`PUT /answers` 的 `answer` 宽进结构化 JSON（四条件判别）；`/answers` 与 detail 出参增 `answerText`（解构单一出口）与 items `options/module/layer`；新增「incremental_bundle 草稿契约」节（digestRows 行结构同构全量 + clarify.items 不带 seq）；push 与增量合并采纳出参增 `danglingPids` 观测计数（纯信号非守卫）。v1.5 及以前 payload 不变，新字段缺省即旧行为。
 
 > v1.5 变更（doc 守恒终检）：push-artifacts 顶层 `doc` 增 `guard`（`{algo,source,mediaTokens,textSha}`，parse_doc ≥0.4 产出）；missingMedia 从宽松计数（doc 照常落库、前端占位）改为 **>0 即 409 阻断**；平台落库前按同口径归一化复算 textSha、对账 mediaTokens 与 media status（契约详见「doc.guard 内容守恒契约」节）。v1.4 及以前 payload 不变；缺 guard 的旧 doc 在平台启用终检后将被 409 拒（提示升级 parse_doc ≥0.4 重产）。
 
