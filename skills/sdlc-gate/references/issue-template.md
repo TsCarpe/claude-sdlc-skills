@@ -18,6 +18,9 @@
 |---|---|
 | 评审状态 | 待裁决 |
 | 风险分级 | <A / B / C>（来源 cases 头；未分级写「未分级（按 A）」；与 cases 头不一致时先修正再预审——sdlc-test 侧 guard_exec 检查 2.5 已机械校验 digest/cases/issues 三头一致） |
+| reviewMode | <external / degraded>（external = 平台外置 runner；degraded = 进程内单会话，仅 C 级允许） |
+| fanout | <A=4 / B=2 / C=0；degraded 写实际扇出数（通常 0）> |
+| contextMode | <fresh / single-session>（A/B 必须 fresh；C 主会话自查 single-session） |
 | 设计文档 | <路径> |
 | 用例文件 | <路径> |
 | CONTRACT 基准 | intake/ 三件套（<版本/日期>；回退原始 PRD 时注明） |
@@ -108,6 +111,7 @@
 - **场景列必填**（分歧/角色/可测性明细表 + 裁决焦点表）：2-3 句业务白话（谁、在哪、做什么），禁止代号；裁决者不读 design/cases 可理解问题本体。素材 = 子代理产出的场景初稿（ARTIFACT 行为描述 + CONTRACT 章节），主会话 RECONCILE 时改写补齐——初稿前移，终稿裁判权在主会话
 - **场景 good/bad 示例**：✅「运营在活动配置页勾选评选品类后点保存」——谁、在哪、做什么齐全；❌「setRange 提交 cellList 空报文」——代号不是场景
 - **焦点表场景同源**：裁决焦点表「场景（白话）」列从对应明细行**原样复制**，不得改写（与标题列同源复制同口径，速览与明细同源）
+- **扇出留痕三行（机械校验）**：头部 kv 必须写 `reviewMode` / `fanout` / `contextMode`——A=external/4/fresh、B=external/2/fresh、C=external（或 degraded）/0/single-session。A/B 级写成 degraded 或 fanout 不足会被 `check_trace.py` 拦截（平台侧 ingest 校验若已启用，同口径拒收）；进程内单会话通道（平台 agent）只能产出 C 级，固定 degraded/0/single-session。三行缺失按迁移窗口前存量产物放行（脚本告警），新产物不得缺
 - **业务背景行**：头部 kv「业务背景」2-3 句白话核心链路（谁→做什么→到哪），禁代号；生成时一次落盘，裁决阶段不追加内容
 - **代号速查**：只列本文件实际引用的跨产物代号（防膨胀），一行一代号，释义为白话，来源列写定义处（如 digest §7 / design §4）；「编号体系」行只写命名规则（D/A/S/T 前缀与命名空间约定），具体代号释义全在速查节——禁止把释义塞回头部 kv 行
 - **原文摘引强制**：「设计说」「用例说」「原文摘引」列必须引用 artifact 原文 ≤2 句 + 位置；**禁止只给行号/章节号不给原文**

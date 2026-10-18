@@ -54,6 +54,8 @@ Review-gate 进度：
 
 用 Agent 工具生成子代理，对抗 prompt 用下方模板。**token 纪律：每个子代理只喂 ARTIFACT + 角色审查要点 + CONTRACT 相关章节 + 近期误报模式，不喂会话全文。**
 
+**扇出留痕（平台机械校验）**：issues 头部必须写 `reviewMode` / `fanout` / `contextMode` 三行——A=external/4/fresh、B=external/2/fresh、C=external（或 degraded）/0/single-session。A/B 级不许降级为单会话串行自审：平台外置 runner 用 Agent 工具扇出；**进程内单会话通道（平台 agent）只执行 C 级**并以 degraded/0/single-session 如实标注。平台侧 ingest 校验（若已启用）与本地脚本同口径：`check_trace.py` 校验三行与风险分级的一致性（A/B 级 degraded 或 fanout 不足即拦截），`guard_dev.py` 拦截 A/B 级 degraded 放行。
+
 | # | 角色 | ARTIFACT | 审查要点 |
 |---|---|---|---|
 | 1 | 架构一致性 / 分层规范 | 设计 | 分层职责、跨层对象、接口契约读写口径、存量兼容（接口/字段变更对既有调用方影响）与回滚可逆性；规范源 = 项目分层规范文档（如 `.trellis/spec/`、`dev_standards/` 等项目自建规范目录），读不到则降级通用清单并在 issues 注明证据降级 |

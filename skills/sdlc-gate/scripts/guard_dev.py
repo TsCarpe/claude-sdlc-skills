@@ -17,6 +17,8 @@
      不 import,单独安装互相不可见,改口径须三处同步)头部「评审状态」= 已放行;
      待裁决 / 字段缺失均拒。状态行仅认头部区块(首个 ## 标题前,header_kv),
      正文插「已放行」行不识别——该函数与 _shared.header_kv 两处复刻,改口径须两侧同步
+  3. P1-9:A/B 级头部 reviewMode=degraded(降级单会话)拒放行——该档位必须外置
+     runner 全新上下文扇出;未标注 reviewMode 的存量产物按旧格式放行
 
 降级边界:脚本不可得(无 python3)时人工核对最新 issues 头部「评审状态」;
 review/ 下非模板产出的手写文件若恰为最新份,按「评审状态字段缺失」如实拒绝。
@@ -94,6 +96,14 @@ def main() -> int:
         return fail([f"评审关口未放行:{latest.name} 头部「评审状态」= {val!r}——"
                      f"先完成 sdlc-gate 逐条裁决(Step 4)与放行闭环(Step 5);"
                      f"设计的人工 ack(确认点③/协作文档确认)只是定稿信号,不构成放行"])
+    # P1-9:A/B 级降级单会话评审不构成质量放行——外置 runner 全新上下文扇出才是该档位口径
+    tier_raw = (header_kv(text, "风险分级") or "").strip()
+    tier = tier_raw[:1].upper() if tier_raw[:1].upper() in ("A", "B", "C") else "A"
+    mode = header_kv(text, "reviewMode")
+    if tier in ("A", "B") and mode == "degraded":
+        return fail([f"{tier} 级评审为降级单会话:{latest.name} 头部 reviewMode=degraded——"
+                     f"A/B 必须由外置 runner 的全新上下文子代理扇出(A=4/B=2);"
+                     f"用外置 runner 重跑评审并重新生成 issues 后再放行"])
     print(f"{OK} 开发放行守卫通过:{latest.name} 评审状态={val}")
     return 0
 

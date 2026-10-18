@@ -1,6 +1,6 @@
 ---
 name: sdlc-test
-description: "Orchestrates AI testing: dev-complete verification (compile/boot/smoke), case generation, static consistency checks, browser-based functional testing, and reports. Subcommands (cases/dev/static/exec/spec/report) are independently re-runnable with two human checkpoints; passing cases can be assetized into Playwright specs so regression rounds run with zero agent tokens. AI 测试智能体编排：开发完成验证 → 用例生成 → 静态一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report 需求名"
+description: "Orchestrates AI testing: dev-complete verification (compile/boot/smoke), case generation, static consistency checks, browser functional testing, and reports. Subcommands (cases/dev/static/exec/spec/report) are re-runnable with two human checkpoints; passing cases can be assetized into Playwright specs for zero-token regression. AI 测试智能体编排：开发完成验证→用例生成→静态一致性→浏览器功能测试→报告；子命令 cases/dev/static/exec/spec/report 独立可重跑，两道人工关卡，通过用例可资产化为 Playwright spec。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report 需求名"
 ---
 
 # AI 测试智能体

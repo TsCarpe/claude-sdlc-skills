@@ -13,6 +13,7 @@
     "拒绝文案点明：任务框架/文档的人工 ack 只是流程性定稿信号，不构成质量放行",
     "若 review/ 目录为空：拒绝并提示先完成 sdlc-gate Step 1-3 生成 issues",
     "若 issues-<日期>-r2.md（待裁决）晚于 issues-<日期>.md（已放行）：按最新一份拦截，补救文案给「完成 r2 裁决或确认误开移出 review/」两个去向",
+    "若最新 issues 评审状态=已放行但风险分级为 A/B 且 reviewMode=degraded：守卫仍拒绝，提示必须由外置 runner 全新上下文扇出（A=4/B=2）并重新生成 issues",
     "若最新 issues 评审状态=已放行：守卫通过，正常进入开发"
   ]
 }

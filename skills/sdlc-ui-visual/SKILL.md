@@ -1,6 +1,6 @@
 ---
 name: sdlc-ui-visual
-description: "设计稿到代码的视觉还原闭环：以 Figma 链接或基准图为唯一视觉基准，对运行中的前端页面做真实浏览器截图比对（DOM 几何逐项对照 + 像素叠加/差异/热区 + 小元素放大判读），按 P0>P1>P2 分级驱动修复轮，功能回归后按六要素汇报。Design-to-code visual restoration loop: takes a Figma link or baseline image as the single reference, diffs the running page via real browser screenshots (DOM geometry checklist + pixel overlay/diff/heatmap + small-element zoomed inspection), drives tiered fix rounds, verifies functional regression, then reports. Use when 用户提供 Figma 设计稿或基准图要求视觉还原、UI 还原、设计稿还原、照着 Figma 改样式、像素级比对、视觉走查、视觉偏差修复，或说 ui check、ui-align。输入是设计稿基准且允许改样式代码——纯功能验证走 sdlc-test。用法：/sdlc-ui-visual Figma链接或基准图路径 [目标页面或组件]"
+description: "Design-to-code visual restoration loop: diffs the running page against a Figma link or baseline image via real screenshots (DOM geometry + pixel diff/heatmap + zoomed inspection), drives tiered fix rounds and verifies functional regression. 设计稿到代码的视觉还原闭环：以 Figma 链接或基准图为唯一视觉基准，对运行中的前端页面做浏览器截图比对（DOM 几何 + 像素差异/热区 + 小元素放大），按 P0>P1>P2 分级驱动修复轮，功能回归后按六要素汇报。Use when 用户提供 Figma 设计稿或基准图要求视觉还原、UI 还原、设计稿还原、照着 Figma 改样式、像素级比对、视觉走查、视觉偏差修复，或说 ui check、ui-align。输入是设计稿基准且允许改样式代码——纯功能验证走 sdlc-test。用法：/sdlc-ui-visual Figma链接或基准图路径 [目标页面或组件]"
 ---
 
 # UI 视觉还原

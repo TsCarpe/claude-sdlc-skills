@@ -11,6 +11,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 固定 Python 工具链：ubuntu-latest 的 system pip 受 PEP 668 限制，后续 Pillow 安装需要
+      # setup-python 提供的可写环境（P1-3）
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: marketplace.json 合法性
         run: python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
 
@@ -48,28 +54,28 @@ jobs:
       - name: markdown 相对链接与路径引用存在性（断链零容忍）
         run: |
           python3 - <<'EOF'
-          import os, re
+          import os, re, subprocess
           broken = []
           link_re = re.compile(r'\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
-          for dp, dns, fns in os.walk('.'):
-              if any(x in dp for x in ['.git', '.idea', '.serena', 'node_modules']):
+          # 只遍历 git 跟踪的 markdown：本地存在但被 .gitignore 排除的文件（如 poc/）不在
+          # CI checkout 中，扫它们会造成「本地绿、CI 红」的不可复现差异（P1-3）
+          tracked = subprocess.check_output(['git', 'ls-files', '-z', '*.md'], text=True).split('\0')
+          for f in (x for x in tracked if x):
+              if os.path.basename(f) == 'CHANGELOG.md':
                   continue
-              for fn in fns:
-                  if not fn.endswith('.md') or fn == 'CHANGELOG.md':
+              dp = os.path.dirname(f) or '.'
+              text = re.sub(r'```.*?```', '', open(f, encoding='utf-8').read(), flags=re.S)
+              for m in link_re.finditer(text):
+                  t = m.group(1)
+                  if t.startswith(('http://', 'https://', '#', 'mailto:')):
                       continue
-                  f = os.path.join(dp, fn)
-                  text = re.sub(r'```.*?```', '', open(f, encoding='utf-8').read(), flags=re.S)
-                  for m in link_re.finditer(text):
-                      t = m.group(1)
-                      if t.startswith(('http://', 'https://', '#', 'mailto:')):
-                          continue
-                      p = t.split('#')[0]
-                      if p and not os.path.exists(os.path.normpath(os.path.join(dp, p))):
-                          broken.append(f"{f} -> {t}")
-                  # harness=历史路径防回流守卫（v0.5.0 迁出，勿删）；doc=docs 笔误守卫
-                  for m in re.finditer(r'`(doc|docs|templates|harness|skills)/[A-Za-z0-9_\-./]+\.(md|json|py|sh|yaml|yml)`', text):
-                      if not os.path.exists(m.group(0).strip('`')):
-                          broken.append(f"{f} -> {m.group(0)}")
+                  p = t.split('#')[0]
+                  if p and not os.path.exists(os.path.normpath(os.path.join(dp, p))):
+                      broken.append(f"{f} -> {t}")
+              # harness=历史路径防回流守卫（v0.5.0 迁出，勿删）；doc=docs 笔误守卫
+              for m in re.finditer(r'`(doc|docs|templates|harness|skills)/[A-Za-z0-9_\-./]+\.(md|json|py|sh|yaml|yml)`', text):
+                  if not os.path.exists(m.group(0).strip('`')):
+                      broken.append(f"{f} -> {m.group(0)}")
           assert not broken, "断链:\n" + "\n".join(broken)
           print("OK: 相对链接检查通过")
           EOF
@@ -134,6 +140,10 @@ jobs:
 
       - name: parse_doc 内容守恒自检（--self-test）
         run: python3 skills/sdlc-intent/scripts/parse_doc.py --self-test
+
+      # compare.py 顶层 import PIL，缺依赖 exit 2（P1-3 潜在第二红灯）；显式安装保证自检真的跑
+      - name: 视觉比对依赖（Pillow）
+        run: python3 -m pip install --disable-pip-version-check Pillow==12.3.0
 
       - name: compare.py 视觉比对自检（--self-test）
         run: python3 skills/sdlc-ui-visual/scripts/compare.py --self-test

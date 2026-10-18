@@ -26,6 +26,8 @@
   4. FR 覆盖（best-effort）——digest 每个 FR 在 cases 双向追踪表有覆盖用例或非空原因
   5. 场景列非空——表头声明「场景（白话）」列时，〇节焦点行与一/二节明细行
      该列不得为空（旧格式无该列自动跳过；「场景必填」模板红线的机械兜底）
+  6. 扇出留痕——头部 reviewMode/fanout/contextMode 与风险分级一致（P1-9）：
+     A=external/4/fresh、B=external/2/fresh、C=single-session；三行全缺按旧格式跳过
 
 登记不校验（定义源在任务系统，位置不可知，输出注明）：
   设计.D-xx / 功能.F-xx / 确认.Q-xx / ER.X
@@ -154,6 +156,58 @@ def check_refs(files: dict[str, Path], defs: dict[str, set[str]]) -> tuple[list[
                         msgs.append(f"引用不可达：{path.name}:{i} 引用 {m.group(0)} —— "
                                     f"{fmt_available(defs.get(src, set()), prefix_of(ident), src_name)}")
     return msgs, checked
+
+
+REVIEW_TIER_FANOUT = {"A": 4, "B": 2}
+
+
+def _header_kv(lines: list[str], field: str) -> str | None:
+    """头部 kv（首个 ## 标题前）取 `| 字段 | 值 |`；正文同名行不识别。"""
+    for ln in lines:
+        if ln.startswith("##"):
+            return None
+        m = re.match(rf"^\|\s*{re.escape(field)}\s*\|\s*([^|]+)", ln)
+        if m:
+            return m.group(1).strip()
+    return None
+
+
+def check_review_meta(lines: list[str], issues_name: str) -> list[str]:
+    """检查 6：issues 头扇出留痕与风险分级一致。
+
+    三行全缺 = 迁移窗口前存量产物：跳过不阻断（notes 告警）；出现任一行即按新契约严格校验。
+    A/B 级必须外置 runner 全新上下文扇出（A=4 / B=2 子代理），degraded 或扇出不足即违规；
+    C 级为主会话自查，contextMode 须 single-session、fanout 须 0。"""
+    mode = _header_kv(lines, "reviewMode")
+    fanout_raw = _header_kv(lines, "fanout")
+    ctx = _header_kv(lines, "contextMode")
+    if mode is None and fanout_raw is None and ctx is None:
+        return []
+    msgs: list[str] = []
+    if mode not in ("external", "degraded"):
+        msgs.append(f"扇出留痕非法：{issues_name} 头部 reviewMode={mode or '空'}（须 external|degraded）")
+    if ctx not in ("fresh", "single-session"):
+        msgs.append(f"扇出留痕非法：{issues_name} 头部 contextMode={ctx or '空'}（须 fresh|single-session）")
+    try:
+        fanout = int(fanout_raw or "")
+    except ValueError:
+        msgs.append(f"扇出留痕非法：{issues_name} 头部 fanout={fanout_raw or '空'}（须非负整数）")
+        fanout = -1
+    tier_raw = (_header_kv(lines, "风险分级") or "").strip()
+    tier = tier_raw[:1].upper() if tier_raw[:1].upper() in ("A", "B", "C") else "A"
+    if tier in ("A", "B"):
+        need = REVIEW_TIER_FANOUT[tier]
+        if mode == "degraded" or ctx != "fresh":
+            msgs.append(f"{tier} 级评审须全新上下文扇出（reviewMode=external / fanout≥{need} / "
+                        f"contextMode=fresh）：{issues_name} 为 degraded/single-session")
+        elif fanout >= 0 and fanout < need:
+            msgs.append(f"{tier} 级评审扇出不足：{issues_name} fanout={fanout}（须 ≥{need}）")
+    else:
+        if ctx != "single-session":
+            msgs.append(f"C 级评审为主会话自查：{issues_name} contextMode 须为 single-session")
+        if fanout > 0:
+            msgs.append(f"C 级评审为主会话自查：{issues_name} fanout={fanout}（须为 0）")
+    return msgs
 
 
 def section_marks(lines: list[str]):
@@ -432,6 +486,24 @@ _ISSUES_REF = _ISSUES_OK.replace(
 _ISSUES_REL = _ISSUES_OK.replace(_T15_ROW, _T15_ROW.replace("已执行", "待执行"))
 # 宽容正例：分类·严重度只局部加粗（分歧·**高**，模板红线「高必须加粗」的合法变体）——计数仍须同源
 _ISSUES_BOLD = _ISSUES_OK.replace("分歧·高 | a |", "分歧·**高** | a |")
+
+# P1-9 扇出留痕：B 级 external/2/fresh 正例；degraded / 扇出不足反例（旧 fixture 三行全缺 = 存量兼容）
+_REVIEW_HEAD_OK = ("| 评审状态 | 待裁决 |\n"
+                   "| 风险分级 | B |\n"
+                   "| reviewMode | external |\n"
+                   "| fanout | 2 |\n"
+                   "| contextMode | fresh |")
+_ISSUES_REVIEW_OK = _ISSUES_OK.replace("| 评审状态 | 待裁决 |", _REVIEW_HEAD_OK)
+_ISSUES_REVIEW_BAD = (_ISSUES_REVIEW_OK.replace("| reviewMode | external |", "| reviewMode | degraded |")
+                      .replace("| fanout | 2 |", "| fanout | 0 |")
+                      .replace("| contextMode | fresh |", "| contextMode | single-session |"))
+_ISSUES_REVIEW_SHORT = _ISSUES_REVIEW_OK.replace("| fanout | 2 |", "| fanout | 1 |")
+# C 级：主会话自查固定 degraded/0/single-session；fanout>0 反例
+_ISSUES_REVIEW_C_OK = (_ISSUES_REVIEW_OK.replace("| 风险分级 | B |", "| 风险分级 | C |")
+                       .replace("| reviewMode | external |", "| reviewMode | degraded |")
+                       .replace("| fanout | 2 |", "| fanout | 0 |")
+                       .replace("| contextMode | fresh |", "| contextMode | single-session |"))
+_ISSUES_REVIEW_C_BAD = _ISSUES_REVIEW_C_OK.replace("| fanout | 0 |", "| fanout | 2 |")
 # 方言反例：追踪行命名空间误用项目名（示范.FR-01）——须指因报错而非伪装成覆盖缺口
 _CASES_MD_DIALECT = _CASES_MD.replace("| 需求.FR-01 |", "| 示范.FR-01 |")
 
@@ -544,7 +616,12 @@ def self_test() -> int:
                                      ("dialect", _ISSUES_OK, _CASES_MD_DIALECT),
                                      ("v2ok", _ISSUES_V2_OK, _CASES_MD),
                                      ("v2scene", _ISSUES_V2_SCENE, _CASES_MD),
-                                     ("v2focus", _ISSUES_V2_FOCUS, _CASES_MD)):
+                                     ("v2focus", _ISSUES_V2_FOCUS, _CASES_MD),
+                                     ("reviewok", _ISSUES_REVIEW_OK, _CASES_MD),
+                                     ("reviewbad", _ISSUES_REVIEW_BAD, _CASES_MD),
+                                     ("reviewshort", _ISSUES_REVIEW_SHORT, _CASES_MD),
+                                     ("reviewc", _ISSUES_REVIEW_C_OK, _CASES_MD),
+                                     ("reviewcbad", _ISSUES_REVIEW_C_BAD, _CASES_MD)):
             base = tmp / "sdlc" / name
             (base / "intake").mkdir(parents=True)
             (base / "test").mkdir(parents=True)
@@ -600,6 +677,19 @@ def self_test() -> int:
         rc, out = run([str(tmp), "v2focus"])
         assert rc == 1 and out.count("场景列必填") == 1, out
 
+        # 扇出留痕：B 级 external/2/fresh 正例全绿；degraded 与扇出不足分别被拦且指因明确
+        rc, out = run([str(tmp), "reviewok"])
+        assert rc == 0 and "追溯校验通过" in out, f"合法扇出留痕应全绿：\n{out}"
+        rc, out = run([str(tmp), "reviewbad"])
+        assert rc == 1 and "B 级评审须全新上下文扇出" in out, out
+        rc, out = run([str(tmp), "reviewshort"])
+        assert rc == 1 and "扇出不足" in out, out
+        # C 级：degraded/0/single-session 全绿；fanout>0 被拦
+        rc, out = run([str(tmp), "reviewc"])
+        assert rc == 0 and "追溯校验通过" in out, f"合法 C 级留痕应全绿：\n{out}"
+        rc, out = run([str(tmp), "reviewcbad"])
+        assert rc == 1 and "C 级评审为主会话自查" in out and "fanout=2" in out, out
+
         # A7：拼错 flag 显式报错，不静默丢弃对应检查
         rc, out = run(["--relese", str(tmp), "ok"])
         assert rc == 2 and "未知参数" in out, out
@@ -651,6 +741,7 @@ def main(argv: list[str] | None = None) -> int:
 
     msgs, ref_count = check_refs(files, defs)
     msgs += check_counts(lines["issues"], files["issues"].name)
+    msgs += check_review_meta(lines["issues"], files["issues"].name)
     if release:
         msgs += check_release(lines["issues"], files["issues"].name)
     fr_msgs, fr_ran = check_fr_coverage(lines.get("digest", []), lines.get("cases", []),
@@ -665,6 +756,9 @@ def main(argv: list[str] | None = None) -> int:
     notes.append(f"登记不校验 {ro} 处（设计.D/功能.F/确认.Q/ER——定义源在任务系统）")
     if not fr_ran:
         notes.append("FR 覆盖检查跳过（digest 或 cases 缺失/无 FR）")
+    if all(_header_kv(lines["issues"], f) is None
+           for f in ("reviewMode", "fanout", "contextMode")):
+        notes.append("扇出留痕未标注（迁移窗口前旧格式）——A/B 级新产物须写 reviewMode/fanout/contextMode")
 
     if msgs:
         print(f"{NG} 追溯校验未通过（{len(msgs)} 项），逐条修复后重跑：")
