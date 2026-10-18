@@ -91,7 +91,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 
 `GET /api/requirements/<reqId>/answers`，回写本地：
 
-1. `intake/pm-checklist-<日期>.md`：答复写入对应问题的「答复」列，新答复标 `(平台 <answeredAt>)`。**答复列取 `answerText`**（平台解构后的纯文本——`answer` 原文可能是 `{"kind":...}` 结构化 JSON 串，直接回写会把裸 JSON 带进本地清单）。
+1. `intake/pm-checklist-<日期>.md`：答复写入对应问题的「答复」列，新答复标 `(平台 <answeredAt>)`。**答复列取 `answerText`**（平台解构后的纯文本——`answer` 原文可能是 `{"kind":...}` 结构化 JSON 串，直接回写会把裸 JSON 带进本地清单）。**回写前先看 `status`**：仅 `answered` 写答复列；`rejected`/`deferred` 写处置态（`（已驳回：<note>）`/`（挂起：<note>）`）不写答复；**`pending` 一律清空答复列**——「重新作答」后平台有意保留旧 `answer` 留痕（残留 answerText 不代表已答），照写会把已否定的答复误呈现为 PM 结论。
 2. `intake/audit-<日期>.md`：对应问题处理状态更新（如 `[ ✅已确认：<结论> ]`）。
 3. 完成后**提示用户重跑 sdlc-intent** 更新 digest——平台不替代 digest 重算。
 4. **漏检比对（可选，用户同意后做）**：把 PM 答复揭示的问题与体检命中清单对照——答复里出现"体检本该查出而没查出"的口径/缺口时，按 `../sdlc-intent/references/missed-patterns.md` 的条目格式归因记录一条漏检模式（单独安装 sdlc-sync 时该引用仅作来源说明、不依赖其存在，本条跳过即可）。只记模式不记个案，含真实业务词的内容不入库。
