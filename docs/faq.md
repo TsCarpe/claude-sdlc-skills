@@ -31,10 +31,17 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 | codegraph MCP | sdlc-design（存量勘察）、sdlc-test static | 降级定向 grep + 读文件，结果注明证据降级 |
 | lark-cli | sdlc-intent（飞书文档/评论区）、sdlc-sync（push-artifacts 拉飞书原文快照） | intent 用本地 markdown 文件路径输入，跳过评论区整合；sync 无原文快照可推（快照是质检依据版本），先补 lark-cli 再推 |
 | YApi MCP | sdlc-test cases（接口契约摄入） | 跳过该信息源，用例按需求文档推导 |
+| Figma MCP（如 `figma-context-mcp`） | sdlc-ui-visual（基准获取） | 改用基准图模式；无结构化数据与原版 SVG 下载 |
+| Python 3 | sdlc-intent / sdlc-gate / sdlc-test / sdlc-guardrails / sdlc-ui-visual（脚本） | 走人工核对/降级留档；guard_exec 会警示人工降级形态 |
+| PyYAML | sdlc-guardrails engine | 引擎无法解析规则文件；安装 `pip install pyyaml` 后重试 |
+| Pillow | sdlc-ui-visual compare.py | 脚本报错并提示 `pip3 install Pillow`；像素比对不可用 |
+| Playwright / Node / npm | sdlc-test spec 回归档 | 回归轮降级为 agent 逐用例执行，失去 runner 加速 |
+| git | sdlc-release-check（diff）、sdlc-guardrails（pre-commit） | release-check 无法生成 diff；pre-commit 兜底不可用 |
+| 平台环境（`SDLC_PLATFORM_URL` / `SDLC_PLATFORM_REPO`） | sdlc-sync | 平台不可用时本地工作流完整可用（降级 = 现状）；连接拒绝先确认平台已启动 |
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**
-A：不必须。8 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
+A：不必须。9 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
 
 ### 使用建议
 

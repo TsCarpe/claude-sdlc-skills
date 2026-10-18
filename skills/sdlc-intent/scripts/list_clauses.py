@@ -70,6 +70,7 @@ def main():
                 head = b.get("head") or []
                 meta = " ｜ ".join(f"{head[i]}: {cells[i]}" for i in range(min(len(cells), len(head)))
                                   if cells[i])
+                # 表头预览截断到 80 字：避免长表头把终端输出撑爆
                 print(f"\n== 行[{label}]  {meta[:80]}")
                 walk(b["id"], 0, label)
 

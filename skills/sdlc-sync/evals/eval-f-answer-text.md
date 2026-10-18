@@ -1,13 +1,13 @@
 # eval-f：拉答复与发布消费 answerText（裸 JSON 不落地）
 
-> 官方 JSON 结构场景（CONTRIBUTING「evals 规范格式」）；编号接续 README 存量 eval-a…e。
+> 官方 JSON 结构场景（CONTRIBUTING「evals 规范格式」）；编号接续 README 的其他 agent 行为场景。
 
 ## 输入（平台侧预置，评选活动类中性虚构）
 
 平台 `/answers` 与 detail 预置三条作答形态：
 
-- P03（冲突类选择题，payload 带 options A/B）：前端点选 A 并填补充——`answer` 原文为 `{"kind":"option","optionKey":"A","optionText":"仅参与教师可见","extra":"低年级作品同口径"}`（DB 存储形态），出参 `answerText` = 「仅参与教师可见（补充：低年级作品同口径）」
-- P05：自由文本 `{"kind":"text","text":"报名截止前可撤回，截止后不可"}`，`answerText` = 「报名截止前可撤回，截止后不可」
+- P03（冲突类选择题，payload 带 options A/B）：前端点选 A 并填补充——`answer` 原文为 `{"kind":"option","optionKey":"A","optionText":"仅参评人可见","extra":"低龄组作品同口径"}`（DB 存储形态），出参 `answerText` = 「仅参评人可见（补充：低龄组作品同口径）」
+- P05：自由文本 `{"kind":"text","text":"活动截止前可撤回，截止后不可"}`，`answerText` = 「活动截止前可撤回，截止后不可」
 - P08：`status=deferred`（挂起，note=「下学期再定」），未作答
 
 ```json

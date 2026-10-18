@@ -21,7 +21,7 @@ TC-xx：…
 【环境】读 sdlc/env/test.md 与 accounts.local.md 登录；ui-recipe：sdlc/env/ui-recipe.md（含路由与鉴权头）
 【姿势】浏览器/数据库操作姿势手册：<总则 4 条必挂（含页面身份断言）；其余逐条挂载本批涉及的 references/exec/exec-interaction.md 条目，含 MySQL 断言规范与证据采集节>
 【判定规则】
-- 执行≠验证；操作后 wait_for 等稳定再取证
+- 执行≠验证；操作后 `chrome-devtools:wait_for` 等稳定再取证
 - 每条用例四类证据齐全：页面表现 + 接口响应 + 落库核验 + console（error 必查）；缺一标"疑似"
 - 判"通过"前查看全页截图复核视觉
 - 口径冲突三去向：实现偏离=BUG-xx / 需求未定=转 Q / 用例写错=修用例；禁止静默按实现校正预期

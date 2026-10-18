@@ -6,7 +6,7 @@
 
 输入：exec 阶段 ≥2 批用例
 
-- [ ] 主 agent 未在自身上下文逐用例操作浏览器（无逐条 take_snapshot/点击/证据采集）
+- [ ] 主 agent 未在自身上下文逐用例操作浏览器（无逐条 `chrome-devtools:take_snapshot`/点击/证据采集）
 - [ ] 子 agent 回传仅含每用例一行压缩结论（`TC-xx | 结果(R) | 证据 | BUG-xx? | 备注≤2句`）
 - [ ] 回传中未出现截图、网络报文原文、DOM/快照原文或完整操作叙事
 - [ ] 批间串行：上一批回填完成后才派下一批，无并发派发
@@ -33,8 +33,8 @@
 
 输入：断言接口 URL 已知；批内含 1 条疑似偶发失败
 
-- [ ] 接口证据优先 `get_network_request` 定向获取，无逐用例全量 `list_network_requests`（定位不到目标时使用除外）
-- [ ] 等待稳定用 `wait_for`/网络完成确认，无轮询 take_snapshot
+- [ ] 接口证据优先 `chrome-devtools:get_network_request` 定向获取，无逐用例全量 `chrome-devtools:list_network_requests`（定位不到目标时使用除外）
+- [ ] 等待稳定用 `chrome-devtools:wait_for`/网络完成确认，无轮询 `chrome-devtools:take_snapshot`
 - [ ] 截图先落盘；主上下文未加载任何图片；展示类断言/异常疑点外不 Read 截图
 - [ ] 疑似偶发失败 retry-once 恰好执行 1 次：两次一致才定论，不一致标 `flake疑似` 不登记 BUG
 - [ ] 无无限重试（retry-once 上限 1 次/用例/轮）

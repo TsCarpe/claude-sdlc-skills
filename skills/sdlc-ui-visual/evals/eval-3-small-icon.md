@@ -9,7 +9,7 @@
     "指出数值等价不等于视觉等价：SVG box 的 10×10 与 em box 的 10×10 语义不同，字体图标字形可能只占 em 框约 60%",
     "拒绝以区域平均 diff 下结论（区域平均稀释小元素差异），改走元素级验证：--box 裁剪放大 ≥3 倍 + 视觉判读形状/大小/颜色 + 暗像素计数",
     "暗像素两侧均 <10 时输出「不可判定」，升级手段或转人工确认，不判一致",
-    "若视觉不等价成立：用 download_figma_images 拿原版 SVG 落组件目录替换字体图标（font-size:0 + background），不用调大 font-size 逼近"
+    "若视觉不等价成立：用 `figma-context-mcp:download_figma_images` 拿原版 SVG 落组件目录替换字体图标（font-size:0 + background），不用调大 font-size 逼近"
   ]
 }
 ```

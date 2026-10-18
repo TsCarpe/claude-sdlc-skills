@@ -1,6 +1,6 @@
 ---
 name: sdlc-test
-description: "AI 测试智能体编排：开发完成验证（compile/boot/冒烟）→ 用例生成 → 静态代码一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡（用例审核、报告复验）；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report <需求名>"
+description: "Orchestrates AI testing: dev-complete verification (compile/boot/smoke), case generation, static consistency checks, browser-based functional testing, and reports. Subcommands (cases/dev/static/exec/spec/report) are independently re-runnable with two human checkpoints; passing cases can be assetized into Playwright specs so regression rounds run with zero agent tokens. AI 测试智能体编排：开发完成验证 → 用例生成 → 静态一致性检测 → test 环境浏览器功能测试 → 报告生成。子命令（cases/dev/static/exec/spec/report）独立可重跑，两道人工关卡；通过用例可资产化为 Playwright spec，回归轮跑 runner 零 agent token。Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report 需求名"
 ---
 
 # AI 测试智能体
@@ -10,6 +10,8 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 **栈适配**：方法论栈无关；栈绑定面的盘点与换栈入口见 `references/stack-profile.md`（换栈/新项目接入时读，日常执行不加载）。
 
 产物目录（相对当前项目根）：`sdlc/<需求名>/test/` 下放 `cases.md` 与 `reports/<日期>-r<N>/`；共享环境配置在 `sdlc/env/`。
+
+**前置依赖**：`python3`；`chrome-devtools` MCP（exec 浏览器操作）；`codegraph` / `mysql` MCP（static 与落库核验，缺失可降级）；Playwright / Node / npm（spec 回归档，模板见 `templates/`）。
 
 ## 路由
 
@@ -33,7 +35,7 @@ description: "AI 测试智能体编排：开发完成验证（compile/boot/冒�
 轮次含义与回归范围细则见 [references/round-rules.md](references/round-rules.md)。
 
 **关卡强制**：执行 `static`/`exec` 前读用例文件头部，`审核状态 ≠ 已确认` 时拒绝并提示用户先完成关卡1（人工审核用例后，将头部状态改为 `已确认（日期）`，或让用户口头确认后代改）。若 `sdlc/<需求名>/review/` 存在，关卡1 以 sdlc-gate 状态为准：`评审状态 = 已放行` 视同关卡1 通过（代改时引用 issues 文件），`≠ 已放行` 时拒绝并提示先完成 sdlc-gate 裁决；review 目录不存在则维持本条原行为。
-**本条已机械化**（2026-09-15，2026-09-28 增检查5）：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认，锚定最新一份 issues）、风险分级三口径、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）、**开发完成验证留档反查与交叉校验**（一律拦，老需求补跑一次即过）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
+**本条已机械化**：由 `scripts/guard_exec.py` 承载——关卡1 判定（含 gate 互认，锚定最新一份 issues）、风险分级三口径、轮次目录命名、spec ✓ 标注与 specs/ 资产一致性（防 R3 型失真）、**开发完成验证留档反查与交叉校验**（一律拦，老需求补跑一次即过）均由脚本校验，入口命令见阶段2/3 第一步；脚本拒绝时停止并呈现缺失清单，禁止绕过。
 
 ## 阶段 1 cases：用例生成
 
@@ -108,7 +110,7 @@ Exec 进度：
 
 > 通过且口径拍板的用例 → Playwright spec；此后回归轮该部分由 runner 执行（零 agent token），agent 只诊断红色项。完整规则（粒度/前置复用/选择器/证据映射/失败三向/生命周期）见 `references/spec/spec-guide.md`，必须先读。
 > **分级控制**：风险分级 A 级强制资产化 / B 级默认做 / C 级跳过（不产 spec，回归轮全量走 agent 执行）。
-> **前置（首次）**：runner 基础设施（`sdlc/` 根两件 + `env/runner/` 三件）缺失时，按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建——复制模板 → 替换占位符 → sdlc/ 根 npm install → spike 全绿即就绪。
+> **前置（首次）**：runner 基础设施（`sdlc/` 根两件 + `env/runner/` 三件）缺失时，按 `references/env-template.md`「回归档 Playwright runner」接入表引导搭建——复制模板 → 替换占位符 → sdlc/ 根 npm install → spike 全绿即就绪。模板直接位于 [templates/run_regression.sh](templates/run_regression.sh) 与 [templates/runner/](templates/runner/)（`package.json` / `playwright.config.ts` / `capture-login.mjs` / `spike.spec.ts`）。
 
 1. 准入：默认范围 = BUG 关联用例 + P0/P1 稳定流；用例条目手标可扩围
 2. 读 cases.md + exec-log「复现锚点」翻译为 spec：`test()` = 一用例、按 G-xx 组/模块归档、前置 API 直调优先 / flows/ UI 函数兜底（≥2 用例用到才抽）

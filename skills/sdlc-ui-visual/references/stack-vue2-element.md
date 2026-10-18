@@ -14,7 +14,7 @@
 
 设计稿给的是 SVG 时，**禁止用字体图标 + font-size 逼近**（字形只占 em 框约 60%，数值同 10×10 视觉墨迹可能只有 30%）。固定姿势：
 
-1. `download_figma_images` 下载原版 SVG → 存目标组件同目录
+1. `figma-context-mcp:download_figma_images` 下载原版 SVG → 存目标组件同目录
 2. CSS 替换字体图标：`font-size: 0` 隐藏字形 + `background: url('./icon-xxx.svg') center / 10px 10px no-repeat`
 3. 复验走暗像素计数 + 放大判读（几何数值全等也不代表视觉等价）
 

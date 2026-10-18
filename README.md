@@ -79,8 +79,10 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 ```
 ### 方式二：Claude Code 插件市场
 /plugin marketplace add TsCarpe/claude-sdlc-skills
-/plugin install claude-sdlc-skills@claude-sdlc-skills
+/plugin install sdlc-skills@claude-sdlc-skills
 ```
+
+> 插件名已从 `claude-sdlc-skills` 改为 `sdlc-skills`（第三方插件名不能以 `claude-` 开头）。此前装过旧名的用户请先卸载旧插件，再用上方命令重装；旧安装名不会自动迁移。
 
 **第 2 步 · 装完先试这句**（零外部依赖）——对一个真实需求文档（飞书链接或本地 markdown）说：
 

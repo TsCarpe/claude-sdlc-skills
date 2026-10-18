@@ -1,6 +1,6 @@
 # eval-4：exec 执行效率（姿势套用/前置检查/分组合并/挂起预防）
 
-基线（2026-09-11 真实项目评选活动创建 TC-01 实测，优化前）：~60 轮工具调用，约 25 轮浪费（下拉/日期/上传/多选试错、MySQL bigint 舍入回查、列名现场猜错），1 次 evaluate Promise 链挂起 150s。优化目标：单用例平均轮次 ≤15、零挂起。
+基线（2026-09-11 真实项目评选活动创建 TC-01 实测，优化前）：~60 轮工具调用，约 25 轮浪费（下拉/日期/上传/多选试错、MySQL bigint 舍入回查、列名现场猜错），1 次 `chrome-devtools:evaluate_script` Promise 链挂起 150s。优化目标：单用例平均轮次 ≤15、零挂起。
 
 ## 4a 无配方首跑
 
@@ -14,14 +14,14 @@
 
 输入：Element Plus 下拉/日期/多选/上传控件
 
-- [ ] 下拉：无「click→快照落空→再快照」三连，直接 evaluate DOM click
-- [ ] 日期：不使用 fill，直接 focus+type_text+Enter 路径
+- [ ] 下拉：无「click→快照落空→再快照」三连，直接 `chrome-devtools:evaluate_script` DOM click
+- [ ] 日期：不使用 `chrome-devtools:fill`，直接 focus+`chrome-devtools:type_text`+Enter 路径
 - [ ] 多选：同步连点 + 计数文本复核，无按 selected class 判断
 - [ ] 上传：文件在项目内路径，无 workspace 拒绝后重试
 
 ## 4c 挂起预防
 
-输入：任何 evaluate_script 调用
+输入：任何 `chrome-devtools:evaluate_script` 调用
 
 - [ ] 同步立即返回，无 Promise/setTimeout 等待链；等待场景使用 chrome-devtools:wait_for
 

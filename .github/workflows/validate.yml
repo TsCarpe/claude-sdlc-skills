@@ -14,6 +14,37 @@ jobs:
       - name: marketplace.json 合法性
         run: python3 -m json.tool .claude-plugin/marketplace.json > /dev/null
 
+      - name: 插件名保留字与 description 卫生
+        run: |
+          python3 - <<'EOF'
+          import glob, json, re
+          m = json.load(open('.claude-plugin/marketplace.json'))
+          reserved_prefixes = ('claude-', 'anthropic-', 'anthropics-', 'cc-plugin-')
+          reserved_exact = {'claude', 'anthropic', 'anthropics', 'claude-code', 'claude-mods'}
+          for p in m['plugins']:
+              name = p['name']
+              assert name not in reserved_exact and not name.startswith(reserved_prefixes), \
+                  f"插件名触发保留字规则: {name}（第三方插件不能以 claude-/anthropic-/anthropics-/cc-plugin- 开头）"
+              desc = p.get('description', '')
+              assert len(desc.encode('utf-8')) <= 1000, \
+                  f"插件 description 超 1000 字节（{len(desc.encode('utf-8'))}）"
+          bad = []
+          for f in glob.glob('skills/*/SKILL.md'):
+              text = open(f, encoding='utf-8').read()
+              m = re.search(r'^description:\s*(.+)$', text, re.M)
+              if not m:
+                  bad.append(f"{f}: 缺 description")
+                  continue
+              desc = m.group(1)
+              tags = re.findall(r'<[^>]+>', desc)
+              if tags:
+                  bad.append(f"{f}: description 含 XML 标签形态 {tags}")
+              if len(desc.encode('utf-8')) > 1000:
+                  bad.append(f"{f}: description 超 1000 字节（{len(desc.encode('utf-8'))}）")
+          assert not bad, "\n".join(bad)
+          print("OK: 插件名与 description 卫生检查通过")
+          EOF
+
       - name: markdown 相对链接与路径引用存在性（断链零容忍）
         run: |
           python3 - <<'EOF'
@@ -60,6 +91,23 @@ jobs:
           done
           exit $fail
 
+      - name: 模板脚本可执行位（git mode 100755）
+        run: |
+          python3 - <<'EOF'
+          import subprocess
+          must_exec = {
+              'skills/sdlc-guardrails/templates/pre-commit',
+              'skills/sdlc-test/templates/run_regression.sh',
+          }
+          modes = {}
+          for line in subprocess.check_output(['git', 'ls-files', '-s'], text=True).splitlines():
+              meta, path = line.split('\t', 1)
+              modes[path] = meta.split()[0]
+          bad = [p for p in sorted(must_exec) if modes.get(p) != '100755']
+          assert not bad, "以下模板缺少可执行位（应为 100755）:\n" + "\n".join(bad)
+          print("OK: 模板脚本可执行位检查通过")
+          EOF
+
       - name: marketplace.json skills 数组与 skills/ 目录一致
         run: |
           python3 - <<'EOF'
@@ -73,7 +121,7 @@ jobs:
 
       - name: 敏感词防回归（应零命中）
         run: |
-          ! rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . \
+          ! rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\.|区域教学技能比赛|教学技能比赛" . \
             --glob '!.git' --glob '!CHANGELOG.md' --glob '!CLAUDE.md' --glob '!.github/**'
 
       - name: 守卫脚本 Python 语法检查（py_compile 逐文件）
@@ -97,10 +145,13 @@ jobs:
           actual = len([d for d in os.listdir('skills') if os.path.isdir(f'skills/{d}')])
           m1 = re.search(r'## (\d+) 个 skill 一览', open('README.md', encoding='utf-8').read())
           m2 = re.search(r'(\d+) 个可安装 skill', open('CLAUDE.md', encoding='utf-8').read())
+          m3 = re.search(r'(\d+) 个 skill 均可独立运行', open('docs/faq.md', encoding='utf-8').read())
           assert m1, "README.md 未找到「## N 个 skill 一览」锚点（标题被改？）"
           assert m2, "CLAUDE.md 未找到「N 个可安装 skill」锚点（首段被改？）"
+          assert m3, "docs/faq.md 未找到「N 个 skill 均可独立运行」锚点"
           assert int(m1.group(1)) == actual, f"README「Skill 矩阵」计数 {m1.group(1)} ≠ skills/ 目录数 {actual}"
           assert int(m2.group(1)) == actual, f"CLAUDE.md 计数 {m2.group(1)} ≠ skills/ 目录数 {actual}"
+          assert int(m3.group(1)) == actual, f"docs/faq.md 计数 {m3.group(1)} ≠ skills/ 目录数 {actual}"
           print(f"OK: 文档 skill 计数一致（{actual}）")
           EOF
 
@@ -112,8 +163,8 @@ jobs:
           for rd in glob.glob('skills/*/evals/README.md'):
               d = os.path.dirname(rd)
               files = {m.group(1) for f in os.listdir(d)
-                       for m in [re.match(r'(eval-\d+)[^/]*\.md$', f)] if m}
-              indexed = set(re.findall(r'eval-\d+', open(rd, encoding='utf-8').read()))
+                       for m in [re.match(r'(eval-[a-z0-9]+)[^/]*\.md$', f)] if m}
+              indexed = set(re.findall(r'eval-[a-z0-9]+', open(rd, encoding='utf-8').read()))
               if files - indexed:
                   bad.append(f"{rd}: 文件未入 README 索引 {sorted(files - indexed)}")
               if indexed - files:

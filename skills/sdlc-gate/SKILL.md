@@ -1,11 +1,13 @@
 ---
 name: sdlc-gate
-description: "评审关口：技术设计与测试用例定稿后的强制评审关口——按风险分级分档对抗评审（A 级 4 个全新上下文子代理 / B 级 2 个 / C 级主会话自查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate <需求名>"
+description: "Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. 评审关口：技术设计与测试用例定稿后的强制评审关口——按风险分级分档对抗评审（A 级 4 个全新上下文子代理 / B 级 2 个 / C 级主会话自查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
 ---
 
 # Review Gate（评审关口）
 
 > **定位**：技术设计与测试用例是同一份需求经两条独立路径的重新表达——分歧即高纯度信号。本 skill 把评审机制化为强制关口：AI 扇出预审 → 状态拦截 → 真人**裁决**（裁决者，不是复审者）。前置条件：用例与设计**独立产出**（sdlc-test cases 禁止读设计文档），否则交叉退化为一致性检查。
+
+**前置依赖**：`python3`（check_trace / guard_dev）；`codegraph` / `mysql` MCP（RECONCILE 代码核对，缺失降级定向 grep + 读文件）。
 
 产物目录：`sdlc/<需求名>/review/`，文件 `issues-<日期>.md`（新一轮加 `-r<N>`）。
 skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级安装为 `<项目根>/.claude/skills/sdlc-gate`，全局安装为 `~/.claude/skills/sdlc-gate`。

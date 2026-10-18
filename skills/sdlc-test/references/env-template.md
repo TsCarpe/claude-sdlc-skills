@@ -9,7 +9,7 @@
 - [sdlc/env/repos.local.md（gitignore，本机供给）](#sdlcenvreposlocalmdgitignore本机供给)
 - [sdlc/env/dev.md（开发验证档，入库）](#开发验证档sdlcenvdevmd入库)
 - [sdlc/env/dev-auth.local.md（gitignore，本机供给）](#sdlcenvdev-authlocalmdgitignore本机供给)
-- [回归档 Playwright runner 接入](#回归档-playwright-runner接入--标准布局-2026-09-14-试点定型)
+- [回归档 Playwright runner 接入](#回归档-playwright-runner接入--标准布局)
 - [sdlc/env/ui-recipe.md（环境配方）](#sdlcenvui-recipemd环境配方入库口径同-testmd)
 
 ## sdlc/env/test.md（入库）
@@ -105,7 +105,7 @@ authorization: Bearer <本机供给>
 
 依赖项目 `.gitignore` 含 `sdlc/env/*.local.md`（与 accounts/repos.local 同一条，缺失先补）。
 
-## 回归档 Playwright runner（接入 + 标准布局 2026-09-14 试点定型）
+## 回归档 Playwright runner（接入 + 标准布局）
 
 runner 基础设施五件从**本 skill 安装目录 `templates/`** 复制到项目（项目级安装 `<项目根>/.claude/skills/sdlc-test/templates/`，全局安装 `~/.claude/skills/sdlc-test/templates/`）：
 
@@ -121,7 +121,7 @@ runner 基础设施五件从**本 skill 安装目录 `templates/`** 复制到项
 - spike 冒烟（cwd 无关，绝对路径二进制形态）：`<项目根>/sdlc/node_modules/.bin/playwright test --config <项目根>/sdlc/playwright.config.ts spike`
 - 一键回归：`sdlc/env/runner/run_regression.sh [<需求名>]`——纯 runner、不回填 cases.md、不占轮次号（报告落 `<日期>-manual` 目录）；登录态失效先 `node capture-login.mjs` 重采
 - 项目 `.gitignore` 三条：`sdlc/env/*.local.md`、`sdlc/env/runner/browser-state.json`（含会话凭据）、`sdlc/env/runner/test-results/`
-- 首建参考（源项目实测）：channel:'chrome' 走系统 Chrome；若对齐 `~/Library/Caches/ms-playwright` 既有 build 可免 channel，均不可行才 `npx playwright install chromium`
+- 首建参考（源项目实测）：channel:'chrome' 走系统 Chrome；若对齐本机 Playwright 缓存目录（macOS 默认 `~/Library/Caches/ms-playwright`，其他平台按实际路径）既有 build 可免 channel，均不可行才 `npx playwright install chromium`
 
 标准布局（tree 注释即红线依据）：
 
