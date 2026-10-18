@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases) when the platform is unavailable. The platform is the single source of truth for requirements and artifacts; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases <需求名>"
+description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases) when the platform is unavailable. The platform is the single source of truth for requirements and artifacts; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases 需求名"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -24,7 +24,9 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8080`
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
 - 需求对应关系记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001"}`），首次 push 后写入
-- 平台本体与验收脚本在独立仓库 `~/IdeaProjects/sdlc-platform-server/`（连接拒绝时先确认服务已启动：`scripts/dev.sh`）
+- 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先确认服务已启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
+- 飞书快照/媒体读取：`lark-cli`（权限不足时降级为本地已有原文，不阻断）
+- 锚点附加（可选）：`python3` + sdlc-intent 的 `resolve_anchors.py`（同集合安装时；单独安装时跳过）
 
 ## 选择子命令
 
@@ -71,7 +73,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 读本地 `sdlc/<需求名>/intake/` 三件套，结构化为 payload（字段规范见 [references/payload-schema.md](references/payload-schema.md)）：
 
 - `snapshot`：**经 lark-cli 拉取飞书需求原文全文**放入 `{md}`（原文快照 = 体检与澄清的依据版本，平台据此实现出处定位；推送前报告快照字节数）
-- `domains`：全局需求域顺序数组（本轮体检的需求域聚类，如 修改比赛/状态机与流转/…；体检与澄清分组同源同序）
+- `domains`：全局需求域顺序数组（本轮体检的需求域聚类，如 修改评选活动/状态机与流转/…；体检与澄清分组同源同序）
 - `digest`：概述、角色、功能点地图（features，含行级出处 `src`）、**需求点注册表 fr_points**（即 digest §7 规则表的 FR 编号，`{id:"需求.FR-01", name:"<简题>", source:"<行级出处>", group:"<出处分组组头>", module:"<归属功能模块>"}`）、流程步骤表 flows（§5 主流程，`{role,step,next,gap,src}`）与状态机流转边表 states（§6 边表直投，`{obj,from,on,to,gap,src}`；两表 `gap:true` 为原文断点行、next/to 填 `?`，可选 anchor 同 features）
 - `audit`：分级计数 + 问题明细（`{id:"体检.P01", level, title, where, go, group:"<需求域>", quote:"「完整冲突原文」"}`，go = 处理状态/去向）
 - `items`：澄清清单，**seq 必须用原始编号**（如 `P19`），`theme` 必填（需求域，与 audit group 同体系），`quote` 带原文摘引（可空），`answer` 带上本地已有的答复内容
@@ -86,6 +88,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
   通道或放弃变更后再推（rebaseline 变更单例外）。
 - 推送前向用户报告条数与差异：问题数、需求点数、是否刷新快照。
 - 带 doc 推送时媒体必须**全部上传成功**后再推——平台将拒（missingMedia>0 → 409，doc 不落库）。
+- **变更单增量包**：梳理规范见 [../sdlc-intent/references/incremental-guide.md](../sdlc-intent/references/incremental-guide.md)（受影响章节切片/作废清单/anchor 越界纪律；同集合安装时生效，单独安装 sdlc-sync 时仅作来源说明，不依赖其存在）。
 
 ### 4. pull-answers —— 拉回 PM 答复（回写本地）
 
@@ -134,7 +137,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 | 症状 | 处置 |
 |---|---|
-| 连接拒绝 | 平台未启动：sdlc-platform-server 仓库 `scripts/dev.sh` |
+| 连接拒绝 | 平台未启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh` |
 | 404 需求不存在 | `.platform` 里 reqId 错误或卡片被删，向用户确认 |
 | 409 版本冲突 | 展示 conflicts 明细，等用户裁决 |
 | 401 | 平台启用了 X-Token（write-token），向用户要 token 并加请求头 |

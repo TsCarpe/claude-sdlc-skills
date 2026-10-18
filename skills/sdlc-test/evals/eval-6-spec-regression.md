@@ -1,6 +1,6 @@
 # eval-6：spec 资产化与 runner 回归（生成验证循环/三向诊断/cwd 纪律）
 
-背景（2026-09-14 spike 实测）：storageState 登录态复用可行（源项目实测，鉴权键前缀随项目而异），系统 Chrome 零下载路线（channel:'chrome'）跑通，单条 spec 4.2s。首试点 = 比赛需求 A 组 BUG 关联 + P0/P1 用例。
+背景（2026-09-14 spike 实测）：storageState 登录态复用可行（源项目实测，鉴权键前缀随项目而异），系统 Chrome 零下载路线（channel:'chrome'）跑通，单条 spec 4.2s。首试点 = 评选活动需求 A 组 BUG 关联 + P0/P1 用例。
 
 ## 6a 生成验证循环（/sdlc-test spec）
 
@@ -9,7 +9,7 @@
 - [ ] 准入过滤：未通过/口径未拍板的用例不资产化，明确列出排除项；风险分级 A 级强制 / B 级默认做 / C 级整体跳过 spec 资产化（回归全量走 agent 执行）
 - [ ] 每条 spec 的 test 标题带 TC 编号，文件按 G-xx 组/模块归档
 - [ ] 前置复用选型正确：API 直调优先（鉴权头取自 ui-recipe），UI flows/ 仅 ≥2 用例共用的流才抽；无 beforeAll 共享一场提交
-- [ ] 选择器为语义型（getByRole/getByLabel/文本），无 XPath，无 MCP evaluate_script hack 搬运
+- [ ] 选择器为语义型（getByRole/getByLabel/文本），无 XPath，无 MCP `chrome-devtools:evaluate_script` hack 搬运
 - [ ] 生成后立即 runner 验证；红色项修完复跑，**全绿才回填 cases.md 标注 spec ✓（日期）**
 - [ ] 出过 DB BUG 的用例 spec 头部挂 SQL 清单（业务键定位，无大 ID 直查）
 

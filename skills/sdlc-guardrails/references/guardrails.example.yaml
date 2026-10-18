@@ -3,6 +3,7 @@
 # 规则来源：development-checklist.md 中可 grep 机械化条目（checklist 头部已标注机器拦截范围）
 # 知识层（怎么写对）仍在 checklist/细则；本文件只拦"写了就是错"的
 # 存量违规不追溯（hook 只查本次写入），基线扫描：check.py --check <files>
+# 快速导航（按组头检索）：Controller 五件套 → 全局 Java 红线 → Map/JSONObject 出参 → 分页/转换/分层依赖 → 结构红线
 version: 1
 rules:
   # ---- Controller 层（checklist §2.1 五件套）----

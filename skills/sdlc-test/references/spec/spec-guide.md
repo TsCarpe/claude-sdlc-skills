@@ -48,7 +48,7 @@ sdlc/
 ## 选择器与断言
 
 - 选择器优先级：`getByRole` / `getByLabel` / 可见文本 > CSS 类（组件库内部类名如 `.el-select-dropdown__item` 可作兜底，须注释「内部类名，升级风险」）；禁 XPath
-- 真 Playwright 无 MCP 快照失明问题：teleport 下拉直接 `getByRole('option', { name })` 点选，**禁止**把 exec-interaction 里的 evaluate_script hack 搬进 spec
+- 真 Playwright 无 MCP 快照失明问题：teleport 下拉直接 `getByRole('option', { name })` 点选，**禁止**把 exec-interaction 里的 `chrome-devtools:evaluate_script` hack 搬进 spec
 - 动态值纪律：不断言 uuid/绝对时间戳/精确 ID；日期断言用相对口径；文案断言用稳定关键词不用全句；toast 叠加场景（连发两次拦截）用 `.first()` 收敛避免 strict violation
 - **提交类 spec 可重入**：名称带运行时唯一后缀（`创建验证-spec${Date.now()%100000}`）——区域内未删唯一约束下固定名第二跑必撞重名拦截（试点实测）
 

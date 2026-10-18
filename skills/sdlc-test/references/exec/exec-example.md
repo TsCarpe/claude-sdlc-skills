@@ -8,17 +8,17 @@
 用例：管理员五步向导创建评选活动（名称=创建验证-冒烟，全默认配置），断言四面：
 - 页面：列表新增行，状态=未开始
 - 接口：save 返回 success=true + status=not_started
-- 落库：主行 + 维度 5 / 奖项 4 / 评委 2 / 封面 1 / **合作方全量快照行**
+- 落库：主行 + 维度 5 / 名额 4 / 评审人 2 / 封面 1 / **合作方全量快照行**
 - console：无 error
 
 ## 执行（精选步骤）
 
-1. 点「创建活动」→ `wait_for ["下一步","活动名称"]` 页面就绪
-2. 步骤一按姿势表填：名称 fill；类别下拉 evaluate DOM click 文本匹配；日期 focus+type_text+Enter 逐个键入并复核 value；奖项名额 fill_form
-3. 步骤二介绍 click 容器→type_text；封面 upload（文件在 `<项目>/.tmp-upload/`）
-4. 🔍 探针：时间链填完后复核推导字段——评审开始自动=报名截止次日（发现页面为四输入推导模型，见下方「口径冲突」）
-5. 提交后 `wait_for` 列表特征文本，**证据三连同消息并行**：take_screenshot + list_network_requests + list_console_messages
-6. MySQL：`get_network_request` 取 save 响应确认；业务键定位落库（`WHERE name='创建验证-冒烟'` 子查询），多表 COUNT 聚合一条 SQL
+1. 点「创建活动」→ `chrome-devtools:wait_for ["下一步","活动名称"]` 页面就绪
+2. 步骤一按姿势表填：名称 `chrome-devtools:fill`；类别下拉 `chrome-devtools:evaluate_script` DOM click 文本匹配；日期 `chrome-devtools:evaluate_script` focus+`chrome-devtools:type_text`+Enter 逐个键入并复核 value；名额 `chrome-devtools:fill_form`
+3. 步骤二介绍 `chrome-devtools:click` 容器→`chrome-devtools:type_text`；封面 `chrome-devtools:upload_file`（文件在 `<项目>/.tmp-upload/`）
+4. 🔍 探针：时间链填完后复核推导字段——评审开始自动=活动截止次日（发现页面为四输入推导模型，见下方「口径冲突」）
+5. 提交后 `chrome-devtools:wait_for` 列表特征文本，**证据三连同消息并行**：`chrome-devtools:take_screenshot` + `chrome-devtools:list_network_requests` + `chrome-devtools:list_console_messages`
+6. MySQL：`chrome-devtools:get_network_request` 取 save 响应确认；业务键定位落库（`WHERE name='创建验证-冒烟'` 子查询），多表 COUNT 聚合一条 SQL
 
 ## 判定：失败 → BUG-01（口径冲突处理示范）
 
@@ -33,8 +33,8 @@
 | 现象 | 归因 |
 |---|---|
 | 合作方快照行数 1 ≠ 合作方总数 3 | 实现口径违背（前端 partnerList 只传 1 个+后端未展开）→ BUG |
-| 日期 fill 后值丢失/空 | fill 误用——date-picker 必须键盘路径 |
-| 评委已选人数回零 | 按 selected class 判断后重复点击，把已选项点掉——多选必须同步连点+计数复核 |
+| 日期 `chrome-devtools:fill` 后值丢失/空 | `chrome-devtools:fill` 误用——date-picker 必须键盘路径 |
+| 评审人已选人数回零 | 按 selected class 判断后重复点击，把已选项点掉——多选必须同步连点+计数复核 |
 
 ## 回填（三处）
 

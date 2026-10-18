@@ -1,11 +1,13 @@
 ---
 name: sdlc-doubt
-description: '对刚做出的非平凡技术决策发起对抗式独立复查——把决策剥离结论后交给全新上下文的审查者"找问题"。Use when 影响ER或公共组件的决策回写前、复杂SQL/状态机流转定稿前、技术方案选型二选一定稿前、提交前对"已全范围检查"断言存疑时、用户说"这个判断我不放心""帮我质疑一下这个方案""这个方案稳不稳""doubt-review"。'
+description: 'Adversarially re-checks a non-trivial technical decision in a fresh context by stripping the conclusion and asking an independent reviewer to find problems. 对刚做出的非平凡技术决策发起对抗式独立复查——把决策剥离结论后交给全新上下文的审查者"找问题"。Use when 影响ER或公共组件的决策回写前、复杂SQL/状态机流转定稿前、技术方案选型二选一定稿前、提交前对"已全范围检查"断言存疑时、用户说"这个判断我不放心""帮我质疑一下这个方案""这个方案稳不稳""doubt-review"。'
 ---
 
 # Doubt Review（对抗式决策复查）
 
 > **定位**：自信的答案不等于正确的答案。长会话中，假设会悄然变成"事实"。本 skill 是 **in-flight** 复查——决策落地前质疑它，不是事后的代码质量检查（如 trellis-check、/code-review）。
+
+**前置依赖**：Agent 工具（生成全新上下文子代理）；无脚本或外部服务依赖。
 
 ## 何时触发
 

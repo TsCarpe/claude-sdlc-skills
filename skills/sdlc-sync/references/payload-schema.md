@@ -22,7 +22,7 @@
 
 ```json
 {
-  "name": "区域教学技能比赛",
+  "name": "评选活动",
   "iter": "demo-iter",
   "sourceType": "feishu",
   "sourceUrl": "https://example.feishu.cn/wiki/…",
@@ -40,29 +40,29 @@
 ```json
 {
   "snapshot": { "md": "（可选）飞书需求原文全文 markdown，经 lark-cli 拉取" },
-  "domains": ["修改比赛", "状态机与流转", "…"],
+  "domains": ["修改评选活动", "状态机与流转", "…"],
   "digest": {
     "summary": "一段话需求概述（可含换行）",
     "risk_tier": "A",
-    "roles": ["教师", "学校管理员"],
+    "roles": ["参评人", "活动管理员"],
     "features": [
-      {"role": "区域管理员", "m": "⭐ 比赛管理（列表）", "func": "列表/筛选/分页",
+      {"role": "运营管理员", "m": "⭐ 评选活动管理（列表）", "func": "列表/筛选/分页",
        "cov": "✅有详述", "src": "详述6.1"}
     ],
     "fr_points": [
       {"id": "需求.FR-01", "name": "向导结构：五步固定、逐级校验",
-       "source": "详述6.2.1/3", "group": "§7.1 创建比赛（五步向导）", "module": "比赛管理（列表）"}
+       "source": "详述6.2.1/3", "group": "§7.1 创建评选活动（五步向导）", "module": "评选活动管理（列表）"}
     ],
     "flows": [
-      {"role": "区域管理员", "step": "创建比赛（五步向导）", "next": "提交审核",
+      {"role": "运营管理员", "step": "创建评选活动（五步向导）", "next": "提交审核",
        "gap": false, "src": "详述6.2", "anchor": "（可选）"},
-      {"role": "区域管理员", "step": "提交审核", "next": "?",
+      {"role": "运营管理员", "step": "提交审核", "next": "?",
        "gap": true, "src": "详述6.2", "anchor": "（可选）", "pids": ["P06"]}
     ],
     "states": [
-      {"obj": "比赛", "from": "草稿", "to": "报名中", "on": "发布",
+      {"obj": "评选活动", "from": "草稿", "to": "进行中", "on": "发布",
        "src": "详述6.3", "gap": false, "anchor": "（可选）"},
-      {"obj": "比赛", "from": "报名中", "to": "?", "on": "报名截止",
+      {"obj": "评选活动", "from": "进行中", "to": "?", "on": "活动截止",
        "src": "详述6.3", "gap": true, "anchor": "（可选）"}
     ],
     "md": "（可选）digest 原文 markdown，用于平台折叠展示（含假设清单，是「需求.Axx」引用的定位落点）"
@@ -76,12 +76,12 @@
     "md": "（可选）audit 原文 markdown"
   },
   "items": [
-    {"seq": "P19", "level": "red", "theme": "修改比赛", "question": "问题全文",
+    {"seq": "P19", "level": "red", "theme": "修改评选活动", "question": "问题全文",
      "ctx": "出处", "answer": "本地已有答复（可空）", "quote": "「原文摘引，可空」"},
-    {"seq": "P06", "level": "yellow", "theme": "教研活动", "module": "教研活动", "layer": "5",
+    {"seq": "P06", "level": "yellow", "theme": "活动分组", "module": "活动分组", "layer": "5",
      "question": "成果可见范围两处口径不一致，以哪个为准？", "ctx": "详述7.5.5", "quote": "「冲突摘引」",
      "options": [
-       {"key": "A", "text": "仅教研组全员可见可收（选项全文快照，自包含）", "why": "与原文最小语义改动", "recommended": true},
+       {"key": "A", "text": "仅本组全员可见可收（选项全文快照，自包含）", "why": "与原文最小语义改动", "recommended": true},
        {"key": "B", "text": "两校区全员可见可收"}]}
   ]
 }
@@ -174,7 +174,7 @@
 
 ```json
 [
-  {"seq":"P19","level":"red","theme":"修改比赛","question":"…","answer":"允许随时修改…","answerText":"允许随时修改…",
+  {"seq":"P19","level":"red","theme":"修改评选活动","question":"…","answer":"允许随时修改…","answerText":"允许随时修改…",
    "answeredAt":"2026-09-18 10:00:00","status":"answered","note":"","origin":"skill","srcCommentId":null}
 ]
 ```
@@ -196,8 +196,10 @@ changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + �
 `answer` 字段仍为字符串（DB 列 TEXT），**内容可为结构化 JSON**（选择题化作答，服务端宽进不校验内部结构）：
 
 ```json
-{"kind":"option","optionKey":"A","optionText":"选项全文快照（点选时整段落库）","extra":"补充说明（可空）"}
-{"kind":"text","text":"自由文本答复"}
+[
+  {"kind":"option","optionKey":"A","optionText":"选项全文快照（点选时整段落库）","extra":"补充说明（可空）"},
+  {"kind":"text","text":"自由文本答复"}
+]
 ```
 
 **判别规则（读端解构，四条件全过才算结构化）**：`json.loads` 成功 ∧ 含 `kind` 键 ∧ `kind ∈ {option,text}` ∧ 分支负载非空（option 含非空 `optionText`、text 含非空 `text`）；任一不满足一律按纯文本原样透传——残缺结构化（有 kind 无负载）不会产出空串 `answerText`（下游当未答、条款漏固化），也不在解构层外溢 JSON。`optionText` 取选项全文快照防重推 options 再生成后 key 漂移（D5）。

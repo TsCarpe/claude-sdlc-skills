@@ -1,5 +1,18 @@
 # Changelog
 
+## 未发布
+
+官方 Agent Skills best-practices 对照修复与对抗复核补漏。
+
+- **插件名**：`plugins[0].name` 从 `claude-sdlc-skills` 改为 `sdlc-skills`，避免触发 Claude Code 插件名保留字规则（第三方插件名不能以 `claude-` 开头）；安装命令变为 `/plugin install sdlc-skills@claude-sdlc-skills`。旧名安装不会自动迁移，需卸载后重装。
+- **功能修复**：`templates/pre-commit` 与 `templates/run_regression.sh` 补可执行位（100755），避免 git 静默忽略 hook；CI 增加可执行位检查。
+- **脱敏**：`payload-schema` 等文档中的真实业务域示例统一替换为中性虚构（评选活动/参评人/运营管理员）；敏感词扫描补充中文项目名防回归。
+- **可移植性**：sdlc-sync 的平台仓库路径改为 `$SDLC_PLATFORM_REPO` 占位，不再硬编码作者本机目录。
+- **MCP 工具名**：Figma 与 chrome-devtools 工具引用统一为 `ServerName:tool_name` 完全限定名。
+- **结构**：`incremental-guide.md` 在 sdlc-intent 与 sdlc-sync 双侧直链；`guardrails.example.yaml`、sdlc-test runner 模板从 SKILL.md 直接可达。
+- **依赖与文档**：各 SKILL.md 补前置依赖；移除 SKILL.md 内的变更日期注记；description 去掉尖括号占位符并补齐英文语义句。
+- **评估**：sdlc-sync 补结构化评估；CI 的 eval 索引正则支持字母编号。
+
 ## v0.21.0 (2026-10-15)
 
 新增第 9 个 skill：**sdlc-ui-visual**——设计稿到代码的视觉还原闭环（基准获取 → 代码对照 → 稳定截图 → 多道比对 → 分级修复轮 → 功能回归 → 汇报）。背景：源项目两次 UI 视觉对齐实战（页面级 + 弹窗组件级）验证了完整流水线，其中弹窗案例暴露「字体图标与设计稿 SVG 几何数值全等但视觉墨迹仅 29%，两道自动裁判均判过、用户肉眼识破」的系统性漏检——防漏检规则（小元素强制元素级验证）成为本 skill 与裸 prompt 的核心差异。方案经全新上下文代理对抗式评审（3 blocker + 12 should-fix 全部吸收：状态落盘 run.md、小元素验证独立成关、frame 选择策略写死、references 零互引、compare.py 暗像素计数与 stats 落盘、evals 补隐藏作弊/共用组件回归两个判负场景、description 与 sdlc-test 以「有设计稿基准且允许改代码」分界等）。

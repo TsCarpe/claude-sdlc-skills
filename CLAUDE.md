@@ -22,9 +22,9 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 4. 跨 skill 引用用**同级相对路径**（`../sdlc-doubt/SKILL.md`）并声明「单独安装时仅作来源说明」——不同用户安装 scope（全局/项目）不同，禁止写死绝对路径
 5. **脱敏红线**：不得出现真实项目名、公司名、内网地址、真实鉴权头字段、账号凭据；业务示例一律用中性虚构（商品/订单/评选活动类）。提交前跑：
    ```bash
-   rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\." . --glob '!CHANGELOG.md' --glob '!.git' --glob '!.github/**' --glob '!CLAUDE.md'
+   rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\.|区域教学技能比赛|教学技能比赛" . --glob '!CHANGELOG.md' --glob '!.git' --glob '!.github/**' --glob '!CLAUDE.md'
    ```
-   应零命中
+   应零命中。注意：英文扫描零命中不等于脱敏通过——中文项目名、真实业务域词（比赛/培训/资源等）同样要人工核对并替换为中性虚构。
 6. 权限/配置示例只能新写条目，**禁止从任何本机 settings 文件复制**
 7.（软约定）**三段式规则三写同步**：三段式规则存在三处镜像（README「大需求三段式」/ `docs/workflow.md` §2 / `docs/large-req-playbook.md` 权威版）；改三段式规则时三处必须同步改（CI 无法机检此项，靠本条约定兜底）
 
@@ -33,6 +33,8 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 ```bash
 npx skills@latest add ~/IdeaProjects/claude-sdlc-skills --list   # 应列出全部 skill（frontmatter 可解析）
 python3 -m json.tool .claude-plugin/marketplace.json > /dev/null # JSON 合法
+claude plugin validate . --strict                                # 插件 manifest（保留字/元数据）
+git ls-files -s skills/sdlc-guardrails/templates/pre-commit skills/sdlc-test/templates/run_regression.sh  # 应为 100755
 ```
 
 需要真实冒烟时：在 /tmp 建试验项目 `npx skills add <本仓库路径> -s <skill名> --copy -y` 安装后新开会话触发，验完删除。

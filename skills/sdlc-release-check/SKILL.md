@@ -1,11 +1,13 @@
 ---
 name: sdlc-release-check
-description: "扫描当前分支相对基线分支（master/main）的 Java + SQL diff，提取发版前需在代码之外人工处理的事项——①配置中心（Apollo/Nacos）Key：@Value 单值、@ConfigurationProperties 前缀、任意注解属性中的 ${...} 占位符；②外部平台注册操作：@XxlJob 任务（新增/改名/孤儿检测）、RocketMQ/Kafka/Rabbit listener 订阅关系；③数据库 DDL/DML 变更：.sql 新增行按前置/后置/大表风险/订正分级；④行为知会项（@Scheduled 集群重复执行等）。产出配置 Key 清单 + 平台操作清单 + 数据库变更清单 + 知会项 + 发布时刻表。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。"
+description: "Scans the Java + SQL diff between the current branch and the baseline branch (master/main) and extracts release-time manual actions outside the code: config-center keys (Apollo/Nacos), external platform registrations (xxl-job, MQ listeners), database DDL/DML changes, and behavior notices. Produces config key, platform operation, database change, and notice lists plus a release timeline. 扫描当前分支相对基线分支（master/main）的 Java + SQL diff，提取发版前需在代码之外人工处理的事项——①配置中心（Apollo/Nacos）Key：@Value 单值、@ConfigurationProperties 前缀、任意注解属性中的 ${...} 占位符；②外部平台注册操作：@XxlJob 任务（新增/改名/孤儿检测）、RocketMQ/Kafka/Rabbit listener 订阅关系；③数据库 DDL/DML 变更：.sql 新增行按前置/后置/大表风险/订正分级；④行为知会项（@Scheduled 集群重复执行等）。产出配置 Key 清单 + 平台操作清单 + 数据库变更清单 + 知会项 + 发布时刻表。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。"
 ---
 
 # SDLC Release Check
 
 发版前梳理「需要在代码之外人工处理的配置与注册事项」：配置中心 Key（Apollo/Nacos）、调度任务（xxl-job）、MQ 订阅关系、数据库 DDL/DML 变更，以及无需操作但应知会发版负责人的行为变化，最终汇总为发布时刻表。分析 `.java` 与 `.sql` 文件，忽略 XML/YAML/properties/前端文件；SQL 侧不绑定迁移框架，只认 diff 中的语句本身。
+
+**前置依赖**：`git`（生成 diff）；无 MCP 或脚本依赖。
 
 ## 工作流
 

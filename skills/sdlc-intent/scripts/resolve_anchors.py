@@ -72,7 +72,7 @@ def resolve_source(src, doc_lookups, comments_index, loose_log=None):
                 od = d.get("ordinal") or ""
                 if od == tail or (tail and od.endswith("." + tail)):
                     return d
-            # ② 文本匹配：小节名（步骤一：设置比赛信息）
+            # ② 文本匹配：小节名（步骤一：设置活动信息）
             for d in descendants(children, row["id"]):
                 t = d.get("text") or ""
                 if tail[:10] and tail[:10] in t:  # 小节名取前 10 字子串命中（原名常带「：说明」尾巴，全等匹配会漏）

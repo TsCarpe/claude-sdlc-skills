@@ -7,6 +7,8 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 
 两段式：**第一段梳理**建立对需求的共识理解，**第二段体检**尽早暴露需求缺陷。梳理是体检的前提——先与用户对齐理解，再找问题。
 
+**前置依赖**：`python3`（parse_doc / scan_refs / resolve_anchors，纯标准库）；飞书输入用 `lark-cli`（未安装/未登录或权限不足时，按「输入读取」降级为本地文件或文本）。
+
 ## 选择工作流
 
 用户说「评审 / 梳理 / 找问题」时先确认宾语：对象是**需求文档**才进本 skill；是设计/用例走 sdlc-gate，是技术方案走 sdlc-doubt，是上线前检查走 sdlc-release-check。
@@ -28,6 +30,7 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - 文档内嵌表格已随正文返回；若正文出现 `<sheet>`/`<bitable>` 引用且与核心流程相关，用 lark-sheets/lark-base 下钻读取（有权限时）
 - 正文出现内嵌附件块（`<figure ...><source ... token="...">`）且为原型/演示文件（html 等）时，**必须**下载读取：`lark-cli docs +media-download --token "<token>" --output <本地路径>`——markdown 拉取后附件只剩一个自闭合标签，不下载则原型功能面信息完全缺失（原型有而正文无的功能是体检高价值线索）。html 原型体量大（可达数百 KB），只提取结构（页面/导航/弹窗/字段/操作）入上下文，不全量读取。下载失败记「未读取（原因）」写入梳理文档头「原型附件」字段，同评论区口径不重试。原型结构仅供体检阶段交叉核对，**不并入**梳理功能地图——梳理仍忠实正文+评论区
 - 原文内容（正文 + 评论区 + 原型附件）在后续体检阶段还要反复引用，梳理时先在本地留存原始内容（如 `/tmp/` 下临时文件；评论 JSON、正文 markdown、原型文件分开存放）
+- **变更单增量梳理**：变更单 confirm 后的受影响章节局部重检规范见 [references/incremental-guide.md](references/incremental-guide.md)（增量包结构、作废清单、anchor 越界纪律；平台侧执行，sdlc-sync 推送时消费）
 
 ## 第一段：需求梳理
 

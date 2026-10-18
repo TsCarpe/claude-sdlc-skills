@@ -6,13 +6,15 @@
 
 ### Figma MCP
 
-- `get_figma_data(fileKey, nodeId)`：拿布局树（frame/文本/颜色/字号/圆角/padding/gap）。**输出过大被截断时**：把返回持久化到本地 json，用 python 提取 `data[0]['text']` 写成 txt 再分析。
-- `download_figma_images(pngScale=2)`：下载两份——整页 frame（理解上下文）+ 主内容区 frame（比对基准）。组件级任务只下 node-id 本身。
+> 工具名按 `ServerName:tool_name` 完全限定；server 别名以实际安装为准（本仓库示例用 `figma-context-mcp`）。
+
+- `figma-context-mcp:get_figma_data(fileKey, nodeId)`：拿布局树（frame/文本/颜色/字号/圆角/padding/gap）。**输出过大被截断时**：把返回持久化到本地 json，用 python 提取 `data[0]['text']` 写成 txt 再分析。
+- `figma-context-mcp:download_figma_images(pngScale=2)`：下载两份——整页 frame（理解上下文）+ 主内容区 frame（比对基准）。组件级任务只下 node-id 本身。
 - API 的 padding 与渲染 bounds 可能不符（如 paddingTop=10 实渲染 15）：**冲突时以基准图像素扫描为准**。
 
 ### 主内容区 frame 启发式（页面级）
 
-1. 从 get_figma_data 的整页 frame 直接子级里找候选：宽度 ≥ 整页宽 60% 且为最大宽度档的 frame
+1. 从 `figma-context-mcp:get_figma_data` 的整页 frame 直接子级里找候选：宽度 ≥ 整页宽 60% 且为最大宽度档的 frame
 2. 唯一候选 → 用它；多候选/零候选 → 暂停，把候选清单（名称+尺寸）给用户选
 3. 选择结果与理由记入 run.md「基准信息」节
 

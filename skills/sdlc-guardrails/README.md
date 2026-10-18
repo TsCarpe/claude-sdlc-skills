@@ -1,6 +1,6 @@
 # sdlc-guardrails — 可移植红线检查引擎
 
-> 本 skill 为引擎+文档型（engine/ 随 hook 常驻 + 本 README 作规则语法权威），与其余 7 个工作流型 skill（SKILL.md 主干）结构不同。
+> 本 skill 为引擎+文档型（engine/ 随 hook 常驻 + 本 README 作规则语法权威），与其余工作流型 skill（SKILL.md 主干）结构不同。
 
 > 对应心智模型见开源仓库 `docs/design/agent-stack-mental-model.md` §4（skill 安装副本中该文件缺失，以本 README 为准）：时机定载体——
 > 服从性规则（可机械校验的"写了就是错"）在**写文件瞬间**由 hook 拦截，

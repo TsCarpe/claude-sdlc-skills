@@ -1,6 +1,6 @@
 ---
 name: sdlc-ui-visual
-description: "设计稿到代码的视觉还原闭环：以 Figma 链接或基准图为唯一视觉基准，对运行中的前端页面做真实浏览器截图比对（DOM 几何逐项对照 + 像素叠加/差异/热区 + 小元素放大判读），按 P0>P1>P2 分级驱动修复轮（≤5 轮），功能回归后按六要素汇报。Design-to-code visual restoration loop: takes a Figma link or baseline image as the single visual reference, diffs the running page via real browser screenshots (DOM geometry checklist + pixel overlay/diff/heatmap + small-element zoomed inspection), drives tiered fix rounds, verifies functional regression, then reports. Use when 用户提供 Figma 设计稿或基准图要求视觉还原、UI 还原、设计稿还原、照着 Figma 改样式、像素级比对、视觉走查、视觉偏差修复，或说 ui check、ui-align。输入是设计稿基准且允许改样式代码——纯功能验证走 sdlc-test。用法：/sdlc-ui-visual <Figma链接或基准图路径> [目标页面或组件]"
+description: "设计稿到代码的视觉还原闭环：以 Figma 链接或基准图为唯一视觉基准，对运行中的前端页面做真实浏览器截图比对（DOM 几何逐项对照 + 像素叠加/差异/热区 + 小元素放大判读），按 P0>P1>P2 分级驱动修复轮（≤5 轮），功能回归后按六要素汇报。Design-to-code visual restoration loop: takes a Figma link or baseline image as the single visual reference, diffs the running page via real browser screenshots (DOM geometry checklist + pixel overlay/diff/heatmap + small-element zoomed inspection), drives tiered fix rounds, verifies functional regression, then reports. Use when 用户提供 Figma 设计稿或基准图要求视觉还原、UI 还原、设计稿还原、照着 Figma 改样式、像素级比对、视觉走查、视觉偏差修复，或说 ui check、ui-align。输入是设计稿基准且允许改样式代码——纯功能验证走 sdlc-test。用法：/sdlc-ui-visual Figma链接或基准图路径 [目标页面或组件]"
 ---
 
 # UI 视觉还原
@@ -8,6 +8,8 @@ description: "设计稿到代码的视觉还原闭环：以 Figma 链接或基�
 以设计稿为基准把运行中页面还原到位的闭环：**基准 → 代码对照 → 稳定截图 → 多道比对 → 分级修复轮 → 功能回归 → 汇报**。与 sdlc-test 分界：那边验「行为对不对」（源码只读），这边验「长得像不像设计稿」（以设计稿为基准、允许改样式代码）。
 
 **栈适配**：方法论栈无关；Vue2 + element-ui 栈姿势见 [references/stack-vue2-element.md](references/stack-vue2-element.md)（换栈先读，日常执行不加载）。
+
+**前置依赖**：`python3` + Pillow（compare.py；缺依赖时脚本会提示 `pip3 install Pillow`）；`figma-context-mcp`（Figma 输入，server 别名以实际安装为准）；浏览器自动化 MCP（`chrome-devtools`，不可用时按 pipeline 降级链切 Playwright）。
 
 **产物目录**（相对目标项目根）：`.ui-check/<目标名>/`——独立于 `sdlc/` 工作区（无 sdlc 工作区也成立，有则互不依赖）。目录内二进制产物多，首次创建时提示用户把 `.ui-check/` 加入 .gitignore。
 
@@ -19,7 +21,7 @@ description: "设计稿到代码的视觉还原闭环：以 Figma 链接或基�
 
 ## 步骤 1：基准获取
 
-- **Figma 链接**：`/design/` 后第一段为 fileKey；URL 里 `node-id=12-3456` 的 `-` 转 `:` 得 `12:3456` 作 nodeId。`get_figma_data` 拿结构化数据（输出过大时持久化本地再解析），`download_figma_images` 下载基准 PNG（pngScale=2，比对前等比缩到 1x，禁止拉伸）。
+- **Figma 链接**：`/design/` 后第一段为 fileKey；URL 里 `node-id=12-3456` 的 `-` 转 `:` 得 `12:3456` 作 nodeId。`figma-context-mcp:get_figma_data` 拿结构化数据（输出过大时持久化本地再解析），`figma-context-mcp:download_figma_images` 下载基准 PNG（pngScale=2，比对前等比缩到 1x，禁止拉伸；MCP server 别名以实际安装为准，如 `figma-context-mcp`）。
 - **仅基准图**：跳过结构化数据，尺寸/颜色靠图像分析与人工读数。
 - **frame 选择策略**（页面级）：node-id 即整页 frame（只用于上下文理解——应用壳与实际项目不同，整页比对无意义）；**比对基准 = 主内容区 frame**：从子 frame 按尺寸启发式筛（宽度最接近页面主体宽度者）+ 唯一性校验，多候选/零候选暂停问用户。组件级任务（弹窗等）node-id 本身即基准。选择结果记入 run.md。
 - **期望值清单**：从基准数据建 `.ui-check/<目标名>/expected.md`——每元素 位置/尺寸/字号/字重/颜色/圆角/间距，**<20px 的小元素逐项打标 `小元素⚠`**（步骤 4 强制元素级验证）。细则见 [references/pipeline.md](references/pipeline.md)。

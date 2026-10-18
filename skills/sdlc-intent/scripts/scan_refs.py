@@ -97,6 +97,7 @@ def seeds_mode(doc_path):
             # doc.json 用块 idx；markdown 是 0-based 行号，人读从 1 起（「行0」不可读）
             out["ref_statements"].append({
                 "where": f"块{idx}" if is_docjson else f"行{idx + 1}",
+                # 引用语句预览截断到 120 字：足够 LLM 判定落点，又不让长段落撑爆输出
                 "text": t[:120],
                 "matched": m.group(0),
                 "note": "落点是否存在于标题集，交 LLM 判定；标题集见 parallel_chapter_groups 与原文",

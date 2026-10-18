@@ -7,6 +7,8 @@ description: "Deterministic guardrail engine that enforces \"write-it-and-it's-w
 
 把「写了就是错」的服从性规则从文档下沉为**写文件瞬间的确定性拦截**：引擎全局一份（本 skill 的 `engine/check.py`），规则各项目自写（`.claude/guardrails.yaml`），无规则文件 = no-op。
 
+**前置依赖**：`python3` + `PyYAML`（engine/check.py）；`git`（pre-commit 提交兜底）。
+
 ## 何时用
 
 - 新项目接入红线拦截（下方三步接入）
@@ -54,4 +56,5 @@ description: "Deterministic guardrail engine that enforces \"write-it-and-it's-w
 ## 参考（一层引用）
 
 - [README.md](README.md)：架构细则、规则语法全量、语义要点（Write/Edit 差异、no-op 行为）、已知边界
+- [references/guardrails.example.yaml](references/guardrails.example.yaml)：23 条规则示例（从零写规则时参考）
 - [templates/](templates/)：settings-hook.json（hook 挂载段）/ pre-commit（提交兜底）；回归 runner 模板属 sdlc-test（../sdlc-test/templates/，单独安装本 skill 时该引用仅作来源说明，不依赖其存在）

@@ -1,11 +1,13 @@
 ---
 name: sdlc-design
-description: "Produces the technical design document (design.md) from the confirmed requirement digest: solution alternatives, data model, tiered interface contracts, shared-asset inventory with delivery ownership, decision table (C-constraint/H-assumption), and implementation slicing constraints handed to task frameworks like Trellis. Use when the requirement digest is confirmed and design is due, or the user says 技术设计、详细设计、概要设计、出设计、设计文档、接口契约、D 表、方案骨架、切分约束、sdlc-design. 用法：/sdlc-design <需求名>"
+description: "Produces the technical design document (design.md) from the confirmed requirement digest: solution alternatives, data model, tiered interface contracts, shared-asset inventory with delivery ownership, decision table (C-constraint/H-assumption), and implementation slicing constraints handed to task frameworks like Trellis. Use when the requirement digest is confirmed and design is due, or the user says 技术设计、详细设计、概要设计、出设计、设计文档、接口契约、D 表、方案骨架、切分约束、sdlc-design. 用法：/sdlc-design 需求名"
 ---
 
 # 技术设计（sdlc-design）
 
 把已确认的需求共识（sdlc-intent 三件套）翻译成技术设计文档 `design.md`——供三方消费：sdlc-gate 评审、任务框架拆分执行、sdlc-test cases 并行推导。**设计写成文档本身就是发现过程**：契约、决策、公共资产在人能逐行核对的粒度上定死，下游切片免现场设计。
+
+**前置依赖**：`codegraph` MCP（存量勘察；缺失时降级定向 grep + 读文件）；`mysql` MCP（只读核对表结构，可选）。
 
 ## 路由（进入时先判）
 
