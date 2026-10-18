@@ -25,6 +25,9 @@ jobs:
               name = p['name']
               assert name not in reserved_exact and not name.startswith(reserved_prefixes), \
                   f"插件名触发保留字规则: {name}（第三方插件不能以 claude-/anthropic-/anthropics-/cc-plugin- 开头）"
+              desc = p.get('description', '')
+              assert len(desc.encode('utf-8')) <= 1000, \
+                  f"插件 description 超 1000 字节（{len(desc.encode('utf-8'))}）"
           bad = []
           for f in glob.glob('skills/*/SKILL.md'):
               text = open(f, encoding='utf-8').read()
@@ -36,8 +39,8 @@ jobs:
               tags = re.findall(r'<[^>]+>', desc)
               if tags:
                   bad.append(f"{f}: description 含 XML 标签形态 {tags}")
-              if len(desc) > 1024:
-                  bad.append(f"{f}: description 超 1024 字符（{len(desc)}）")
+              if len(desc.encode('utf-8')) > 1000:
+                  bad.append(f"{f}: description 超 1000 字节（{len(desc.encode('utf-8'))}）")
           assert not bad, "\n".join(bad)
           print("OK: 插件名与 description 卫生检查通过")
           EOF

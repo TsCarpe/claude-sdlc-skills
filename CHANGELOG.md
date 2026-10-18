@@ -10,7 +10,7 @@
 - **可移植性**：sdlc-sync 的平台仓库路径改为 `$SDLC_PLATFORM_REPO` 占位，不再硬编码作者本机目录。
 - **MCP 工具名**：Figma 与 chrome-devtools 工具引用统一为 `ServerName:tool_name` 完全限定名。
 - **结构**：`incremental-guide.md` 在 sdlc-intent 与 sdlc-sync 双侧直链；`guardrails.example.yaml`、sdlc-test runner 模板从 SKILL.md 直接可达。
-- **依赖与文档**：各 SKILL.md 补前置依赖；移除 SKILL.md 内的变更日期注记；description 去掉尖括号占位符并补齐英文语义句。
+- **依赖与文档**：各 SKILL.md 补前置依赖；移除 SKILL.md 内的变更日期注记；description 去掉尖括号占位符并补齐英文语义句，长度统一压到 1000 字节以内（CI 按 UTF-8 字节校验）。
 - **评估**：sdlc-sync 补结构化评估；CI 的 eval 索引正则支持字母编号。
 
 ## v0.21.0 (2026-10-15)
