@@ -9,7 +9,7 @@
   - 结构切分纯确定性（html.parser），无 LLM 参与
   - 媒体（图片/附件/画板缩略图）经 lark-cli docs +media-download 落盘，mediaId=内容哈希
   - 评论：宿主块 comment-refs="cN" + reference_map.comments[cN].data 完整评论串 → comment 块
-  - 内容守恒自检（conservation-v1，v0.5）：解析产物与原文字符流对账，失败 exit 2 不落盘
+  - 内容守恒自检（conservation-v1）：解析产物与原文字符流对账，失败 exit 2 不落盘
   - 退出码约定：0 成功 / 1 媒体下载失败（产物照常落盘）/ 2 守恒自检失败（不落盘）/
     3 用法错误（argparse 默认 error 亦 exit 2、与守恒失败撞码，故子类覆写分离——见 _ArgParser；
     消费方 runner.mjs / prompts.py 的码表已同步补 exit 3）
@@ -425,7 +425,7 @@ class DocParser:
             chain = marker_chain + (re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]", "", marker) or str(n),)
             ordinal = ".".join(chain)
             bid = self.block_id(li) or self.new_id()
-            # v0.4：li 裸文本直接收（旧行为只看子元素，前缀整段丢）；纯子列表 li 的 text 为空，
+            # li 裸文本直接收（旧行为只看子元素，前缀整段丢）；纯子列表 li 的 text 为空，
             # 仍发块保锚点；子列表内容只由子项块承载，不折进父 text（防双计）
             text = self.li_inline_text(li)
             self.emit({"id": bid, "type": "list-item", "marker": marker, "ordinal": ordinal,
@@ -444,7 +444,7 @@ class DocParser:
         """单元格直接文本 = td 裸文本 + 非 KEEP 子元素文本（\\n 连接，恢复段落边界）。
         KEEP 白名单子元素（list/img/figure/whiteboard/grid/column/嵌套 table）由子块承载，
         文本不进 cells——与 parse_table 的子块提取口径互斥，防双计。
-        v0.4：删旧行为「cell 含图即弃全部直接文本」（图旁零散文本是正文而非夹注）"""
+        删旧行为「cell 含图即弃全部直接文本」（图旁零散文本是正文而非夹注）"""
         parts = [td.text] if td.text and td.text.strip() else []
         for c in td.children:
             if c.tag in KEEP_IN_TABLE_CELL:
@@ -458,7 +458,7 @@ class DocParser:
     def _cell_subblocks(td):
         """单元格内嵌块级子元素：grid/column 递归展平（容器不自身成块，列内 p/hN/table 走通用
         dispatch）；KEEP 白名单成员由子块承载；其余（p/内联）文本走 cell_direct_text，不发块。
-        v0.5：parse_table 不再逐格分发，仅被 _is_scalar_cell 复用（展平后有无 KEEP 子块）"""
+        parse_table 不再逐格分发，仅被 _is_scalar_cell 复用（展平后有无 KEEP 子块）"""
         for c in td.children:
             if c.tag in ("grid", "column"):
                 yield from DocParser._cell_subblocks(c)
@@ -775,11 +775,11 @@ FIXED_VECTOR_INPUT = ('[{"type":"paragraph","text":"活动链接：必填"},'
                       '{"type":"image","caption":"PC端原型图"}]')
 FIXED_VECTOR_SHA = "61be48ea05d60cc30664afae48879306f5504495306cadaf48ec0d324c4716d9"
 
-# 脱敏 mini fixture（虚构内容；真实文档不入仓）。覆盖面 = v0.4 四修复 + v0.5 表格升级 + 守恒对称口径：
+# 脱敏 mini fixture（虚构内容；真实文档不入仓）。覆盖面 = 四项解析修复 + 表格升级 + 守恒对称口径：
 # thead 表格（表头不进指纹、行文本进）/ grid 两 column 各含一图（图成块挂行块 + media + caption）/
 # li 裸文本+span 混排（前缀不丢）/ li 内只有子列表（父 text 空、子项不双计）/ 含图 cell 正文保留 /
 # caption 进块 / cite 展开（含 cite 子树不收）/
-# v0.5：无 thead 表·表头命中（首行短文本进 head 不成块、占位计数保数据行 ID、原文侧对称排除）/
+# 无 thead 表·表头命中（首行短文本进 head 不成块、占位计数保数据行 ID、原文侧对称排除）/
 # 表头不命中四反例（单行表/首行长文本/首行含 ol/首行纯数字）/ 内容格拆段（cells 空串 + paragraph
 # 子块带 cell 戳与原生 id）/ 整段粗体 subheading / 行内列表挂行块 / 空段丢弃 / 尾随空段标量格
 _SELF_TEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -842,7 +842,7 @@ def self_test():
     assert by_id["li2b"]["text"] == "子项乙" and by_id["li2b"]["parent"] == "li2"  # 不折进父块
     assert by_id["li3"]["text"] == "**加粗项**", by_id["li3"]["text"]  # b→** 规则保留
 
-    # ---- v0.5 表格：thead 表（既有 case 按新语义改写）
+    # ---- 表格：thead 表（既有 case 按新语义改写）
     tr1, tr2 = by_id["tr1"], by_id["tr2"]
     assert tr1["head"] == ["列一", "列二"]  # thead 进 head（展示层），不进指纹
     assert tr1["cells"] == ["", "纯文本B1"], tr1["cells"]  # 多段格=内容格置空；裸文本格仍标量
@@ -860,7 +860,7 @@ def self_test():
     assert {b["id"] for b in blocks if b["type"] == "image"} == {"im1", "im2", "im3"}
     assert set(p.media) == {"tok1", "tok2", "tok3"}  # grid 两图成为 media
 
-    # ---- v0.5 表格：无 thead 表·表头命中（a）
+    # ---- 表格：无 thead 表·表头命中（a）
     hdr = by_id["x-0006"]  # 推断表头行占位计数（x-0005）后首个数据行 = 与旧版逐行编号一致
     assert hdr["type"] == "table-row" and hdr["head"] == ["版本", "日期"], hdr["head"]
     assert hdr["cells"] == ["", "P0"], hdr["cells"]  # 内容格空串 + 尾随空段标量格（g）
@@ -881,7 +881,7 @@ def self_test():
     kids6 = [b for b in blocks if b.get("parent") == "x-0006"]
     assert [b["id"] for b in kids6] == ["x-0007", "x-0008", "x-0009"], kids6
 
-    # ---- v0.5 表格：无 thead 表·表头不命中四反例（b）：单行/首行长文本/首行含 ol/首行纯数字
+    # ---- 表格：无 thead 表·表头不命中四反例（b）：单行/首行长文本/首行含 ol/首行纯数字
     for bid in ("b1", "b2", "b3", "b4", "b5", "b6", "b7"):
         assert by_id[bid]["type"] == "table-row" and by_id[bid]["head"] == [], bid
     assert by_id["b6"]["cells"] == ["1", "2"]  # 首行纯数字 → 全部行为数据行

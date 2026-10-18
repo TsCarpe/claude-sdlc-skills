@@ -11,8 +11,8 @@
 检查项（不通过 exit 1，缺失清单直出）：
   1. sdlc/<需求名>/test/cases.md 存在
   2. 关卡1：cases.md 头部「审核状态」以「已确认」开头；
-     或 sdlc/<需求名>/review/ 最新一份 issues（latest_by_name，v0.12.0 起
-     由「任一份」改为最新份——r1 已放行后开 r2 待裁决时不再误放行）的
+     或 sdlc/<需求名>/review/ 最新一份 issues（latest_by_name
+     取最新份——r1 已放行后开 r2 待裁决时不再误放行）的
      「评审状态」= 已放行（sdlc-gate 关卡互认）
   2.5 风险分级三口径（经 _shared.tier_three_ways，与 verify_dev.py 同源）：
      整行缺失 → 提示「按 A 级继续」不拦（存量兼容）；
@@ -76,7 +76,7 @@ def main() -> int:
 
     text = cases.read_text(encoding="utf-8", errors="replace")
 
-    # 2. 关卡1（含 sdlc-gate 互认；v0.12.0 起互认锚定最新一份 issues）
+    # 2. 关卡1（含 sdlc-gate 互认；互认锚定最新一份 issues）
     review_dir = root / "sdlc" / req / "review"
     m = re.search(r"审核状态[：:]\s*(.+)", text)
     confirmed = bool(m and m.group(1).strip().startswith("已确认"))

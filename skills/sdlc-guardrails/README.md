@@ -56,7 +56,7 @@
 python3 engine/check.py --check <file>...   # 违规 exit 1，人类可读输出
 ```
 
-## 已知边界（v1）
+## 已知边界
 
 - `count_ge` 是文件级计数近似，非逐方法解析（够用：缺注解必然计数不等）
 - 规则纯 regex，不做 AST——需要类型/跨文件分析的规则（如 Service 出参 DTO）不在此层，走 CI/测试期（ArchUnit 等）

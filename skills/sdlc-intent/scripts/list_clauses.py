@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""list_clauses.py — 列出原文块结构中的条款清单，供 sdlc-intent 梳理时精确引用出处（v1.2）
+"""list_clauses.py — 列出原文块结构中的条款清单，供 sdlc-intent 梳理时精确引用出处
 
 梳理纪律：当 intake/doc-*.json 存在时，出处尽量写到条款级（人读格式「详述N·<小节名>」或
 「详述N·<序数>」，如 详述6·步骤一 / 详述6·2.3.1），resolve_anchors.py 据此解析到具体条款块。

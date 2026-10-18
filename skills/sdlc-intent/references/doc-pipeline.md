@@ -1,4 +1,4 @@
-# 原文预处理与块级锚点（v1.2 管线）
+# 原文预处理与块级锚点
 
 > SKILL.md「输入读取 · 原文预处理」条目的展开。文中 `scripts/` 均指本 skill（sdlc-intent）根目录下的 scripts/。
 > 上游：正文 markdown 与评论 JSON 已读取；下游：sdlc-sync 推送（payload 的 doc/anchor 字段见 sdlc-sync 的 payload 契约，本文不展开）。
@@ -21,7 +21,7 @@
 
 ## 2. 输入准备：XML 拉取与文件提取
 
-1. 拉取块级结构（`--detail with-ids` = 每元素自带飞书原生块 ID，即 v1.2 引用锚点）：
+1. 拉取块级结构（`--detail with-ids` = 每元素自带飞书原生块 ID，即引用锚点）：
 
    ```bash
    lark-cli docs +fetch --doc "<URL>" --doc-format xml --detail with-ids > /tmp/fetch.json
@@ -60,13 +60,13 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 - 控制台输出四行怎么读：`blocks=` 块数与类型分布；`media=… ok=…` 媒体下载结果；`conservation ok … textSha=… mediaTokens=N` 守恒自检结果（`--md` 模式为 `conservation fallback`）；`native-anchors=N/M` 原生块 ID 占比——合成 `x-` ID 通常全部来自 table-row（DocxXML 的行元素不带 id，属格式现实而非拉取错误；0.5 内容格段落子块用 p 原生 ID，占比会随层级还原上升）；若 list-item/paragraph 也大量合成，才说明 fetch 没带 `--detail with-ids`，应回查拉取命令。
 - 媒体下载逐项容错：lark-cli 不可得（PATH / nvm / 默认安装路径均未命中）或单项失败时该条目 `status=failed` 带原因，不阻断其他条目与产物落盘（§7）。
 
-### 内容守恒自检（conservation-v1，parse_doc ≥0.4；表头推断排除为 0.5 增强）
+### 内容守恒自检（conservation-v1；表头推断为排除项）
 
 解析产物与原文的字符流对账，防解析静默丢失（历史上踩过：分栏 grid/column 内整棵块丢失、含图单元格夹注文本被弃、li 裸文本前缀丢失、图 caption 未读）。解析器组装 doc 后、写 `--out` 前自检，guard 写入 doc 顶层：
 
-- **原文侧**：content.xml 树上全部 text 节点 + `cite` 展开（`@user-name`，无则 `@user-id`）+ `img@caption`（去尾换行；figure/source/whiteboard 无 caption 不收）+ **排除 thead 子树** + **排除无 thead 表中判定为表头的首行 tr 子树**（0.5 推断表头；判定与解析器同函数 `_table_header`，双侧确定性）。
+- **原文侧**：content.xml 树上全部 text 节点 + `cite` 展开（`@user-name`，无则 `@user-id`）+ `img@caption`（去尾换行；figure/source/whiteboard 无 caption 不收）+ **排除 thead 子树** + **排除无 thead 表中判定为表头的首行 tr 子树**（推断表头；判定与解析器同函数 `_table_header`，双侧确定性）。
 - **产物侧**：全部块 `text`、`table-row` 的 `cells` 全列（内容格为空串，其文本由行内子块 `text` 承载——挪格不挪字符，指纹不变）、image 块 `caption`；`head`（每行重复挂载，收则多重计数）、`path`/`rowLabel`/`ordinal`/`marker`、media `name`/`alt` 不收；comment 块不收（见盲区）。
-- **表头推断（0.5）**：thead 优先；无 thead 时 tbody 行数 ≥2（扣除表头后仍剩 ≥1 数据行；单行表永不判表头）且首行每个 td/th 满足「非空、单段无换行、≤30 字、非纯数字、无 KEEP 块级嵌套」→ 判为表头：文本进各行 `head`、该行不成数据块（仍消耗一次合成 ID 计数，保数据行 `x-` 编号不漂）。首行为纯数字（如序号 1/2/3）不判——数据行常见此形态而表头格几乎不会。合并单元格（colspan/rowspan）维持既有展平口径，不做特殊处理。
+- **表头推断**：thead 优先；无 thead 时 tbody 行数 ≥2（扣除表头后仍剩 ≥1 数据行；单行表永不判表头）且首行每个 td/th 满足「非空、单段无换行、≤30 字、非纯数字、无 KEEP 块级嵌套」→ 判为表头：文本进各行 `head`、该行不成数据块（仍消耗一次合成 ID 计数，保数据行 `x-` 编号不漂）。首行为纯数字（如序号 1/2/3）不判——数据行常见此形态而表头格几乎不会。合并单元格（colspan/rowspan）维持既有展平口径，不做特殊处理。
 - **归一化**：字符流剔除 `*`、`~` 与全部空白 → 剩余字符排序 → sha256（字符多重集合的规范指纹，顺序无关——解析器的内联顺序不可恢复，排序指纹对此免疫；也因此 cells↔子块 text 之间的文本挪移不影响指纹）。
 - **guard 结构**：`{"algo":"conservation-v1","source":"xml","mediaTokens":[树上全部媒体 token 去重排序],"textSha":"<原文侧指纹>"}`；`--md` 回退模式 guard 为 `{"algo":"markdown-fallback"}`，不做文本守恒。
 - **判定口径（agent 门与平台门分离）**：agent 侧（本脚本，exit 2 门）= 产物侧指纹 == guard.textSha，且 mediaTokens 与产物 `media[].token` 集合双向相等，**不查 media status**（离线免 `--download` 跑时 status 恒 pending）；平台落库终检（第二道门）另加 media status 全 ok、missingMedia=0 阻断与 guard 复算。
@@ -119,8 +119,8 @@ python3 scripts/resolve_anchors.py --doc <doc.json> \
 ```
 
 - **`--comments` 优先**：传工作流已拉取的 list-comments JSON——评论全量、顺序即「评论区#N」的 N；`--refmap` 为回退（按 cN 自然序映射，且 fetch 评论可能截断）。
-- 解析策略（确定性，按序尝试）：① 出处含「详述N」→ 定位表行，带「·小节名/序数」时精确到条款块；② 「评论区#N」→ 映射到第 N 条评论的 comment 块；③ quote「」摘引 ≥6 字子串匹配；④ 全部失败 → 不加 anchor（平台回退 needle 文本定位，行为同 v1.1）。
-- 产物 payload-anchored.json 直接作为 sdlc-sync push-artifacts 的请求体；控制台 `anchors: {…}` 给出六类命中数与 miss 数（v1.4 起含 flows/states），miss 偏高时复查出处写法。
+- 解析策略（确定性，按序尝试）：① 出处含「详述N」→ 定位表行，带「·小节名/序数」时精确到条款块；② 「评论区#N」→ 映射到第 N 条评论的 comment 块；③ quote「」摘引 ≥6 字子串匹配；④ 全部失败 → 不加 anchor（平台回退 needle 文本定位）。
+- 产物 payload-anchored.json 直接作为 sdlc-sync push-artifacts 的请求体；控制台 `anchors: {…}` 给出六类命中数与 miss 数（含 flows/states），miss 偏高时复查出处写法。
 - doc.media 的上传顺序与 `doc`/`anchor` 字段规范见 sdlc-sync 的 payload 契约（此处仅衔接说明）。
 
 ## 7. 失败回退与边界

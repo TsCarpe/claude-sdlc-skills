@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""resolve_anchors.py — 把质检 payload 中的人读出处/引文解析为原文块锚点（v1.2）
+"""resolve_anchors.py — 把质检 payload 中的人读出处/引文解析为原文块锚点
 
 策略（确定性，按序尝试）：
   1. 出处含「详述N」：定位表行块（rowLabel==N），若带「·<小节名>」则在行后代中找文本命中的条款块
   2. 出处/引文含「评论区#序号」：按评论列表序号映射到 comment 块
   3. quote「」摘引文本在整个文档块中子串匹配（≥6 字符，取首个命中）
-  4. 全部失败 → 不加 anchor（前端回退 needle 定位，行为同 v1.1）
+  4. 全部失败 → 不加 anchor（前端回退 needle 定位）
 
 用法：
   resolve_anchors.py --doc doc.json [--comments comments.json] --payload payload.json --out payload-anchored.json
