@@ -61,7 +61,10 @@ A：暂缓。评估结论（2026-09-20）：阶段 A 通过、阶段 B 有条件
 A：sdlc-intent（把 PRD 消化成结构化共识）、sdlc-doubt（决策前对抗复查）单人即有收益；sdlc-gate 的多子代理评审在「设计+用例两份产物都存在」时收益最大；确认点/关卡体系本质是「AI 推进、人裁决」的纪律，与团队规模无关。
 
 **Q：任务框架（如 Trellis）/飞书里已经 ack 了设计文档，为什么还不能开发？**
-A：ack 是**流程性定稿信号**（设计「做完了」），不是质量确认（「对不对」）。放行唯一口径 = sdlc-gate 裁决闭环（issues 头部「评审状态=已放行」，含 --release 落改闭环校验全绿）。guard_dev 守卫拦截的正是「ack 被当成放行信号直接开码」——飞书技术文档的评阅是设计产物的下游发布通道（配套规范见 [feishu-tech-review-guide.md](dev-standards-reference/details/feishu-tech-review-guide.md)；产出该文档的 sdlc-doc 为源项目全局 skill，不在本仓），同样不构成放行。时序：确认点② ack（定稿）→ sdlc-gate 评审+裁决 → 放行 → 确认点③ child prd → 开发。
+A：ack 是**流程性定稿信号**（设计「做完了」），不是质量确认（「对不对」）。放行唯一口径 = sdlc-gate 裁决闭环（issues 头部「评审状态=已放行」，含 --release 落改闭环校验全绿）。guard_dev 开发入口校验拦截的正是「ack 被当成放行信号直接开码」——飞书技术文档的评阅是设计产物的下游发布通道（配套规范见 [feishu-tech-review-guide.md](dev-standards-reference/details/feishu-tech-review-guide.md)；产出该文档的 sdlc-doc 为源项目全局 skill，不在本仓），同样不构成放行。时序：确认点② ack（定稿）→ sdlc-gate 评审+裁决 → 放行 → 确认点③ child prd → 开发。
+
+**Q：我没过 gate 就直接开发了，为什么没拦住？**
+A：旧版触发词只覆盖「待评审」，没有覆盖「开始开发」这个时刻；现已补两处：① sdlc-gate 的 description 增加「开始开发 / 直接开发 / 拆任务 / 写代码 / 实现功能」触发；② 收到开发请求先走「开发请求入口」，查 `sdlc/<需求名>/review/` 最新 issues。`guard_dev` 是**调用即校验、未调用不生效**——没有任务框架启动钩子的项目，由开发会话入口先运行；未放行时模型应停下并指向 `/sdlc-gate`。你明确要求跳过时，会先要你显式确认，再写 `review/exemptions/exemption-<日期>.md` 留痕；A/B 级 degraded 不接受豁免绕过。
 
 **Q：开发完成验证（compile/boot/冒烟）为什么前置到开发侧，不全留给 sdlc-test？**
 A：静态检查查不了「起不起得来」；开发阶段验证失败在**同一上下文内修复**最便宜，后置到 exec 才发现则要换会话重载全部背景，且整轮测试编排（关卡+环境+派发）报废。业界同构：DoD「code compiles」是开发完成定义、冒烟是进入深度测试的准入门槛而非替代——开发阶段验「能不能跑」，测试阶段验「跑得对不对」。机制：`/sdlc-test dev` 产 verify 留档，static/exec 入口（guard_exec 检查5）反查留档倒逼，漏跑会被测试入口拦下。

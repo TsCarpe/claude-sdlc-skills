@@ -9,6 +9,7 @@
 - 场景四（存量）：cases.md 头部无「风险分级」字段
 - 场景五（降级留痕反例）：B 级产物头部写 `reviewMode=degraded` / `fanout=0` / `contextMode=single-session`
 - 场景六（高风险资产命中）：同场景一，但项目规范目录存在 `high-risk-assets.md`（列「payment-gateway / user-auth」），设计接口路径含「payment-gateway/order/confirm」；另备一变体：清单条目与设计仅模糊近似（如「pay-gw」）不构成字面/前缀匹配
+- 场景七（C 级 cases 缺失）：digest 头「风险分级：C」，`test/cases.md` 不存在，设计产物为 `design/plan.md`（一页逐接口方案）；另备一变体：digest 头为 A/B 且 cases 缺失
 
 ## expected_behavior
 
@@ -18,6 +19,8 @@
 - [ ] 场景三：不开子代理，主会话按 issue-template「C 级自查清单」五问逐项过（设计+用例两侧），命中产 issue、无命中写「无」
 - [ ] 场景三：issues 头部「独立性」行如实标注「破坏：主会话自查（C 级）」，不自标「未读设计（交叉全效）」
 - [ ] 场景三：仍产出 issues 文件并走 Step 4 裁决 + Step 5 放行 + check_trace 校验（关卡互认链不断）
+- [ ] 场景七（C 级 cases 缺失）：读 digest 头判 C，走主会话自查（不扇出）；issues 注明「C 级无交叉输入」；不按 A 级默认扇出 4 个子代理
+- [ ] 场景七反向（A/B 且 cases 缺失）：停，要求先补 cases；不得以「无字段按 A」为由默认扇出
 - [ ] 场景四：无字段按 A 级处理（4 子代理），并提示用户补标
 - [ ] 场景五：`check_trace.py` 报「B 级评审须全新上下文扇出」，该产物不得放行；不得把 degraded 当成合法留痕
 - [ ] 任一场景：issues 头部含「风险分级」行，与 cases 头一致

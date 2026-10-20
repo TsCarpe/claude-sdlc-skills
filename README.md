@@ -4,7 +4,7 @@
 [![validate](https://github.com/TsCarpe/claude-sdlc-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/TsCarpe/claude-sdlc-skills/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**AI-native SDLC skills for Claude Code**（其他兼容 agent 经 [skills.sh](https://skills.sh) 亦可安装）——把 SDLC 里最耗人的重复劳动交给 AI：需求梳理、技术设计、测试用例与浏览器执行、对抗评审、设计稿视觉还原、发版审计；红线由脚本机械拦截；**人只在两处关口裁决**。不是 prompt 合集，是带关卡、留档、降级路径的完整工作流。
+**AI-native SDLC skills for Claude Code**（其他兼容 agent 经 [skills.sh](https://skills.sh) 亦可安装）——把 SDLC 里最耗人的重复劳动交给 AI：需求梳理、技术设计、测试用例与浏览器执行、对抗评审、设计稿视觉还原、发版审计；内容红线由脚本写入即拦，流程关卡由脚本在入口校验；**人只在两处关口裁决**。不是 prompt 合集，是带关卡、留档、降级路径的完整工作流。
 
 文档以中文为主，skill 对中英文触发语均响应；在真实 Java 项目上端到端跑通后开源。
 
@@ -20,7 +20,7 @@ AI 写代码已经够快，瓶颈移到了**需求理解、测试与评审**—�
 
 1. **产物落盘，不靠对话记忆**——每个环节产出 markdown 文件（digest / design / cases / issues / report），跨会话可恢复、可逐行核对、可审计
 2. **对抗出真问题**——评审与决策复查交给全新上下文的子代理独立推导、交叉比对，分歧即信号
-3. **服从的事走代码，判断的事走人**——红线（关卡、命名、规范违规）由 hook/脚本机械拦截，不打扰；口径冲突、issue 裁决、放行全部留给真人
+3. **服从的事走代码，判断的事走人**——红线（关卡、命名、规范违规）由 hook/脚本在写入或入口处校验，不打扰；口径冲突、issue 裁决、放行全部留给真人
 
 ## 一个需求的一生
 
@@ -59,7 +59,7 @@ flowchart LR
 贯穿全链路的关键机制：
 
 - **需求分级路由（A/B/C）**——intent 评分卡定级，design / gate / test 按级裁剪机器工作量（C 级最轻、A 级全量）；分级只裁机器工作量，不裁人工关卡
-- **开发双关卡**——gate 放行由 guard_dev 守卫机械拦截「未放行先开发」（ack ≠ 放行）；开发完成由 verify_dev 验 compile/boot/冒烟留档反查——开发阶段验「能不能跑」，测试阶段验「跑得对不对」
+- **开发双关卡**——gate 放行由 guard_dev 在开发入口校验（开发请求入口 + 任务框架启动钩子；调用即校验、未调用不生效，ack ≠ 放行）；开发完成由 verify_dev 验 compile/boot/冒烟留档反查——开发阶段验「能不能跑」，测试阶段验「跑得对不对」
 - **关卡互认**——sdlc-gate 放行视同 sdlc-test 用例审核关卡通过
 - **设计与拆分分工**——sdlc-design 定契约/决策/公共资产，切分约束随 design.md 交付；任务编排归任务框架（如 Trellis），拆分执行免现场设计
 - **用例独立性红线**——cases 禁止读设计，这是交叉审查的价值前提
@@ -97,7 +97,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 1. **sdlc-intent**（5 分钟）——零依赖，梳理+体检立即可用
 2. **sdlc-release-check**（5 分钟）——零 MCP，任意 git 仓库即用
 3. **sdlc-doubt**（观念转变）——关键决策落定前多一道对抗复查
-4. **sdlc-design**（半小时上手）——digest 确认后产 design.md；B 级 mini / C 级跳过
+4. **sdlc-design**（半小时上手）——digest 确认后产 design.md；B 级 mini / C 级免 design.md（产一页 plan.md，仍走 gate 自查）
 5. **sdlc-gate**（1 天上手）——需要先有「设计+用例并行产出」的习惯，收益最大
 6. **sdlc-ui-visual**（10 分钟）——基准图模式零 MCP（python3 + Pillow 即可跑比对闭环）；Figma 结构化数据与自动截图需 figma / 浏览器 MCP
 7. **sdlc-test**（持续投入）——需要 test 环境 + MCP 配套，建议 ①-⑥ 稳定后再上
@@ -109,7 +109,7 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 
 - **第一段 · 业务全貌**：「角色 × 状态 × 功能点」主线串联 + 功能点清单，人逐行核对（确认点①）
 - **第二段 · 技术骨架**：接口契约分级 / 公共资产 / D 表 / 实现顺序，由 sdlc-design 机制化承载；期间测试用例并行独立产出，双双定稿后过 sdlc-gate（确认点②）
-- **第三段 · 逐功能点实现**：骨架 child 先行，业务 child 逐个切片执行；gate 已放行是硬前提（guard_dev 机械拦截开发）（确认点③）
+- **第三段 · 逐功能点实现**：骨架 child 先行，业务 child 逐个切片执行；gate 已放行是硬前提（guard_dev 开发入口校验）（确认点③）
 
 用三次小确认替代一次看不完的大确认，每次确认的产物粒度都是人能逐行核对的清单。方法论全文：[docs/large-req-playbook.md](docs/large-req-playbook.md)（框架无关，任意任务框架可复刻）+ 三份 [产物模板](templates/)；分级全貌见 [sdlc-workflow-landscape](docs/design/sdlc-workflow-landscape.md)。
 

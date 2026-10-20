@@ -28,7 +28,7 @@ flowchart TB
         C2a --> B4["sdlc-gate 评审关口<br/>A＝4 / B＝2 / C＝自查<br/>3 角色预审 + 1 交叉审查"]
         B3b --> B4
         B4 --> C2{"人工逐条裁决 → 放行<br/>落改 / 权衡记档 / 驳回"}
-        C2 -->|"gate 已放行才可开发（guard_dev 拦截）"| C3{"确认点③<br/>child PRD 评审"}
+        C2 -->|"gate 已放行才可开发（guard_dev 入口校验）"| C3{"确认点③<br/>child PRD 评审"}
         C3 --> B5["任务切片<br/>（可选任务框架；大需求走三段式）"]
         B5 --> B6["实现 + 质量核验 + 完成验证<br/>规范合规 / 跨层数据流 /<br/>compile·boot·冒烟留档"]
         B6 --> B7["sdlc-test AI 测试<br/>cases → 🔒关卡1 → static<br/>→ exec → 🔒关卡2 → report"]
@@ -89,8 +89,8 @@ flowchart TB
 |---|---|---|---|
 | 1. 接收与梳理体检 | sdlc-intent：梳理（含流程图/状态机）→ 七层体检；评论区必读 | 梳理产物落盘后暂停 | intake/ 三件套：digest（需求摘要）/ audit（缺陷体检报告）/ pm-checklist（待 PM 澄清清单） |
 | 2. 规划（金字塔顶层） | 业务主线串联（角色×状态×功能点）→ 功能点从主线推导 → ER 后置；Q 表硬阻塞 | **确认点①** 逐行核对 | parent prd.md + design.md 上半（ER） |
-| 3. 评审（关口） | 技术设计（sdlc-design 产 design.md：备选/契约分级/D 表/公共资产/切分约束；C 级跳过，B 级 mini）与测试用例并行独立产出 → sdlc-gate（A＝4/B＝2/C＝自查分档扇出，三重判级可升 A；复审轮继承注入+变更聚焦收敛，r3 高严重度新发熔断）+ RECONCILE（对账过滤，剔除误报） | **确认点②** 设计逐行定稿（框架 ack＝定稿信号，非放行）；**逐条裁决**（分歧类必须人拍板）→ 放行 | design.md（sdlc-design）、review/issues-日期.md（宽表含场景白话+原文摘引+裁决列，头部业务背景+代号速查+上轮继承） |
-| 4. 切片开发（金字塔中/底层） | 🔒 guard_dev 开发放行守卫（gate 已放行才可开发）；骨架 child 先行、child prd 内联瘦身；或轻量任务主会话直做 | **确认点③** child prd 评审后才开发 | child prd、代码变更 |
+| 3. 评审（关口） | 技术设计（sdlc-design 产 design.md：备选/契约分级/D 表/公共资产/切分约束；C 级免 design.md（产一页 plan.md），B 级 mini）与测试用例并行独立产出 → sdlc-gate（A＝4/B＝2/C＝自查分档扇出，三重判级可升 A；复审轮继承注入+变更聚焦收敛，r3 高严重度新发熔断）+ RECONCILE（对账过滤，剔除误报） | **确认点②** 设计逐行定稿（框架 ack＝定稿信号，非放行）；**逐条裁决**（分歧类必须人拍板）→ 放行 | design.md（sdlc-design）、review/issues-日期.md（宽表含场景白话+原文摘引+裁决列，头部业务背景+代号速查+上轮继承） |
+| 4. 切片开发（金字塔中/底层） | 🔒 guard_dev 开发放行守卫（gate 已放行才可开发；开发请求入口先查）；骨架 child 先行、child prd 内联瘦身；无 digest 的日常小任务主会话直做（走分级路由的 B/C 仍需 gate） | **确认点③** child prd 评审后才开发 | child prd、代码变更 |
 | 5. 质量核验 | 规范合规 / 跨层数据流 / 复用检查 + verify_dev 开发完成验证（C 级 compile+boot；A/B 级＋冒烟）；有设计稿基准的 UI 变更走 sdlc-ui-visual 视觉还原（截图比对→分级修复轮→功能回归，产物 `.ui-check/`） | 🔴 问题人工介入 | 检查报告、dev/verify-*.md（完成验证留档） |
 | 6. AI 测试 | sdlc-test：cases → static（用例↔代码比对）→ exec（浏览器）→ report | **🔒关卡1** 用例审核；**🔒关卡2** 报告复验 | cases.md、reports/ |
 | 7. 收尾沉淀 | 归档 + 教训回写判断 + 文档同步 | — | 归档任务、规范增量、文档 |
@@ -111,7 +111,7 @@ flowchart TB
 | **技能层** | sdlc-intent | 需求接收两段式：梳理 8 区块 → 七层缺陷体检 | 📦 | playbook+自创 |
 | | sdlc-design | 技术设计产出：备选方案/契约读写分级/公共资产归属/D 表 C·H/实施切分约束（交付任务框架拆分执行） | 📦 | playbook+G+自创 |
 | | sdlc-test | AI 测试编排（dev 完成验证 → cases → static → exec → report），子命令独立可重跑 | 📦 | 自创 |
-| | sdlc-gate | 评审关口：全新上下文子代理按风险分档（A＝4/B＝2/C＝自查）互查设计与用例，放行后解锁开发（guard_dev） | 📦 | 自创 |
+| | sdlc-gate | 评审关口：全新上下文子代理按风险分档（A＝4/B＝2/C＝自查）互查设计与用例，放行后解锁开发（guard_dev 开发入口校验） | 📦 | 自创 |
 | | sdlc-doubt | 非平凡决策剥离结论，交全新上下文审查者「找问题」 | 📦 | skills→D2 决策 |
 | | sdlc-release-check | 发版前扫描 Java+SQL diff：配置 Key / 平台注册操作 / DDL·DML 变更分级，汇总发布时刻表 | 📦 | 自创 |
 | | sdlc-guardrails | 横切引擎：写时红线拦截（PostToolUse hook + pre-commit 兜底 + `--check` 基线扫描），引擎一份全局、规则按项目 | 📦 | 自创 |
@@ -126,7 +126,7 @@ flowchart TB
 | 需求梳理 | 产出摘要/体检/澄清三件套，评论区一并消化 | 确认梳理口径，答复澄清项 |
 | 技术设计 | 接口契约、决策表、公共资产清单成稿 | 确认点①② 逐行核对清单 |
 | 评审 | 分档子代理互查（A＝4/B＝2/C＝自查）、过滤误报、汇总 issue 宽表 | 逐条裁决；分歧类拍板（不得下放 AI） |
-| 切片编码 | child 切片实现 + 规范自检 | gate 放行后才启动开发（guard_dev 守卫）；抽查关口产物；被锁口径拍板 |
+| 切片编码 | child 切片实现 + 规范自检 | gate 放行后才启动开发（guard_dev 开发入口校验）；抽查关口产物；被锁口径拍板 |
 | 质量核验 | 规范合规 / 跨层数据流 / 复用检查 + verify_dev 三件套（compile/boot/冒烟）执行留档 | 🔴 问题裁决修复方向 |
 | 测试 | 用例生成、静态比对、浏览器执行、报告 | 🔒关卡1 用例审核、🔒关卡2 报告复验 |
 | 经验沉淀 | 提炼教训候选、草拟规范增量 | 决定是否固化为 spec 规则 |

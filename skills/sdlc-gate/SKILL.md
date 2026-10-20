@@ -1,6 +1,6 @@
 ---
 name: sdlc-gate
-description: "Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. 评审关口：技术设计与测试用例定稿后的强制评审关口——按风险分级分档对抗评审（A 级 4 个全新上下文子代理 / B 级 2 个 / C 级主会话自查）产出 issue 清单与分歧清单，人工逐条裁决后放行开发/测试执行。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或需求梳理确认后设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
+description: "Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. Also checks the development entry before development starts. 评审关口：设计与用例定稿后的强制评审，按风险分级分档对抗评审（A 级 4 子代理 / B 级 2 个 / C 级主会话自查）产出 issue 与分歧清单，人工裁决后放行开发/测试；用户要求开始开发、直接开发、拆任务、写代码或实现功能时使用——即使未评审或用户要求跳过。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
 ---
 
 # Review Gate（评审关口）
@@ -12,6 +12,22 @@ description: "Runs the mandatory risk-tiered review gate after technical design 
 产物目录：`sdlc/<需求名>/review/`，文件 `issues-<日期>.md`（新一轮加 `-r<N>`）。
 skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级安装为 `<项目根>/.claude/skills/sdlc-gate`，全局安装为 `~/.claude/skills/sdlc-gate`。
 
+## 开发请求入口（先于路由）
+
+收到「开始开发 / 直接开发 / 拆任务 / 写业务代码 / 实现功能」类请求时，先做开发放行检查（项目无需求目录时不适用）：
+
+```text
+开发请求入口：
+- [ ] Step 0：定位需求目录——`sdlc/*/` 且含 intake/digest、review、test/cases 或 design/design|plan 任一；0 个 → 普通开发；多个或名称不明确 → 先问，不猜
+- [ ] Step 1：查 `sdlc/<需求名>/review/` 最新 issues（排除 `exemptions/`）
+- [ ] Step 2：已放行且非 A/B degraded → 运行 guard_dev.py；否则停 / 走豁免
+```
+
+- **已放行**：运行 `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`，通过才进入开发。
+- **未放行或无 issues**：停，不写业务代码、不拆任务、不改源码（只允许写 `sdlc/` 产物）；列缺失与补齐路径：A/B → `/sdlc-design` + `/sdlc-test cases` → `/sdlc-gate`；C → `design/plan.md` → `/sdlc-gate` 自查。
+- **用户坚持跳过**：列风险并要求**明确回答「确认豁免本次 gate」**；仅在该明确确认后写 `sdlc/<需求名>/review/exemptions/exemption-<YYYYMMDD>.md`（七字段见 [exemption-template.md](references/exemption-template.md)），不把「后果我担」「先做吧」等笼统表态当确认；再由 guard_dev 校验放行。
+- 示例：用户说「直接开始开发」→ 回「`sdlc/评选活动/review/` 无已放行 issues，先跑 `/sdlc-gate 评选活动`；未放行前不写业务代码」。
+
 ## 路由
 
 无子命令。按产物状态自动路由：
@@ -19,15 +35,15 @@ skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级�
 - review 目录不存在或已放行后设计/用例有实质变更 → 走 Step 1-3 开新一轮；**新一轮 ≠ 全量重审**，按 Step 2 末「复审轮规则」收敛（r≥2 继承注入 + 变更聚焦）
 - 存在状态=待裁决的 issues 文件 → 直接进 Step 4 裁决，拒绝重开预审
 - 存在状态=熔断的 issues 文件 → 呈报熔断建议（退回 sdlc-design 重考虑方案），用户裁决去向，禁止继续裁决落改
-- 读 cases.md 头「风险分级」定评审档位（A=4 子代理 / B=2 / C=主会话自查）；无字段按 A 级（Step 2 分档规则）
-- **已放行 ≠ 可开发**——开发启动前运行 `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`（见 Step 5 放行后守卫）
+- 读 cases.md 头「风险分级」定评审档位（A=4 子代理 / B=2 / C=主会话自查）；cases 缺失时读 digest 头：digest=C → C 档自查；digest=A/B/无字段 → 停，要求先补 cases（无字段按 A 级保守处理，不得默认扇出）
+- **已放行 ≠ 可开发**——开发请求先走「开发请求入口」；已放行后运行 `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`；豁免按 `review/exemptions/` 规则（见 Step 5 放行后守卫）
 
 ## 前置输入（缺失则引导补齐，降级须在 issues 文件注明）
 
 | 输入 | 来源 |
 |---|---|
-| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；轻量任务 = `sdlc/<需求名>/design/design.md`。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
-| 测试用例 | `sdlc/<需求名>/test/cases.md` |
+| 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；A/B 轻量任务 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页逐接口方案）。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
+| 测试用例 | `sdlc/<需求名>/test/cases.md`；A/B 必需，C 级可缺失（缺失时 issues 注明「C 级无交叉输入」，自查仅审 plan） |
 | CONTRACT 基准 | `sdlc/<需求名>/intake/` 三件套（digest/audit/pm-checklist），缺失时回退原始 PRD 并注明 |
 | 高风险资产清单 | 项目自建规范目录下的 `high-risk-assets.md`（可选；读不到跳过，命中判定见 Step 2 分档规则第三重——与分层规范降级同构） |
 
@@ -42,17 +58,17 @@ Review-gate 进度：
 
 ## Step 1: 定位输入
 
-按「前置输入」表定位三路输入（技术设计 / 测试用例 / CONTRACT 三件套；缺失则引导补齐，降级须在 issues 文件注明）。确认用例独立性：用例生成时未读过设计文档（见顶部定位段的前置条件，不满足时交叉审查退化为一致性检查）。
+按「前置输入」表定位三路输入（技术设计 / 测试用例 / CONTRACT 三件套；缺失则引导补齐，降级须在 issues 文件注明）。确认用例独立性：用例生成时未读过设计文档（见顶部定位段的前置条件，不满足时交叉审查退化为一致性检查）。C 级无 cases 时记「C 级无交叉输入」，不按破坏独立性处理。
 
 ## Step 2: 扇出预审（按风险分级分档，全新上下文）
 
-**分档规则（读 cases.md 头「风险分级」，无字段按 A 级；三重判级——① cases 头 + ② 对照设计文档影响面章节（接口契约/公共资产清单）+ ③ 项目高风险资产清单：项目自建规范目录（同分层规范读取口径）下的 `high-risk-assets.md` 列固定 A 级资产域（支付/鉴权/资金/公共库接口等，项目自定义），命中 = 清单条目与设计公共资产清单/接口路径的字面或前缀匹配，模糊命中不升级。②③任一发现影响面证据且当前低于 A 级 → tier 只升不降：回写 digest 头并同步 cases/issues 头后按 A 级扇出）**：
+**分档规则（读 cases.md 头「风险分级」；cases 缺失时读 digest 头：digest=C → C 档自查；digest=A/B/无字段 → 停，要求先补 cases（无字段按 A 级保守处理，不得默认扇出）；三重判级——① cases 头 + ② 对照设计文档影响面章节（接口契约/公共资产清单）+ ③ 项目高风险资产清单：项目自建规范目录（同分层规范读取口径）下的 `high-risk-assets.md` 列固定 A 级资产域（支付/鉴权/资金/公共库接口等，项目自定义），命中 = 清单条目与设计公共资产清单/接口路径的字面或前缀匹配，模糊命中不升级。②③任一发现影响面证据且当前低于 A 级 → tier 只升不降：回写 digest 头并同步 cases/issues 头后按 A 级扇出）**：
 
 | 风险分级 | 扇出 |
 |---|---|
 | A | 4 子代理（下表 #1-#4 全量） |
 | B | 2 子代理（#2 数据模型与 SQL + #4 交叉审查者，prompt 模板同用） |
-| C | 主会话自查（不开子代理）：强制套用下方对抗 prompt 逐项过，按 [issue-template.md](references/issue-template.md)「C 级自查清单」产出，仍产 issues 走 Step 4 裁决 + Step 5 放行（保关卡互认链） |
+| C | 主会话自查（不开子代理）：输入 = plan.md（+ cases 若存在，缺失时注明「C 级无交叉输入」）；强制套用下方对抗 prompt 逐项过，按 [issue-template.md](references/issue-template.md)「C 级自查清单」产出，仍产 issues 走 Step 4 裁决 + Step 5 放行（保关卡互认链） |
 
 用 Agent 工具生成子代理，对抗 prompt 用下方模板。**token 纪律：每个子代理只喂 ARTIFACT（复审轮 = 变更 + 关联章节，见复审轮规则）+ 角色审查要点 + CONTRACT 相关章节 + 近期误报模式 + 上轮继承（仅复审轮，标题级），不喂会话全文。**
 
@@ -146,7 +162,7 @@ CONTRACT: <intake 三件套相关章节>
 
 过滤后执行**同根因合并**：同一根因多条（跨角色或单角色内）并成一个裁决单元——人裁决的是裁决单元数，不是发现数；严重度=低且无动作建议的进备案区。规则与示例见 issue-template.md。
 
-issues 文件的产物结构与填写规则以 [issue-template.md](references/issue-template.md) 为**唯一权威**——宽表一行一条、分歧清单置顶、头部速览与裁决焦点、可读性红线（标题与原文摘引原样保留、场景（白话）列必填、`<br>` 分行、代号内联释义、严重度降序、速览与明细同源、头部业务背景与代号速查、焦点表场景同源复制）全部以模板为准，本文件不重复。头部状态置 `待裁决`。
+issues 文件的产物结构与填写规则以 [issue-template.md](references/issue-template.md) 为**唯一权威**——宽表一行一条、分歧清单置顶、头部速览与裁决焦点、可读性红线（标题与原文摘引原样保留、场景（白话）列必填、`<br>` 分行、代号内联释义、严重度降序、速览与明细同源、头部业务背景与代号速查、焦点表场景同源复制）全部以模板为准，本文件不重复。头部状态置 `待裁决`。C 级按模板「C 级最小骨架」产出（0 条也保留速览统计表，数字填 0）。
 
 🔒 关卡措辞：「issue 清单已生成于 <路径>，共 X 条（分歧 Y 条）；请逐条裁决，确认后我继续，需修改请直接说」。
 
@@ -173,6 +189,8 @@ issues 文件的产物结构与填写规则以 [issue-template.md](references/is
 - **驳回**：**必填理由**，记「驳回：<理由>」
 - **存疑**：记「存疑：<去向>」（拉 PM / 留到下轮）
 
+**C 级 0 条**：仍按 🔒 呈报「自查 0 条，是否确认放行？」，不得跳过人工确认直接置已放行。
+
 ### 默认裁决模式：高优逐条 + 其余批量预填
 
 - **高优逐条**：三类分歧全部 + 严重度=高的角色条目，按主题分组（同改动对象合并）逐批裁决，每批 ≤4 题
@@ -183,13 +201,15 @@ issues 文件的产物结构与填写规则以 [issue-template.md](references/is
 
 ## Step 5: 放行
 
-全部裁决单元裁决完毕（备案区除外）→ 头部状态改 `已放行（日期）`，裁决记录区块补齐汇总。
+全部裁决单元裁决完毕（备案区除外）→ 头部状态改 `已放行（日期）`，裁决记录区块补齐汇总。C 级即使 0 条，也须取得用户明确确认后才进入放行。
 
 **放行前闭环校验（硬规则，已机械化）**：置「已放行」前**运行** `python3 <skill 目录>/scripts/check_trace.py <项目根> <需求名> --release`——逐条核对裁决=落改的条目「落点/状态」非空且=已执行，不满足时拦截并列出未执行项（标题+落点+当前值），完成修订后才可放行。防批量裁决组吞条目/漏执行。脚本不可得时按本规则人工逐条核对。
 
 **sdlc-test 关卡互认**：已放行后，可将 `sdlc/<需求名>/test/cases.md` 头部 `审核状态` 代改为 `已确认（日期，sdlc-gate 已放行）`——sdlc-gate 裁决已覆盖人工用例审核。放行后才允许进入开发 / sdlc-test `static`、`exec`。
 
-**放行后：开发放行守卫（本条已机械化）**：开发会话启动前**运行** `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`——校验 review/ 最新一份 issues（文件名日期+轮号取最大，与 check_trace 同口径）头部「评审状态」= 已放行；exit≠0 时停止并向用户呈现缺失清单，禁止绕过；脚本不可得（无 python3）时人工核对最新 issues 头部。措辞红线：任务框架或协作文档对设计的 ack（确认点③、飞书技术文档确认等）是**流程性定稿信号，不构成质量放行**——本守卫拦截的正是「ack 被当成放行信号直接开码」。
+**放行后：开发放行守卫（调用即机械校验，未调用不生效）**：开发会话启动前**运行** `python3 <skill 目录>/scripts/guard_dev.py <项目根> <需求名>`——校验 review/ 最新一份 issues（文件名日期+轮号取最大，与 check_trace 同口径）头部「评审状态」= 已放行；exit≠0 时停止并向用户呈现缺失清单，禁止绕过；脚本不可得（无 python3）时人工核对最新 issues 头部。措辞红线：任务框架或协作文档对设计的 ack（确认点③、飞书技术文档确认等）是**流程性定稿信号，不构成质量放行**——本守卫拦截的正是「ack 被当成放行信号直接开码」。
+
+**豁免（用户明确确认跳过）**：用户明确回答「确认豁免本次 gate」后，写 `sdlc/<需求名>/review/exemptions/exemption-<YYYYMMDD>.md`（七字段见 [exemption-template.md](references/exemption-template.md)）；笼统的「后果我担」不构成确认。守卫判定顺序：① A/B 级 degraded → 拒绝（不接受豁免）；② 最新 issues 已放行 → 通过；③ 否则看最新豁免 → 基线匹配最新 issues 文件名（无 issues 时=「无」）且七字段齐全才放行。豁免只解锁开发，sdlc-test static/exec 仍需关卡1。
 
 ## 通用纪律
 

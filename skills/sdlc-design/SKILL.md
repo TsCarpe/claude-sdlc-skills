@@ -13,7 +13,7 @@ description: "Produces the technical design document (design.md) from the confir
 
 读 `sdlc/<需求名>/intake/` 最新 digest 头「风险分级」：
 
-- **C 级** → 不产文档，引导轻量路径（主会话逐接口方案确认 / 直接建任务执行），本 skill 到此为止
+- **C 级** → 不产 design.md，产一页 `sdlc/<需求名>/design/plan.md`（逐接口方案，骨架见 [references/design-template.md](references/design-template.md)「C 级轻量方案」），随后走 `/sdlc-gate <需求名>` C 档主会话自查；放行后才可开发
 - **A/B 级** → 继续；B 级按 mini 骨架产出（裁剪规则见 design-template 末节）
 - **digest 不存在** → 停，先跑 sdlc-intent——设计的输入是共识版需求，不是原文速读
 - **已存在 design.md 且用户未要求重开** → 读头部输入锚点（digest/audit/pm-checklist 三文件日期）与各文件最新一份比对：全部一致则在其上增量修订，任一更新即按增量修订处理并提示口径漂移、确认是否重审
@@ -42,7 +42,7 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 - [ ] Step 1: 前置闸三道 + 输入定位（digest / audit / pm-checklist / Q 表载体 / 项目规范源）
 - [ ] Step 2: 存量勘察（现有接口/Req/组件/表结构）
 - [ ] Step 3: 按 references/design-template.md 产出 design.md（A 全量 / B mini）
-- [ ] Step 4: 齐套自检（下表六项）
+- [ ] Step 4: 齐套自检（A/B 下表六项；C 按 C 模板自检）
 - [ ] Step 5: 落盘 + 🔒 暂停等确认点②定稿
 ```
 
@@ -50,9 +50,9 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 
 **Step 2 存量勘察**：契约必须贴现状不悬空——读现有接口/Req/组件/表结构后落笔。MCP 优先（完全限定名 `codegraph:codegraph_explore`、`mysql:mysql_query`）；codegraph 缺失降级定向 grep + 读文件，mysql 缺失按设计内声明的表结构（均如实注明降级）。
 
-**Step 3** 读取 [references/design-template.md](references/design-template.md) 按骨架产出；大需求落位与任务框架交接规则读取 [references/trellis-handoff.md](references/trellis-handoff.md)。
+**Step 3** 读取 [references/design-template.md](references/design-template.md) 按骨架产出（A 全量 / B mini / C 轻量方案）；大需求落位与任务框架交接规则读取 [references/trellis-handoff.md](references/trellis-handoff.md)。
 
-**Step 4 齐套自检**（漏项即返工，反馈循环）：
+**Step 4 齐套自检**（漏项即返工，反馈循环）。C 级不套用下表六项，按 design-template「C 级轻量方案」自检（头部四项 + 逐接口表完整、验证命令可执行）：
 
 | # | 检查 |
 |---|---|
@@ -63,9 +63,9 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 | 5 | audit 🔴/🟡 问题去向逐条有落点（已承接 / 转 Q 表 / 本期不做+理由） |
 | 6 | Q 表就位（复用注明来源 prd，或已按定位规则生成） |
 
-**Step 5 落盘 + 🔒 暂停**。落盘路径：轻量 = `sdlc/<需求名>/design/design.md`（与 intake/、test/ 等同层级子目录，不存在则创建）；大需求走任务框架 = parent 任务目录（如 Trellis `.trellis/tasks/<task>/design.md`，见 trellis-handoff.md）。确认点② 措辞：
+**Step 5 落盘 + 🔒 暂停**。落盘路径：A/B 轻量 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页）；大需求走任务框架 = parent 任务目录（如 Trellis `.trellis/tasks/<task>/design.md`，见 trellis-handoff.md）。确认点② 措辞：
 
-> design.md 已生成于 <路径>，请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从 intake 三件套**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；gate 放行后才可拆分开发（guard_dev 机械拦截）。
+> 设计产物已生成于 <路径>（A/B = design.md；C = plan.md），请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从 intake 三件套**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；gate 放行后才可拆分开发（guard_dev 开发入口校验）。**C 级例外**：cases 可缺失，plan.md 产出后直接走 `/sdlc-gate` C 档自查；`/sdlc-test dev` 前补最小 cases（P0 + 双向追踪表）。
 
 ## 设计纪律
 
@@ -76,6 +76,6 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 
 ## 边界
 
-- 只产 design.md，**不做任务编排**（建任务/拆 subtask/排期归任务框架；拆分规则随 §7 实施切分约束交付，见 trellis-handoff.md）
+- 只产设计产物（A/B `design.md`；C `design/plan.md`），**不做任务编排**（建任务/拆 subtask/排期归任务框架；拆分规则随 §7 实施切分约束交付，见 trellis-handoff.md）
 - **不评审**（设计评审归 sdlc-gate）；单点决策存疑走 sdlc-doubt 旁路
 - 不替代 sdlc-intent：需求侧口径冲突回需求侧裁决，禁止设计期静默择一

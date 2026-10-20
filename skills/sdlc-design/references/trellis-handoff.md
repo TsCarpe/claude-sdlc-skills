@@ -53,7 +53,7 @@ sdlc-design 产 design.md
 → 任务框架建 parent 任务 + scope 确认（人工）
 → 拆 subtask（≈三段式的 child 切片，须遵守 design §7 切分约束）
 → 🔒 subtask prd 评审 = 确认点③，过四条件才 implement
-→ 开发启动合法性由 guard_dev 机械拦截（关卡接入节）
+→ 开发启动合法性由 guard_dev 开发入口校验（关卡接入节）
 ```
 
 **确认点③核对清单（四条件，subtask prd 评审用）**：
@@ -61,7 +61,7 @@ sdlc-design 产 design.md
 1. **契约符合度**：与 design 接口契约的符合度——无现场设计痕迹；若有 → 停，回 design 补契约（subtask 一半内容是现场设计 = 上层缺项）
 2. **内联/注入完整性**：通用结论（契约/公共资产/D 表/ER）已由上下文清单注入、特有结论（本切片特有的校验组合/边界/口径）已内联——两者都缺 = 执行 agent 会瞎补
 3. **技术级 AC 可测性**：验收标准可测
-4. **gate 已放行**：subtask prd 的 ack 是流程性确认，不构成质量放行——开发启动由 guard_dev 机械拦截（见下节）
+4. **gate 已放行**：subtask prd 的 ack 是流程性确认，不构成质量放行——开发启动由 guard_dev 开发入口校验（见下节）
 
 ## 上下文清单登记
 
@@ -95,6 +95,8 @@ sdlc-design 产 design.md
 ## 关卡接入
 
 开发合法性关卡（guard_dev 开发放行守卫 / verify_dev 完成验证）的行为约定：
+
+未接入任务框架启动钩子的项目：开发会话入口先走 sdlc-gate 的「开发请求入口」，再运行 guard_dev；不得以任务框架未接入为由跳过。
 
 | 接入点 | 行为 |
 |---|---|

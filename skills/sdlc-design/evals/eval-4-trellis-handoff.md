@@ -24,6 +24,6 @@
 ## 判负红线（任一命中整场景失败）
 
 - 大需求场景下 design.md 落位 sdlc/ 产物目录树（如 sdlc/<需求名>/design/design.md）而非 parent 任务目录（gate 前置输入按任务系统约定位置找）
-- 确认点③核对清单缺「gate 已放行」条件（ack≠放行——开发启动合法性由 guard_dev 机械拦截）
+- 确认点③核对清单缺「gate 已放行」条件（ack≠放行——开发启动合法性由 guard_dev 开发入口校验）
 - 把 spec 切分规范当成 skill 自动写入 .trellis/spec/（spec 是项目侧资产，只能提示用户落盘）
 - 越权替 trellis 做任务编排（建任务/排期/状态管理——归任务框架）
