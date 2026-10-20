@@ -2,6 +2,16 @@
 
 ## 未发布
 
+借鉴 Anthropic code review 工程文章（claude.dev/blog/solving-code-review-at-anthropic）六条实践：独立反例 eval、复审轮收敛、备案去向、回滚预案、角色失败定义、三重判级。方案经全新上下文代理对抗式评审（1 blocker + 8 should-fix 全部吸收——三重判级补三头回写（否则被 sdlc-test `tier_three_ways` 机械拦截）、token 纪律句扩五项、r3 熔断路由出口、red_lines 形态归位 CONTRIBUTING 规范等）。
+
+- **评估基建**：sdlc-gate 新增 eval-9（独立反例场景——干净产物应零误报，高/中严重度误报进清单即判负，改预审/RECONCILE/模板/分档规则后的必跑回归）与 eval-10（复审轮收敛）；CONTRIBUTING 增独立反例场景规范、「改 gate 四类规则须附全量 evals 回归」验证项、真实误报/漏报事件同源登记为 eval 场景；存量 JSON 内嵌 red_lines 场景（eval-4/8）登记入迁移 TODO。
+- **sdlc-gate 复审轮收敛**：新一轮不再全量重审——r≥2 继承注入（上轮裁决标题级注入防存量复读，翻案须引用上轮编号）+ 变更聚焦扇出（只喂变更 + 关联章节，角色 4 交叉审查者仍全量）+ r3 高严重度新发熔断（停裁决、状态置「熔断」、呈报退回 sdlc-design）；token 纪律句扩五项枚举；输出段模板增「上轮继承」占位；issues 头部增「上轮」行（继承摘要 + 扇出范围）。
+- **备案去向**：备案区处置列扩三枚举（知悉即可 / 下轮 revisit / 单独立项），备案条目必须有归宿，不得悬空。
+- **sdlc-release-check 回滚预案**：输出模板新增「回滚预案」节（destructive DDL 反向语句 / DML 备份恢复 / 新增配置 Key 回收 / 新增平台任务下线 / 代码 revert + 回滚顺序建议），发布时刻表第 4 步改指向该节（单一出处）。
+- **角色失败定义**：sdlc-gate 四角色审查要点各增一句具象失败定义（「这个 repo 里失败长什么样」优先于泛化清单）。
+- **三重判级**：分档规则增第三重——项目自建规范目录 `high-risk-assets.md` 命中即无条件升 A（字面/前缀匹配，模糊命中不升级），回写三头后按 A 级扇出；同步 sdlc-intent risk-tiering 触发源、gate eval-5（增场景六）、docs/workflow.md 评审关口行。
+- **行为回归结论**（/tmp 试验项目 + 全新上下文执行代理）：eval-10（复审轮收敛）**通过**——r1 已驳回条目零复读、无关章节未进扇出、r1 落改被修订覆盖丢失按「翻案引用上轮编号」重报、备案 revisit 重评闭环、变更聚焦下子代理视野盲区误报由主会话 RECONCILE 按契约误读仲裁剔除。eval-9（独立反例）两轮场景无效但结论已实证——AI 构造的「干净」产物首轮被揪出 24 条真缺陷；按全量修复清单重写后二轮（通道异常致双路重扇出，共 4 份独立输出）仍有多条真发现且两路采样各不相同（上调不唤醒候补、快照读超卖、用例不可证伪等——每轮修复把机制写得更具体又开出新攻击面）；六路扇出累计 60+ 条**零误报**，判负红线「误报」前提始终不成立——实证「人工确认健康」前提无法由构造方单方满足，已写实进 eval-9 构造说明（AI 自检不构成确认）。回归中另确认三重判级第三重「清单不存在跳过」、issues 头「上轮：无」首轮占位行为正确；据实战补强复审轮规则两句——翻案语义增「落改未保持」形态、关联章节判定增「变更字段落点声明章节」。
+
 官方 Agent Skills best-practices 对照修复与对抗复核补漏。
 
 - **插件名**：`plugins[0].name` 从 `claude-sdlc-skills` 改为 `sdlc-skills`，避免触发 Claude Code 插件名保留字规则（第三方插件名不能以 `claude-` 开头）；安装命令变为 `/plugin install sdlc-skills@claude-sdlc-skills`。旧名安装不会自动迁移，需卸载后重装。
@@ -12,6 +22,10 @@
 - **结构**：`incremental-guide.md` 在 sdlc-intent 与 sdlc-sync 双侧直链；`guardrails.example.yaml`、sdlc-test runner 模板从 SKILL.md 直接可达。
 - **依赖与文档**：各 SKILL.md 补前置依赖；移除 SKILL.md 内的变更日期注记；description 去掉尖括号占位符并补齐英文语义句，长度统一压到 1000 字节以内（CI 按 UTF-8 字节校验）。
 - **评估**：sdlc-sync 补结构化评估；CI 的 eval 索引正则支持字母编号。
+
+插件渠道危险模式审核修复。
+
+- **sdlc-release-check**：frontmatter 加 `disable-model-invocation: true`（该 skill 命中插件审核危险模式——扫描分支 diff 并提取配置中心 Key/平台任务/DDL 等发版敏感事项，须防模型意外触发）；触发方式收窄为用户显式 `/sdlc-release-check`，description 补「用法」行（947→975 字节，仍在 1000 上限内）；CONTRIBUTING frontmatter 规范同步登记该字段。
 
 ## v0.21.0 (2026-10-15)
 

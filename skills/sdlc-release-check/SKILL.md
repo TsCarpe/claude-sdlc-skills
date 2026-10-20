@@ -1,6 +1,7 @@
 ---
 name: sdlc-release-check
-description: "Scans the Java + SQL diff between current and baseline branches (master/main), extracting release-time manual actions outside code: config-center keys (Apollo/Nacos), platform registrations (xxl-job, MQ listeners), DDL/DML changes, and behavior notices, producing config-key, platform-operation, database-change, and notice checklists plus a release timeline. 扫描当前分支相对基线分支的 Java + SQL diff，提取发版前需在代码之外人工处理的事项：配置中心 Key（Apollo/Nacos）、@XxlJob 任务与 MQ 订阅、DDL/DML 分级、行为知会项，产出四类清单与发布时刻表。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。"
+description: "Scans the Java + SQL diff between current and baseline branches (master/main), extracting release-time manual actions outside code: config-center keys (Apollo/Nacos), platform registrations (xxl-job, MQ listeners), DDL/DML changes, and behavior notices, producing config-key, platform-operation, database-change, and notice checklists plus a release timeline. 扫描当前分支相对基线分支的 Java + SQL diff，提取发版前需在代码之外人工处理的事项：配置中心 Key（Apollo/Nacos）、@XxlJob 任务与 MQ 订阅、DDL/DML 分级、行为知会项，产出四类清单与发布时刻表。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。用法：/sdlc-release-check"
+disable-model-invocation: true
 ---
 
 # SDLC Release Check
@@ -113,7 +114,21 @@ Release Check Progress:
 1. **部署前**：执行前置 DDL（列出）→ 配置中心添加必配 Key（列出；有默认值项可不配）→ MQ 平台确认 topic 已建 + 订阅关系（列出——消费者启动即订阅，必须先于部署）
 2. **部署应用**
 3. **部署后**：xxl-job 调度中心新建任务（列出——executor 注册后再建，避免旧实例触发不存在的 handler）→ 执行 DML 订正（列出）→ 执行后置 DDL（列出，先确认旧代码全下线）
-4. **验证**：destructive DDL 准备反向回滚语句（列出）；孤儿任务/订阅下线（列出）
+4. **验证**：回滚预案就绪（destructive DDL 反向语句与孤儿任务/订阅下线，见「回滚预案」节）
+
+## 回滚预案（按本次 diff 汇总，条件式生成）
+
+（只列本次 diff 实际产出项的反向动作；无任何回滚动作时不输出本节，不输出空表格）
+
+回滚顺序建议：停流量 → revert 代码 → 新增平台任务停用/订阅下线 → 新增配置 Key 回收 → 数据回滚（DDL 反向 / 备份恢复，最后执行且优先用备份）。
+
+| 回滚对象 | 反向动作 | 依据（指向对应清单条目） |
+|---|---|---|
+| destructive DDL | 反向语句：<具体语句> | 数据库变更清单 #n |
+| DML 订正 | 回填前备份表 / 反向 UPDATE：<语句> | 数据库变更清单 #n |
+| 新增配置 Key | 配置中心删除或注释 <key> | 配置 Key 清单 #n |
+| 新增平台任务/订阅 | 调度中心停用 / MQ 删订阅 <标识> | 平台操作清单 #n |
+| 代码 | revert 本次合并 | — |
 ```
 
 末尾纯文本代码块，仅列「新增」状态的**配置 Key**，每行一个，供直接粘贴到配置中心；有默认值的单独一节与必配项区分（平台操作、数据库变更与知会项无可粘贴形态——SQL 的执行载体是 .sql 文件本身——均不进纯文本块）：
@@ -127,8 +142,8 @@ thread.pool.order.core-size
 xxl.job.executor.port  # 默认 9999
 ```
 
-各节均无新增时，明确输出「本次 diff 无新增配置 Key、平台操作项与数据库变更」，不要输出空表格（发布时刻表随之无内容，同样不输出）。
+各节均无新增时，明确输出「本次 diff 无新增配置 Key、平台操作项与数据库变更」，不要输出空表格（发布时刻表随之无内容，同样不输出；回滚预案同理——无任何回滚动作时不输出本节）。
 
 ## 术语
 
-全篇统一使用：配置 Key、基线分支、新增行、复用、注解属性、配置组、默认值、平台操作清单、handler 名、订阅关系、孤儿任务、知会项、前置 DDL、后置 DDL、订正脚本、发布时刻表。
+全篇统一使用：配置 Key、基线分支、新增行、复用、注解属性、配置组、默认值、平台操作清单、handler 名、订阅关系、孤儿任务、知会项、前置 DDL、后置 DDL、订正脚本、发布时刻表、回滚预案。
