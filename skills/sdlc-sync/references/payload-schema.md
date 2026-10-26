@@ -253,7 +253,10 @@ changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + �
 ## GET 端点（读）
 
 - `GET /api/requirements?iter=&status=` 需求列表（含 totalQ/answeredQ/caseCount 聚合）
-- `GET /api/requirements/{id}` 详情：card（含 riskTier）、items（含 quote、`answerText`（同 /answers 口径）与 `options/module/layer`）、digest（features 含 src；flows/states 含 src/anchor/gap；flows 含 `pids` 数组）、audit（items 含 group/quote/relatedCases、`layer`）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、standard
+- `GET /api/requirements/{id}` 详情：card（含 riskTier、status：submitted/reviewing/clarifying/published/changed）、items（含 quote、`answerText`（同 /answers 口径）与 `options/module/layer`）、digest（features 含 src；flows/states 含 src/anchor/gap；flows 含 `pids` 数组）、audit（items 含 group/quote/relatedCases、`layer`）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、`standard{markdown,version,pushedAt}`（**仅发布后存在**；pull-dev-bundle 的 standard 来源）
+- `GET /api/requirements/{id}/design` 设计视图：`tier`、`repos[]`（多目标仓）、`skipDeclared{by,at}`（C 级轻量跳过声明，无正文）、`finalized{by,at,md,version}`（**version 每次 finalize 递增、首次 1**——重拉凭据）、`draft{md,taskId,updatedAt}`、`phase`: `skipped|final|draft|none`（pull-dev-bundle 只认 final=落盘 / skipped=记凭据不落文件）
+- `GET /api/requirements/{id}/gate` 门禁视图：`rounds[{roundNo,status:pending|released,openedAt,releasedAt,releasedBy,reviewMode,fanout,contextMode,issuesMd}]`——**issuesMd = 该轮 issues 文件 md 全文留档（ingest 时存），`null` = 平台留档功能上线前的存量轮**，此时 pull-dev-bundle 不产出 issues 投影（处置见 SKILL.md 第 7 节）；`issues[]`（最新轮结构化行：code/sev/theme/role/scene/quote/loc/basis/div/tradeoff/unit/filed/verdict(`""|revise|reject|query`)/verdictNote/verdictBy/verdictAt/revLocation/revStatus(`""|pending|done`)）；`units[]`（读面聚合，另有 `filed` 值 = 备案组）；`phase`: `blocked|running|summary|deciding|released`
 - `GET /api/fr-points?req_id=` 需求点编号集（表单软校验数据源）
-- `GET /api/cases?iter=&reqId=&status=&tool=&q=` 用例列表（含 verifyRefs/defectRefs 数组）
-- `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（含 verifyRefs/defectRefs 数组）
+- `GET /api/cases?iter=&reqId=&status=&tool=&q=` 用例列表（含 verifyRefs/defectRefs 数组；**list 面无 pre/steps/expect，points 为原始 JSON 字符串**——pull 重建明细必须逐条走 detail）
+- `GET /api/cases/{reqId}/{caseId}` 用例详情 + 评论（points 为数组，含 pre/steps/expect；含 verifyRefs/defectRefs 数组）
+- 注意：POST /api/cases 是**全量替换语义**（本次 payload 未携带的 sdlc-test 用例被同步删除）——本地精简重推后平台即出现删除，pull-dev-bundle 的 cases 合并须按 dev-bundle-merge.md「已删用例处置」执行

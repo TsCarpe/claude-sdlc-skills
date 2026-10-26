@@ -16,6 +16,7 @@ description: "Produces the technical design document (design.md) from the confir
 - **C 级** → 不产 design.md，产一页 `sdlc/<需求名>/design/plan.md`（逐接口方案，骨架见 [references/design-template.md](references/design-template.md)「C 级轻量方案」），随后走 `/sdlc-gate <需求名>` C 档主会话自查；放行后才可开发
 - **A/B 级** → 继续；B 级按 mini 骨架产出（裁剪规则见 design-template 末节）
 - **digest 不存在** → 停，先跑 sdlc-intent——设计的输入是共识版需求，不是原文速读
+- **已存在 design.md 且头部有 `> 平台定稿：` 锚点行**（sdlc-sync pull-dev-bundle 拉回的平台定稿）→ **拒绝本地增量修订**：该设计已在平台定稿，本地改动即口径漂移；引导用户走平台 design_rev / 变更单，修订定稿后 `/sdlc-sync pull-dev-bundle <需求名> only:design` 拉回。**例外**：用户显式要求重开时——警告「将脱离平台定稿基线，平台侧后续修订与本文件无法对账」，确认后允许重写，重写落盘时**删除锚点行**（本地文件回归普通设计，下次 pull 按无锚点路径比对）
 - **已存在 design.md 且用户未要求重开** → 读头部输入锚点（digest/audit/pm-checklist 三文件日期）与各文件最新一份比对：全部一致则在其上增量修订，任一更新即按增量修订处理并提示口径漂移、确认是否重审
 
 ## Q 表定位规则

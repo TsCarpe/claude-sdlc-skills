@@ -115,7 +115,7 @@ flowchart TB
 | | sdlc-doubt | 非平凡决策剥离结论，交全新上下文审查者「找问题」 | 📦 | skills→D2 决策 |
 | | sdlc-release-check | 发版前扫描 Java+SQL diff：配置 Key / 平台注册操作 / DDL·DML 变更分级，汇总发布时刻表 | 📦 | 自创 |
 | | sdlc-guardrails | 横切引擎：写时红线拦截（PostToolUse hook + pre-commit 兜底 + `--check` 基线扫描），引擎一份全局、规则按项目 | 📦 | 自创 |
-| | sdlc-sync | 横切 · 产物出口/入口：三件套与用例上团队平台、拉回 PM 澄清答复闭环（平台本体为独立仓 sdlc-platform） | 📦 | 自创 |
+| | sdlc-sync | 横切 · 产物出口/入口：三件套与用例上团队平台、拉回 PM 澄清答复闭环、发布后开发包一键拉回本地（pull-dev-bundle：standard/design/cases/gate 裁决投影，平台本体为独立仓 sdlc-platform） | 📦 | 自创 |
 | **产物层** | sdlc/<需求名>/ | 每需求一目录：intake 三件套 / design 技术设计（轻量链路；大需求随 parent 任务目录）/ review issues / test cases+reports / dev 完成验证留档 | 📦（约定随 skill） | playbook+自创 |
 | | 决策记录 / 开发日志 / 统一 ID 体系 | 决策 ADR / 日志 / 跨产物「命名空间.编号」引用不断链 | 🏠 | bp+自创 |
 

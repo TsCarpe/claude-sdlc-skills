@@ -2,6 +2,15 @@
 
 ## 未发布
 
+新增 sdlc-sync pull-dev-bundle 开发包一键对齐：平台定稿产物（standard/design/cases/gate 裁决）一键拉回本地 `sdlc/<需求名>/`，本地开发/测试关卡（guard_dev、sdlc-test 关卡1）按既有机械口径直接消费平台权威状态。方案经全新上下文代理对抗式评审（3 blocker + 7 should-fix + 7 nit 全部吸收——冒烟夹具 KEEP=1 冻结语义、存量已放行卡的本地豁免出路、平台删除用例的执行历史保留等），端到端冒烟实证两道关卡通过。
+
+- **pull-dev-bundle 子命令**：前置检查链（卡状态；changed 默认停且确认后强制 only: 单产物；`.platform.pulled` 凭据比对——无变化即「已对齐」）+ 五类产物落盘：intake 三件套（复用 pull-artifacts 不重述）、standard、design（头部平台定稿锚点）、cases（diff+确认后区块合并，细则下沉 references/dev-bundle-merge.md）、gate 裁决投影（`review/issues-<开轮日>-r<N>.md`——平台留档 md 原文为底，头部评审状态/裁决列/落点列/汇总表回填，filed 备案不进裁决汇总）。
+- **机械口径兼容（守卫脚本零改动）**：投影头部逐字符合 header_kv 判定（首 `##` 前 kv 表行）；原文头部形态不齐时改写/追加兼容、风险分级行缺失补写、与 card.riskTier 不一致以平台现值改写并报告（防三口径永久拦死）；review/ 双向核对——本地存在轮号 ≥ 投影轮号的 issues 文件即停。
+- **平台定稿锚点**：sdlc-design 路由识别 `> 平台定稿：` 行即拒本地增量修订、引导平台 design_rev/变更单后 only:design 重拉；用户显式重开须警告脱离平台基线，确认后允许且随重写删锚点。
+- **过程数据保护**：cases 区块合并保留结果/spec/BUG 列、证据行、缺陷跟踪表、阶段进度、非 FR 追踪行与「静态.」验证项行；平台已删但有执行历史的用例标注「已下线（平台删除于 日期）」保留；平台用例评论不回流已声明。
+- **评估与描述**：sdlc-sync 新增 eval-g/h/i（空工作区全产物落盘、本地已有 cases 区块合并、锚点拒绝与重开例外）；description 补 pull-dev-bundle 触发词与用法（964 字节）。
+- **配套平台仓改动**（sdlc-platform-server）：gate ingest 补存 issues md 全文（`gate_issues_r{N}` 产物，每轮一行）、view 每轮输出 `issuesMd`（存量轮 null，pull 侧不产残缺投影改走本地豁免）；verify-gate.mjs 增 KEEP=1 冻结冒烟夹具（§5 末收尾）。
+
 借鉴 Anthropic code review 工程文章（claude.dev/blog/solving-code-review-at-anthropic）六条实践：独立反例 eval、复审轮收敛、备案去向、回滚预案、角色失败定义、三重判级。方案经全新上下文代理对抗式评审（1 blocker + 8 should-fix 全部吸收——三重判级补三头回写（否则被 sdlc-test `tier_three_ways` 机械拦截）、token 纪律句扩五项、r3 熔断路由出口、red_lines 形态归位 CONTRIBUTING 规范等）。
 
 - **评估基建**：sdlc-gate 新增 eval-9（独立反例场景——干净产物应零误报，高/中严重度误报进清单即判负，改预审/RECONCILE/模板/分档规则后的必跑回归）与 eval-10（复审轮收敛）；CONTRIBUTING 增独立反例场景规范、「改 gate 四类规则须附全量 evals 回归」验证项、真实误报/漏报事件同源登记为 eval 场景；存量 JSON 内嵌 red_lines 场景（eval-4/8）登记入迁移 TODO。

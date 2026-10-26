@@ -54,7 +54,7 @@ flowchart LR
 | [sdlc-ui-visual](skills/sdlc-ui-visual/SKILL.md) | 旁路 · 开发后视觉验收 | 以 Figma 链接或基准图为唯一基准，真实截图比对（DOM 几何逐项 + 像素热区 + 小元素放大判读）驱动分级修复轮（≤5 轮）+ 功能回归，六要素汇报。「照这张设计稿把弹窗还原一下 / 跑个 ui check」 |
 | [sdlc-release-check](skills/sdlc-release-check/SKILL.md) | 旁路 · 发版前 | 扫描 Java+SQL diff，提取发版前需人工处理的事项：Apollo/Nacos 配置 Key、xxl-job 任务、MQ 订阅、DDL/DML 变更分级，汇总成发布时刻表。「跑上线前检查」 |
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | PostToolUse hook 按项目 guardrails.yaml 机械拦截违规写入，pre-commit 兜底 + 存量基线扫描。「给这个项目接红线拦截」 |
-| [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复（平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复」 |
+| [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复、发布后开发包一键拉回本地（standard/design/cases/gate 裁决投影，平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复 / 拉开发包」 |
 
 贯穿全链路的关键机制：
 

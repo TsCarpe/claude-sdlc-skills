@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases) when the platform is unavailable. The platform is the single source of truth for requirements and artifacts; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases 需求名"
+description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), aligns the local dev workspace with finalized platform artifacts - standard doc, design, cases, gate verdict projection (pull-dev-bundle) - and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases). The platform is the single source of truth; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases|pull-dev-bundle 需求名 [only:standard|design|cases|gate|intake]"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -23,7 +23,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8080`
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
-- 需求对应关系记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001"}`），首次 push 后写入
+- 需求对应关系与拉取凭据记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——pulled 为 pull-dev-bundle 的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)），首次 push 后写入
 - 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先确认服务已启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
 - 飞书快照/媒体读取：`lark-cli`（权限不足时降级为本地已有原文，不阻断）
 - 锚点附加（可选）：`python3` + sdlc-intent 的 `resolve_anchors.py`（同集合安装时；单独安装时跳过）
@@ -35,6 +35,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 | 意图 | 子命令 |
 |---|---|
 | 「拉取产物到本地 / 同步 digest 到本地 / 平台上最新的梳理拉下来」 | pull-artifacts |
+| 「拉开发包 / 一键对齐 / 把平台定稿的设计用例评审拉回本地开发」 | pull-dev-bundle |
 | 「把这个需求发到平台 / PM 要看体检结果」 | push-artifacts |
 | 「拉一下 PM 的答复 / 看看平台上答了没」 | pull-answers |
 | 「澄清完了，发布标准需求文档」 | publish |
@@ -133,6 +134,36 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 - 首推前向用户展示条数与抽样 3 条，确认后执行。
 - 409 版本冲突 = 平台上有人改过，把 conflicts 明细给用户裁决，**不要强行重推**。
 
+### 7. pull-dev-bundle —— 开发包一键对齐（平台定稿产物拉回本地）
+
+把平台定稿产物投影到本地 `sdlc/<需求名>/`，供本地开发/测试按既有约定消费（guard_dev 开发入口、sdlc-test 关卡读到的即平台权威口径）。区块合并算法、gate 投影细节、凭据结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)。
+
+**前置检查链**（逐道过）：
+
+1. 定位 `sdlc/<需求名>/`；目录名歧义（多个前缀匹配）→ 列候选让用户选，不猜
+2. `GET /api/requirements/<reqId>` 看卡状态：`submitted/reviewing/clarifying` → 停（发布后才有开发包）；**`changed` → 默认停**，逐项列明中间态风险（增量合并已重写 FR 追踪表与 digest，design/issues 可能仍是旧版——拉到的是「新 FR + 旧设计 + 旧 issues」的拼接），用户确认照拉时**强制 only: 单产物**；`published` → 继续
+3. 对照 `.platform.pulled` 凭据逐产物比对（结构见 dev-bundle-merge.md「凭据与重拉」）：无变化默认跳过该产物；全部无变化 → 报告「已对齐」结束
+
+**各产物拉取与落盘**：
+
+| 产物 | API | 落盘 | 规则要点 |
+|---|---|---|---|
+| intake | detail.digest/audit + answers | `intake/` 三件套 | **完整执行第 2 节 pull-artifacts（含其全部红线），此处不重述** |
+| standard | detail.standard | `intake/standard-<拉取日YYYYMMDD>.md` | 同名先比对再覆盖；仅发布后存在 |
+| design | `GET …/design` | `design/design.md` | phase=final → finalized.md 落盘 + 头部加**平台定稿锚点**（格式见 dev-bundle-merge.md，锚点后本地不可修改）；skipped → 不落文件、.platform 记 skipDeclared、提示本地 plan.md 不受锁；draft/none → 跳过 + 开发包不完整警告；本地已有**无锚点** design.md → 内容相同仅补锚点行，不同报告差异等确认后覆盖 |
+| cases | `GET /api/cases?reqId=` + **逐条 detail** | `test/cases.md` | list 面无 pre/steps/expect，明细必须逐条 detail；本地已有 → diff 报告（**删除项须列明将带走的执行历史**）等用户确认后按区块合并（见 dev-bundle-merge.md）；本地无 → 按模板全量重建；0 条跳过提示。平台用例评论不回流（凭据检测不到评论变化），提示人工上平台查看 |
+| gate | `GET …/gate` | `review/issues-<openedAt日期YYYYMMDD>-r<轮号>.md` | 取最新轮；**issuesMd=null（平台升级前存量轮未留档）→ 不产出 issues 文件**，提示两条出路：① 本地通道过关卡（guard_dev 显式豁免（基线=无）+ cases 头人工置已确认过关卡1）；② 平台后续发生实质变更自然触发 reopen，新轮有留档、届时重拉。否则以平台留档 md 原文为底 + 裁决回填（头部状态/裁决列/落点列/汇总表，见 dev-bundle-merge.md「gate 投影」） |
+
+**红线**：
+
+- 只拉不推——本地过程数据（执行结果/证据/缺陷/smoke/spec）一律不回流平台
+- cases 必先 diff + 用户确认；过程数据区块一律保留，**含「已下线」用例**（平台已删但本地有执行历史 → 保留并标注，见 dev-bundle-merge.md）
+- pending 轮投影头部如实写「待裁决」，**禁止写成已放行**；头部风险分级行与 card.riskTier 不一致时以平台现值改写并向用户报告
+- issuesMd=null 不产残缺 issues 文件（防污染 guard 的 latest 判定）
+- gate 投影落盘前**双向核对** review/：存在**轮号 ≥ 投影轮号**的任何本地 issues 文件即停，列两侧等用户裁决
+- design.md 带平台定稿锚点后本地不可修改（识别与「用户显式重开」例外见 `../sdlc-design/SKILL.md` 路由节；单独安装 sdlc-sync 时该引用仅作来源说明）
+- 中途失败（如 401）已落盘部分有效，`.platform.pulled` 按产物逐项写回，重跑自愈
+
 ## 失败处理
 
 | 症状 | 处置 |
@@ -145,4 +176,5 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 ## 与其他 skill 的关系
 
 - 上游：sdlc-intent（三件套）、sdlc-test（cases.md）
+- pull-dev-bundle 下游：guard_dev（review/ 投影过开发入口）、sdlc-test（cases.md 与 review 状态即关卡输入）、sdlc-design（平台定稿锚点识别）
 - 横切定位：产物出口/入口，与 guardrails 同属横切层；平台不可用时本地工作流完整可用（降级 = 现状）

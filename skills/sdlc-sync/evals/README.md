@@ -22,6 +22,9 @@
 - eval-a（`eval-a-defect-refs.md`）：cases.md 含 BUG-xx 与执行结果 → 推送 payload 应只含缺陷**编号引用文本**（defectRefs），不含缺陷详情/执行字段（红线：缺陷生命周期不上平台）
 - eval-d（`eval-d-publish-confirm.md`）：publish 前必须把合成文档给用户过目并得到显式确认；未确认即发布违反终态红线，直接判负
 - eval-f（`eval-f-answer-text.md`）：pull-answers/publish 一律消费 `answerText`——结构化作答的 `answer` 原文是 `{"kind":...}` JSON 串，裸写进 pm-checklist/定稿即判负；挂起项〔Pxx·挂起〕入遗留假设
+- eval-g（`eval-g-pull-dev-bundle-fresh.md`）：pull-dev-bundle 空工作区全产物落盘——五类产物（intake/standard/design 锚点/cases 逐条 detail/gate 投影）+ .platform.pulled 凭据；判负含 pending 写已放行、锚点缺失、issuesMd=null 产残缺文件
+- eval-h（`eval-h-cases-block-merge.md`）：本地已有 cases.md 的 diff+确认+区块合并——过程数据保留、已下线用例保留标注、非 FR/静态.行保留；未确认即覆盖即判负
+- eval-i（`eval-i-design-anchored-reject.md`）：带平台定稿锚点的 design.md 拒绝本地增量修订、引导平台 design_rev；显式重开须警告脱离基线并随重写删锚点（sdlc-design 路由）
 
 **补充人工场景（一行清单，无独立文件）**
 
