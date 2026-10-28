@@ -351,10 +351,15 @@ class DocParser:
             return
         if tag == "p":
             text = inline_text(node)
+            pid = self.block_id(node)
             if text:
-                self.emit({"id": self.block_id(node) or self.new_id(), "type": "paragraph",
+                self.emit({"id": pid or self.new_id(), "type": "paragraph",
                            "text": text, "path": self.path_of(),
                            "comments": node.attrs.get("comment-refs")})
+                pid = None  # 原生 id 已被段落块占用
+            for c in node.children:
+                if c.tag == "source":  # 裸 source（无 figure 包裹的附件卡片）独自成附件块
+                    self.emit_attachment(c, block_id=pid or self.new_id(), parent_id=parent_id)
             return
         if tag in ("ol", "ul"):
             self.walk_list(node, parent_id=parent_id, marker_chain=marker_chain)
@@ -597,11 +602,16 @@ class DocParser:
         src = next((c for c in node.children if c.tag == "source"), None)
         if src is None:
             return
+        self.emit_attachment(src, block_id=self.block_id(node) or self.new_id(),
+                             parent_id=parent_id)
+
+    def emit_attachment(self, src, block_id, parent_id=None):
+        """附件块（figure>source 与 p 内裸 source 共用；media 由 token 登记）"""
         token = src.attrs.get("token") or ""
         media_id = self.register_media(token, name=src.attrs.get("name") or "attachment",
                                        mime=src.attrs.get("mime") or "", kind="media")
-        self.emit({"id": self.block_id(node) or self.new_id(), "type": "attachment",
-                   "media": media_id, "name": src.attrs.get("name") or "",
+        self.emit({"id": block_id, "type": "attachment", "media": media_id,
+                   "name": src.attrs.get("name") or "",
                    "mime": src.attrs.get("mime") or "",
                    "bytes": int(src.attrs.get("size") or 0), "path": self.path_of(),
                    "parent": parent_id})
