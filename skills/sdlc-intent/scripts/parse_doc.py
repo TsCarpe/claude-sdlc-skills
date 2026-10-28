@@ -38,8 +38,10 @@ VOID_TAGS = {"img", "source", "col", "br", "hr", "colgroup"}
 # 单元格内由子块承载的结构（文本不进 cells，防双计）：list/图/附件/画板 + 分栏容器 + 嵌套表
 # 块级子元素白名单（由子块承载，宿主 text 不收——防双计；表格单元格/列表项/标题共用）：
 # 基础块级 + v4.1 新增承载 pre/blockquote/checkbox（code/quote/todo 的 lark-cli XML 形态）
+# callout 入白名单：td 内高亮块的列表子树此前整棵消失（jiaoyan-background td>callout>ol
+# 的 25 个 li，oracle 块计数暴露——守恒/黄金比对双绿盲区，两链路同解析器同丢）
 KEEP_IN_TABLE_CELL = {"ol", "ul", "img", "figure", "whiteboard", "grid", "column", "table",
-                      "pre", "blockquote", "checkbox"}
+                      "pre", "blockquote", "checkbox", "callout"}
 
 
 # ---------------------------------------------------------------- tree builder
@@ -104,14 +106,17 @@ def _cite_name(attrs):
     return f"@{attrs.get('user-name') or attrs.get('user-id') or ''}".strip()
 
 
-def inline_text(node):
-    """元素内联内容 → markdown 风格文本（cite→@用户，b→**，del→~~，br→换行）"""
+def inline_text(node, skip_keep=False):
+    """元素内联内容 → markdown 风格文本（cite→@用户，b→**，del→~~，br→换行）。
+    skip_keep=True 时跳过 KEEP 块级子元素子树（由子块承载，宿主 text 防双计）"""
     out = []
 
     def walk(n):
         if n.text:
             out.append(n.text)
         for c in n.children:
+            if skip_keep and c.tag in KEEP_IN_TABLE_CELL:
+                continue
             if c.tag == "cite":
                 out.append(_cite_name(c.attrs))
             elif c.tag == "b":
@@ -383,7 +388,7 @@ class DocParser:
                     self.dispatch(c, parent_id=hid)
             return
         if tag == "p":
-            text = inline_text(node)
+            text = inline_text(node, skip_keep=True)
             pid = self.block_id(node)
             if text:
                 self.emit({"id": pid or self.new_id(), "type": "paragraph",
@@ -393,6 +398,11 @@ class DocParser:
             for c in node.children:
                 if c.tag == "source":  # 裸 source（无 figure 包裹的附件卡片）独自成附件块
                     self.emit_attachment(c, block_id=pid or self.new_id(), parent_id=parent_id)
+                elif c.tag in KEEP_IN_TABLE_CELL:
+                    # p 内嵌块级子元素（ul/ol/img/figure/whiteboard/grid/…）由子块承载——
+                    # 此前 p 分支不递归，内嵌列表整列表丢块、文本被 inline_text 压扁进段落
+                    # （守恒自检恒真盲区，oracle 块计数是唯一暴露面；实锤：主样本 p>ul×1）
+                    self.dispatch(c, parent_id=pid or parent_id)
             return
         if tag in ("ol", "ul"):
             self.walk_list(node, parent_id=parent_id, marker_chain=marker_chain)
