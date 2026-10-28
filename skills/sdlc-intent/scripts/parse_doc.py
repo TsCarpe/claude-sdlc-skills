@@ -395,9 +395,13 @@ class DocParser:
             return
         if tag == "whiteboard":
             token = node.attrs.get("token") or ""
+            # mermaid 型画板（type=mermaid）源码存于标签 text——守恒原文侧无条件收 text 节点，
+            # 产物侧此前 whiteboard 块无 text 字段 → 双侧口径不对称，指纹必差（实锤样本：AI活动
+            # 纪要技术设计，3 张 mermaid 画板 457 字符）。text 字段双侧（parse_doc/平台 block.py
+            # doc_text_stream）均无条件收，对称；普通画板 text 空，行为不变
             self.emit({"id": self.block_id(node) or self.new_id(), "type": "whiteboard",
                        "token": token, "media": self.register_whiteboard(token),
-                       "path": self.path_of()})
+                       "text": (node.text or "").strip(), "path": self.path_of()})
             return
         if tag in ("grid", "column", "div", "span", "blockquote", "body", "#root", "colgroup",
                    "col", "thead", "tbody", "tr", "td", "th", "li", "source", "b", "del", "i",
