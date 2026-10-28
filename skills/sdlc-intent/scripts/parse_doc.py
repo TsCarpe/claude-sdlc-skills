@@ -333,6 +333,19 @@ class DocParser:
         for c in node.children:
             self.dispatch(c, parent_id=parent_id, marker_chain=marker_chain)
 
+    def heading_text(self, node):
+        """标题直接内联文本：块级子元素（KEEP 白名单）子树跳过，文本不折进标题——
+        b/del 内联标记走 plain_text 同口径（标题不收 **/~~，与旧行为一致）"""
+        buf = [node.text or ""]
+        for c in node.children:
+            if c.tag in KEEP_IN_TABLE_CELL:
+                continue
+            if c.tag == "cite":
+                buf.append(_cite_name(c.attrs))
+            else:
+                buf.append(plain_text(c))
+        return re.sub(r"\s+", " ", "".join(buf)).strip()
+
     def dispatch(self, node, parent_id=None, marker_chain=()):
         tag = node.tag
         if tag in ("title",):
@@ -342,12 +355,19 @@ class DocParser:
         m = re.fullmatch(r"h([1-9])", tag)
         if m:
             level = int(m.group(1))
-            text = plain_text(node)
+            text = self.heading_text(node)
             while self.headings and self.headings[-1][0] >= level:
                 self.headings.pop()
             self.headings.append((level, text))
-            self.emit({"id": self.block_id(node) or self.new_id(), "type": "heading",
+            hid = self.block_id(node) or self.new_id()
+            self.emit({"id": hid, "type": "heading",
                        "level": level, "text": text, "path": self.heading_path()})
+            # 标题内嵌块级子元素（grid 分栏/图/列表/表格）由子块承载——此前 heading 只发
+            # 单块即 return：分栏内容被 plain_text 压扁进标题文本（结构丢），图连同 caption
+            # 整体丢（守恒自检以媒体对账暴露：want-have 缺失）
+            for c in node.children:
+                if c.tag in KEEP_IN_TABLE_CELL:
+                    self.dispatch(c, parent_id=hid)
             return
         if tag == "p":
             text = inline_text(node)
