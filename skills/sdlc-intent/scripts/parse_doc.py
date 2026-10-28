@@ -432,6 +432,15 @@ class DocParser:
                        "done": str(node.attrs.get("done") or "").lower() == "true",
                        "path": self.path_of(), "parent": parent_id})
             return
+        if tag == "sheet":
+            # sheet(30)：lark-cli XML = <sheet sheet-id token/>（空标签，单元格内容在独立电子表格，
+            # 不随文档下载）——此前未知标签兜底 walk 无 emit，块静默丢失且守恒两侧都不含 sheet
+            # 恒真抓不到（唯一能暴露的是 blocks API 块计数三方比对）。不登记 media（无下载语义）
+            self.emit({"id": self.block_id(node) or self.new_id(), "type": "sheet",
+                       "token": node.attrs.get("token") or "",
+                       "sheetId": node.attrs.get("sheet-id") or "",
+                       "path": self.path_of(), "parent": parent_id})
+            return
         if tag == "whiteboard":
             token = node.attrs.get("token") or ""
             # mermaid 型画板（type=mermaid）源码存于标签 text——守恒原文侧无条件收 text 节点，
