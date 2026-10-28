@@ -799,18 +799,45 @@ class DocParser:
 
 
 # ---------------------------------------------------------------- media download
-def download_media(media_list, media_dir):
+def download_media(media_list, media_dir, manifest=None):
+    """媒体回填三态：manifest 命中（本地文件/skipped 豁免）优先，miss 项才走 lark-cli——
+    纯 Python 飞书链路（platform_sdlc media.py 产 manifest）无 lark-cli 依赖；miss 且无
+    lark-cli 时显式失败（fail-closed 不静默降级）。lark-cli 路径保留（过渡期 runner 兼容）。"""
     os.makedirs(media_dir, exist_ok=True)
+    manifest = manifest or {}
+    pending = []
+    for m in media_list:
+        ent = manifest.get(m["token"])
+        if ent is None:
+            pending.append(m)  # manifest 未认领 → lark-cli 原逻辑
+            continue
+        skipped = ent.get("skipped")
+        if skipped:
+            m["status"] = f"skipped:{skipped}"  # 大附件豁免（size-exceeded），不阻断
+            m["bytes"] = int(ent.get("bytes") or 0)
+            continue
+        p = ent.get("path")
+        if p and os.path.isfile(p):
+            data = open(p, "rb").read()
+            m["bytes"] = len(data)
+            m["sha256"] = ent.get("sha256") or hashlib.sha256(data).hexdigest()
+            m["file"] = os.path.relpath(p, os.path.dirname(media_dir.rstrip("/")))
+            m["status"] = "ok"
+        else:
+            m["status"] = "failed: manifest file missing"
+    if not pending:
+        return
     lark = _find_lark_cli()
     if not lark:
-        print("错误: 未找到 lark-cli(查找顺序:PATH → ~/.nvm/versions/node/*/bin → "
-              "/usr/local/bin、/opt/homebrew/bin)——媒体下载全部失败", file=sys.stderr)
-        for m in media_list:
-            m["status"] = "failed: lark-cli not found"
+        toks = ", ".join(str(m.get("token"))[:14] for m in pending[:5])
+        print(f"错误: manifest 不完整且未找到 lark-cli（未认领 {len(pending)} 项: {toks}…）"
+              "——媒体回填失败", file=sys.stderr)
+        for m in pending:
+            m["status"] = "failed: manifest incomplete"
         return
     env = dict(os.environ)
     env["PATH"] = os.path.dirname(lark) + os.pathsep + env.get("PATH", "")
-    for m in media_list:
+    for m in pending:
         out = os.path.join(media_dir, m["id"])
         cmd = [lark, "docs", "+media-download", "--token", m["token"],
                "--output", out, "--overwrite"]
@@ -1052,6 +1079,9 @@ def main():
     ap.add_argument("--out", default="doc.json")
     ap.add_argument("--media-dir", default="media")
     ap.add_argument("--download", action="store_true", help="调用 lark-cli 下载媒体")
+    ap.add_argument("--media-manifest", default=None,
+                    help="媒体清单 JSON（token→{path,sha256,skipped}；命中免 lark-cli——"
+                         "platform_sdlc 纯 Python 链路产物）")
     ap.add_argument("--url", default="")
     ap.add_argument("--document-id", default="")
     ap.add_argument("--revision-id", default="")
@@ -1102,7 +1132,11 @@ def main():
             return 2
 
     if args.download and media_list:
-        download_media(media_list, args.media_dir)
+        manifest = None
+        if args.media_manifest:
+            raw = json.load(open(args.media_manifest, encoding="utf-8"))
+            manifest = raw if isinstance(raw, dict) else {}
+        download_media(media_list, args.media_dir, manifest=manifest)
 
     doc = {
         "generator": (GENERATOR + " markdown-fallback") if md_mode else GENERATOR,
