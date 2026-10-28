@@ -36,7 +36,10 @@ from html.parser import HTMLParser
 GENERATOR = "sdlc-intent/parse_doc.py 0.5"
 VOID_TAGS = {"img", "source", "col", "br", "hr", "colgroup"}
 # 单元格内由子块承载的结构（文本不进 cells，防双计）：list/图/附件/画板 + 分栏容器 + 嵌套表
-KEEP_IN_TABLE_CELL = {"ol", "ul", "img", "figure", "whiteboard", "grid", "column", "table"}
+# 块级子元素白名单（由子块承载，宿主 text 不收——防双计；表格单元格/列表项/标题共用）：
+# 基础块级 + v4.1 新增承载 pre/blockquote/checkbox（code/quote/todo 的 lark-cli XML 形态）
+KEEP_IN_TABLE_CELL = {"ol", "ul", "img", "figure", "whiteboard", "grid", "column", "table",
+                      "pre", "blockquote", "checkbox"}
 
 
 # ---------------------------------------------------------------- tree builder
@@ -61,12 +64,22 @@ class TreeBuilder(HTMLParser):
     def handle_starttag(self, tag, attrs):
         node = Node(tag, dict(attrs))
         self.stack[-1].children.append(node)
+        if tag == "br":
+            self._newline()
         if tag not in VOID_TAGS:
             self.stack.append(node)
 
     def handle_startendtag(self, tag, attrs):
         node = Node(tag, dict(attrs))
         self.stack[-1].children.append(node)
+        if tag == "br":
+            self._newline()
+
+    def _newline(self):
+        # br 语义 = 裸文本流的换行。data 按 += 追加，\n 落在流位置天然保序；此前 br 夹在
+        # 两段 data 之间时换行信息被 text 拼接吞掉——code 块换行/段中软换行失真的根因。
+        # 消费面安全：inline_text 的 br 分支不再命中（br 无 text/children），其输出本就含 \n
+        self.stack[-1].text += "\n"
 
     def handle_endtag(self, tag):
         for i in range(len(self.stack) - 1, 0, -1):
@@ -393,6 +406,32 @@ class DocParser:
         if tag == "figure":
             self.emit_figure(node, parent_id=parent_id)
             return
+        if tag == "pre":
+            # code(14)：lark-cli XML = <pre lang wrap><code>…<br/>…</code></pre>——此前无分支，
+            # 兜底 walk 不收 code 标签 text，代码文本全丢（守恒文本指纹暴露）。
+            # text 直接取 code.text（br 的 \n 已入流）：inline_text 的空白压缩会毁代码缩进
+            code_el = next((c for c in node.children if c.tag == "code"), None)
+            self.emit({"id": self.block_id(node) or self.new_id(), "type": "code",
+                       "text": (code_el.text or "").strip("\n") if code_el is not None else "",
+                       "lang": node.attrs.get("lang") or "",
+                       "wrap": node.attrs.get("wrap") or "",
+                       "path": self.path_of(), "parent": parent_id})
+            return
+        if tag == "blockquote":
+            # quote(15)/quote_container(34)：lark-cli XML = <blockquote><p>…</p>…</blockquote>
+            # ——此前容器兜底折成 paragraph（顶层）或吸进 li.text（li 内），块型还原丢失
+            parts = [plain_text(c) for c in node.children if plain_text(c)]
+            self.emit({"id": self.block_id(node) or self.new_id(), "type": "quote",
+                       "text": "\n".join(parts), "path": self.path_of(), "parent": parent_id})
+            return
+        if tag == "checkbox":
+            # todo(17)：lark-cli XML = <checkbox done="bool">文本</checkbox>（裸 text 节点）
+            # ——此前未知标签兜底 walk 不收裸 text，待办文本全丢
+            self.emit({"id": self.block_id(node) or self.new_id(), "type": "todo",
+                       "text": (node.text or "").strip(),
+                       "done": str(node.attrs.get("done") or "").lower() == "true",
+                       "path": self.path_of(), "parent": parent_id})
+            return
         if tag == "whiteboard":
             token = node.attrs.get("token") or ""
             # mermaid 型画板（type=mermaid）源码存于标签 text——守恒原文侧无条件收 text 节点，
@@ -403,7 +442,7 @@ class DocParser:
                        "token": token, "media": self.register_whiteboard(token),
                        "text": (node.text or "").strip(), "path": self.path_of()})
             return
-        if tag in ("grid", "column", "div", "span", "blockquote", "body", "#root", "colgroup",
+        if tag in ("grid", "column", "div", "span", "body", "#root", "colgroup",
                    "col", "thead", "tbody", "tr", "td", "th", "li", "source", "b", "del", "i",
                    "code", "br", "cite"):
             # 容器/表格内部细节由专门逻辑处理；此处兜底递归
@@ -417,14 +456,15 @@ class DocParser:
     # ---- lists
     @staticmethod
     def li_inline_text(li):
-        """li 内联文本 = li 直接裸文本 + 非 ol/ul/img 子树的内联内容，无缝拼接（与 inline_text
+        """li 内联文本 = li 直接裸文本 + 非 KEEP 块级子树的内联内容，无缝拼接（与 inline_text
         处理 p 的方式同构，保留 b→** / del→~~ / cite→@ / br→\\n 规则）——飞书 li 的「前缀：」
-        常是裸文本、说明在 span 里，拼接才不断句"""
+        常是裸文本、说明在 span 里，拼接才不断句；KEEP 块级子元素（含 blockquote/pre/checkbox）
+        由子块承载，此处跳过防双计"""
         out = [li.text or ""]
 
         def walk(n):
             for c in n.children:
-                if c.tag in ("ol", "ul", "img"):
+                if c.tag in KEEP_IN_TABLE_CELL:
                     continue
                 if c.tag == "cite":
                     out.append(_cite_name(c.attrs))
@@ -462,10 +502,9 @@ class DocParser:
                        "parent": parent_id,
                        "comments": li.attrs.get("comment-refs") or None})
             for sub in li.children:
-                if sub.tag == "img":
-                    self.emit_image(sub, parent_id=bid)
-                elif sub.tag in ("ol", "ul"):
-                    self.walk_list(sub, parent_id=bid, marker_chain=chain)
+                # img/列表/引用/代码/待办等块级子元素由子块承载（ol/ul 经 dispatch 走 walk_list）
+                if sub.tag in KEEP_IN_TABLE_CELL:
+                    self.dispatch(sub, parent_id=bid)
 
     # ---- tables
     @staticmethod
