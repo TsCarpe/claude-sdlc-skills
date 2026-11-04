@@ -76,7 +76,7 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 
 **Step 2（阶段0·参照系）** 读取 [references/ref-tables.md](references/ref-tables.md)：从梳理产物构造四张参照表（数据字典/指标字典/平行结构矩阵/引用图，按触发特征裁剪），落盘 `sdlc/<需求名>/intake/refs-<YYYYMMDD>.md`。表中空格、断链、⚠️冲突格即缺失类候选，交给 Step 4 做语义判定；某张表构造不出来本身也是信号，如实记录。可选机械辅助：`python3 scripts/scan_refs.py --mode seeds --doc <原文|doc.json>`（构表前产断链/并列章节 seed）、`--mode verify --doc <原文> --refs <refs.md>`（构表后产字段出现位置清单——有录无消的证据义务、机械候选与计数核对）；脚本不可用或输入不含时跳过，不阻塞。
 
-**Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
+**Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/例子与断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
 
 **Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——汇流阶段0 候选（D1）、阶段1 候选（D2）与本层推导（D3）做语义判定与统一分级。该文件定义了每个检查项的命中标准与严重度；规则类/决策类命中按其「决策类型标注」规则在报告类型列标 C 约束 / H 假设（初判带问号）。
 

@@ -66,7 +66,7 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 
 **Step 5 落盘 + 🔒 暂停**。落盘路径：A/B 轻量 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页）；大需求走任务框架 = parent 任务目录（如 Trellis `.trellis/tasks/<task>/design.md`，见 trellis-handoff.md）。确认点② 措辞：
 
-> 设计产物已生成于 <路径>（A/B = design.md；C = plan.md），请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从 intake 三件套**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；gate 放行后才可拆分开发（guard_dev 开发入口校验）。**C 级例外**：cases 可缺失，plan.md 产出后直接走 `/sdlc-gate` C 档自查；`/sdlc-test dev` 前补最小 cases（P0 + 双向追踪表）。
+> 设计产物已生成于 <路径>（A/B = design.md；C = plan.md），请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从 intake 三件套**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；gate 放行后才可拆分开发（guard_dev 开发入口校验）。**C 级例外**：cases 可缺失，plan.md 产出后直接走 `/sdlc-gate` C 档自查；`/sdlc-test dev` 前补最小 cases（P0 + 双向追踪表）。D 表定型 C 中适用机械检查的条目，可持本设计调 sdlc-guardrails 编写规则候选（运行时行为类不适用）。
 
 ## 设计纪律
 
