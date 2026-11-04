@@ -20,3 +20,6 @@ platform-demo/
 # PoC 本地产物（评估期；已移出 git 追踪，本地保留）
 poc/
 /outputs/
+
+# 交接卡（本地过程产物）
+.handoff/
