@@ -571,6 +571,17 @@ class DocParser:
                 yield from DocParser._keep_descendants(c)
 
     @staticmethod
+    def _source_descendants(node):
+        """子树内顶层裸 <source>（不钻入 KEEP 子树——figure>source 由 emit_figure 自行发射，
+        此处再发即双计）。表格单元格内的附件卡片不贡献文本：标量判定与空段丢弃都会把它
+        连同 mediaTokens 一起吞掉（守恒 exit 2，实锤 REQ-2026-004 的 td>p>source）。"""
+        for c in node.children:
+            if c.tag == "source":
+                yield c
+            elif c.tag not in KEEP_IN_TABLE_CELL:
+                yield from DocParser._source_descendants(c)
+
+    @staticmethod
     def _whole_bold(p):
         """整段粗体：唯一子元素是单个 <b>、b 前后无裸文本（HTMLParser 把裸文本聚合进
         p.text，存在性可判）、b 文本非空 → 该段是小标题"""
@@ -585,7 +596,11 @@ class DocParser:
         """标量格：展平 grid/column 后无 KEEP 子块、有效子元素 ≤1（有效 = 非 KEEP 且
         inline_text 非空；空 p/span 计 0，与空段丢弃同口径——飞书 cell 惯有尾随空段
         `<td><p>P0</p><p/></td>` 不误判内容格）、直接文本 ≤120 字。
+        含裸 <source> 附件（不论嵌在 p/span 里）→ 内容格：附件不贡献文本，
+        否则 `<td><p><source/></p></td>` 会被判空标量格整格吞掉。
         标量 → 文本进 cells；否则内容格（cells 置空串，子块树承载）"""
+        if next(DocParser._source_descendants(td), None) is not None:
+            return False
         if next(DocParser._cell_subblocks(td), None) is not None:
             return False
         effective = sum(1 for c in DocParser._cell_children_flat(td) if inline_text(c))
@@ -594,19 +609,26 @@ class DocParser:
         return len(DocParser.cell_direct_text(td)) <= 120
 
     def _emit_cell_paragraph(self, p, row_id):
-        """单元格内段落：空文本且无 KEEP 后代 → 丢弃；空文本但带 KEEP 后代 → 只承载
-        KEEP 成员；非空 → paragraph 子块（原生 id 直用，整段粗体标 subheading）"""
+        """单元格内段落：空文本且无 KEEP 后代/裸 source → 丢弃；空文本但带 KEEP 后代或
+        source → 只承载子块；非空 → paragraph 子块（原生 id 直用，整段粗体标 subheading）。
+        裸 source 附件两个分支都要发：附件卡片常与「原型：」等文本同段（实锤样本），
+        只在空段发射会漏。"""
         text = inline_text(p)
+        pid = self.block_id(p)
+        if text:
+            block = {"id": pid or self.new_id(), "type": "paragraph",
+                     "text": text, "path": self.path_of(), "parent": row_id,
+                     "comments": p.attrs.get("comment-refs")}
+            if self._whole_bold(p):
+                block["subheading"] = True
+            self.emit(block)
+            pid = None  # 原生 id 已被段落块占用
+        for src in self._source_descendants(p):
+            self.emit_attachment(src, block_id=pid or self.new_id(), parent_id=row_id)
+            pid = None
         if not text:
             for k in self._keep_descendants(p):
                 self.dispatch(k, parent_id=row_id)
-            return
-        block = {"id": self.block_id(p) or self.new_id(), "type": "paragraph",
-                 "text": text, "path": self.path_of(), "parent": row_id,
-                 "comments": p.attrs.get("comment-refs")}
-        if self._whole_bold(p):
-            block["subheading"] = True
-        self.emit(block)
 
     def _emit_cell_tree(self, td, row_id):
         """内容格子块树（仅内容格调用，与 cells 置空互斥防双计）：裸文本/段落逐个成块、
@@ -626,6 +648,8 @@ class DocParser:
                 self.walk_list(c, parent_id=row_id)
             elif c.tag in KEEP_IN_TABLE_CELL:
                 self.dispatch(c, parent_id=row_id)
+            elif c.tag == "source":  # td 直接挂附件卡片（无 p 包裹）
+                self.emit_attachment(c, block_id=self.block_id(c) or self.new_id(), parent_id=row_id)
             else:
                 t = inline_text(c)
                 if t:
@@ -936,6 +960,10 @@ _SELF_TEST_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <tr id="b6"><td>1</td><td>2</td></tr>
 <tr id="b7"><td>aa</td><td>bb</td></tr>
 </tbody></table>
+<table><tbody>
+<tr id="ta1"><td><p><source name="模板.xlsx" mime="application/vnd.ms-excel" size="100" token="tok4"/></p></td><td><p>原型：<source name="原型.html" mime="text/html" size="200" token="tok5"/></p></td></tr>
+<tr id="ta2"><td><source name="附件.pdf" mime="application/pdf" size="300" token="tok6"/></td><td>普通文本</td></tr>
+</tbody></table>
 </body>
 """
 
@@ -977,7 +1005,7 @@ def self_test():
     assert by_id["im2"]["parent"] == "tr2" and by_id["im3"]["parent"] == "tr2"  # grid 内图挂行块
     assert by_id["im1"]["cell"] == 0 and by_id["im2"]["cell"] == 1 and by_id["im3"]["cell"] == 1
     assert {b["id"] for b in blocks if b["type"] == "image"} == {"im1", "im2", "im3"}
-    assert set(p.media) == {"tok1", "tok2", "tok3"}  # grid 两图成为 media
+    assert set(p.media) == {"tok1", "tok2", "tok3", "tok4", "tok5", "tok6"}  # 表格内附件同入 media
 
     # ---- 表格：无 thead 表·表头命中（a）
     hdr = by_id["x-0006"]  # 推断表头行占位计数（x-0005）后首个数据行 = 与旧版逐行编号一致
@@ -1008,11 +1036,23 @@ def self_test():
     assert by_id["x-0010"]["text"] == "标题甲" and by_id["x-0010"]["cell"] == 0
     assert by_id["bn1"]["parent"] == "b4" and by_id["bn1"]["cell"] == 0
 
+    # ---- 表格内裸 source 附件（实锤 REQ-2026-004：td>p>source 曾被当空标量格吞掉，
+    # 附件连同 mediaTokens 丢失 → 守恒 exit 2）：三种形态都必须成 attachment 块并登记媒体
+    ta1, ta2 = by_id["ta1"], by_id["ta2"]
+    assert ta1["cells"] == ["", ""], ta1["cells"]  # 附件格判内容格（cells 置空），不吞
+    ta1_kids = [b for b in blocks if b.get("parent") == "ta1"]
+    # 「原型：」+附件同段：paragraph 与 attachment 块并存，附件不因非空段被漏
+    assert [b["type"] for b in ta1_kids] == ["attachment", "paragraph", "attachment"], ta1_kids
+    assert {b["name"] for b in ta1_kids if b["type"] == "attachment"} == {"模板.xlsx", "原型.html"}
+    assert ta2["cells"] == ["", "普通文本"], ta2["cells"]  # td 直接挂 source 同样判内容格
+    assert [b["type"] for b in blocks if b.get("parent") == "ta2"] == ["attachment"]
+    assert {"tok4", "tok5", "tok6"} <= set(p.media)
+
     # ---- 守恒通过 + thead 对称排除直接锁定
     guard, problems = verify_conservation(root, blocks, media_list)
     assert not problems, problems
     assert guard["algo"] == CONSERVATION_ALGO and guard["source"] == "xml"
-    assert guard["mediaTokens"] == ["tok1", "tok2", "tok3"], guard["mediaTokens"]
+    assert guard["mediaTokens"] == ["tok1", "tok2", "tok3", "tok4", "tok5", "tok6"], guard["mediaTokens"]
     assert "列一" not in re.sub(r"\s", "", source_text_stream(root))  # 表头文本不进原文侧指纹
 
     # ---- 变异测试：对内存产物动手脚后守恒必须失败
