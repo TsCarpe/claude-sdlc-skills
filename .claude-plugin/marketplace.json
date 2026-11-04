@@ -8,12 +8,12 @@
   "plugins": [
     {
       "name": "sdlc-skills",
-      "description": "Nine battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-design (technical design doc: alternatives, tiered interface contracts, shared-asset ownership, C/H decisions, slicing constraints), sdlc-test (cases/dev/static/exec/spec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or main-session self-check, plus guard_dev), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-ui-visual (design-to-code visual restoration via real browser screenshots: DOM geometry + pixel heatmap + small-element inspection, tiered fix rounds, functional regression), sdlc-release-check (pre-release audit: Apollo/Nacos keys, xxl-job/MQ registrations, DDL/DML grading, release runbook), sdlc-guardrails (write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform).",
+      "description": "Ten battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-design (technical design: alternatives, tiered interface contracts, shared assets, C/H decisions, slicing constraints), sdlc-test (cases/dev/static/exec/spec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or self-check, plus guard_dev), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-ui-visual (design-to-code visual restoration via screenshots: DOM geometry + pixel heatmap + tiered fix rounds), sdlc-release-check (pre-release audit: config keys, job/MQ registrations, DDL/DML grading, runbook), sdlc-guardrails (write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform), sdlc-handoff (cross-agent session handoff: self-contained card, drift check, direct takeover).",
       "author": {
         "name": "TsCarpe"
       },
       "category": "development",
-      "keywords": ["sdlc", "requirement", "testing", "regression", "design-doc", "adversarial-review", "guardrails", "release-audit", "playwright", "e2e", "code-review", "agent-skills", "figma", "visual-regression"],
+      "keywords": ["sdlc", "handoff", "requirement", "testing", "regression", "design-doc", "adversarial-review", "guardrails", "release-audit", "playwright", "e2e", "code-review", "agent-skills", "figma", "visual-regression"],
       "source": "./",
       "strict": false,
       "skills": [
@@ -25,7 +25,8 @@
         "./skills/sdlc-ui-visual",
         "./skills/sdlc-release-check",
         "./skills/sdlc-guardrails",
-        "./skills/sdlc-sync"
+        "./skills/sdlc-sync",
+        "./skills/sdlc-handoff"
       ]
     }
   ]

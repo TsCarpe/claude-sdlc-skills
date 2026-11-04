@@ -2,6 +2,13 @@
 
 ## 未发布
 
+新增 **sdlc-handoff**（第 10 个 skill）：跨 agent 通用的会话交接——旧会话把当前任务压成一张自足的交接卡，新会话凭卡接手并先做 git 漂移校验，再直接继续。不绑定任何具体 agent 的目录、环境变量、工具名或斜杠行为。
+
+- **write / resume / list 三动作**：write 先用脚本采集 git 硬事实再动笔，正文 8 段、≤120 行、禁贴 diff，「已完成」每项显式标注 已跑通/仅编译/未验证，并单列「已否决方案」防新会话重走死路；resume 比对 repo/branch/head/dirty_files 报告漂移（只报告不阻断），给 ≤10 行接手确认后直接执行 next，不重做已完成步骤、不推翻已记录决策；list 按修改时间列已有卡并标 stale。
+- **卡自足、脚本增强**：`collect.sh`（纯 bash：git 状态/改动/最近提交/已有交接卡，可选会话与临时产物目录）与 `digest_transcript.py`（JSONL → 用户原话 + 动作时间线 + 触碰文件；未知结构跳过、退出码恒 0）都不是前置条件，缺失时按 `references/manual-collect.md` 手工采集，只有读写文件能力也能走完闭环。
+- **平台无关**：不硬编码 `~/.claude`、`~/.commandcode` 等目录，不使用 `${CLAUDE_*}` / `${COMMANDCODE_*}` 变量与具体工具名；交接卡统一落 `<项目根>/.handoff/`，全局兜底 `~/.handoff/`，`HANDOFF_*` 为唯一可配置入口。
+- **评估**：新增 eval-a（长会话产卡）、eval-b（凭卡接手不重做）、eval-c（交接后漂移报告）+ 三条人工清单；判负红线含贴 diff、把未验证写成已完成、未校验漂移直接开工、自动回滚文件。
+
 《AI Coding 的隐性账单》第二轮剖析（开发与验证环节：sdlc-design / sdlc-gate / sdlc-guardrails / sdlc-test）落地——主题：**验证产出的事实回流断链**（文章代码腐化路径「假设被继承」的机制化堵口）。六主张映射结论：验证税/带宽不对称/同源错误/证据先于自动化/默认不信任五条已强覆盖（spec 资产化、四守卫脚本、双路独立、断言基线、反合理化表），真实增量收敛为回流缺口三项。决策清单与落地计划各过一轮全新上下文对抗式评审（11 条 + 19 条意见全部吸收），用户逐条裁决（错误推测模式飞轮不做；探索档通过项抽检、mutation 式 eval 构造维持观察）。
 
 - **H 假设「毕业」闭环（adopt-1）**：生命周期三处声明（dimensions「定型 H → 转测试验证项，毕业后换新」/ design-template D 表 H 接受条件 / design-techniques 探针用例退役）的最后一段此前无载体——D 表无状态、报告无节、check_trace 不查。落点建在测试报告侧：report-template 新增条件节「假设验证结果」（存在 H 探针用例才必填，无则整节省略；收录 设计.D-xx + 体检.P-xx 两人口，需求.A-xx 留在 digest 假设清单「结论」列防双权威；结论枚举 毕业为 C/换新 H/维持——「维持」=接受条件未触发的运行态，非新终态，dimensions 两态原文不动）；design-template §6 与 stage2 模板 §6 同步声明闭环与回写口径（挂 playbook「D 表决策偏差回写」明文，design-template 头部回写枚举不含 D 表以 playbook 为准）

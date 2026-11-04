@@ -36,17 +36,17 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 | PyYAML | sdlc-guardrails engine | 引擎无法解析规则文件；安装 `pip install pyyaml` 后重试 |
 | Pillow | sdlc-ui-visual compare.py | 脚本报错并提示 `pip3 install Pillow`；像素比对不可用 |
 | Playwright / Node / npm | sdlc-test spec 回归档 | 回归轮降级为 agent 逐用例执行，失去 runner 加速 |
-| git | sdlc-release-check（diff）、sdlc-guardrails（pre-commit） | release-check 无法生成 diff；pre-commit 兜底不可用 |
+| git | sdlc-release-check（diff）、sdlc-guardrails（pre-commit）、sdlc-handoff（漂移校验/改动清单） | release-check 无法生成 diff；pre-commit 兜底不可用；handoff 退化为文件时间清单，交接本身不受影响 |
 | 平台环境（`SDLC_PLATFORM_URL` / `SDLC_PLATFORM_REPO`） | sdlc-sync | 平台不可用时本地工作流完整可用（降级 = 现状）；连接拒绝先确认平台已启动 |
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**
-A：不必须。9 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
+A：不必须。10 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
 
 ### 使用建议
 
 **Q：从哪个 skill 开始用？**
-A：按依赖重量渐进（详见 README「按需采用，不必全装」）：sdlc-intent（零依赖）→ sdlc-release-check（零 MCP，任意 git 仓库即用）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
+A：按依赖重量渐进（详见 README「按需采用，不必全装」）：sdlc-intent（零依赖）→ sdlc-release-check（零 MCP，任意 git 仓库即用）→ sdlc-handoff（零依赖，随时可插）→ sdlc-doubt → sdlc-design（codegraph / mysql MCP 可选、均带降级，digest 确认后即可用）→ sdlc-gate → sdlc-test（依赖最重）。
 
 **Q：sdlc-test 适用什么技术栈？**
 A：按「Java 后端 + MySQL + Web 前端（Element Plus 系组件库）」打磨；static 阶段的前后端代码定位可适配任意栈（codegraph/grep），exec 阶段的交互姿势手册以 Element Plus 为锚点，其他组件库需自行沉淀姿势（手册结构可直接复用）。

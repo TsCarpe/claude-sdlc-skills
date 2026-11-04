@@ -42,7 +42,7 @@ flowchart LR
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
 
-## 9 个 skill 一览
+## 10 个 skill 一览
 
 | skill | 阶段 | 干什么 · 触发示例 |
 |---|---|---|
@@ -55,6 +55,7 @@ flowchart LR
 | [sdlc-release-check](skills/sdlc-release-check/SKILL.md) | 旁路 · 发版前 | 扫描 Java+SQL diff，提取发版前需人工处理的事项：Apollo/Nacos 配置 Key、xxl-job 任务、MQ 订阅、DDL/DML 变更分级，汇总成发布时刻表。「跑上线前检查」 |
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | PostToolUse hook 按项目 guardrails.yaml 机械拦截违规写入，pre-commit 兜底 + 存量基线扫描。「给这个项目接红线拦截」 |
 | [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复、发布后开发包一键拉回本地（standard/design/cases/gate 裁决投影，平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复 / 拉开发包」 |
+| [sdlc-handoff](skills/sdlc-handoff/SKILL.md) | 横切 · 任意阶段 | 会话交接：把当前任务压成一张自足的交接卡（8 段 + 机器可读 frontmatter），换会话/换机器/换 agent 后凭卡直接继续，接手前自动做 git 漂移校验。「交接一下 / 接手上次那个任务 / 上下文满了」 |
 
 贯穿全链路的关键机制：
 
@@ -93,6 +94,8 @@ npx skills update <skill名> -g                   # 更新单个；跨文件迁�
 ## 按需采用，不必全装
 
 按依赖重量逐级上，每一级都独立可用（论证见 [workflow.md §7.3](docs/workflow.md)）：
+
+另有 **sdlc-handoff**（零外部依赖，任意 git 仓库可用）：会话上下文将满或要换 agent 时，把当前任务压成一张交接卡，新会话凭卡接手继续——它不参与下面的依赖分级，随时可插。
 
 1. **sdlc-intent**（5 分钟）——零依赖，梳理+体检立即可用
 2. **sdlc-release-check**（5 分钟）——零 MCP，任意 git 仓库即用
