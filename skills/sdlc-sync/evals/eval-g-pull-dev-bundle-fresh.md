@@ -10,7 +10,7 @@
   "expected_behavior": [
     "执行 pull-dev-bundle 前先查卡状态：published 才继续，不跳过前置检查链",
     "intake 三件套按 pull-artifacts 节完整执行（digest/audit/pm-checklist 渲染落盘 intake/）",
-    "standard 落盘 intake/standard-<日期>.md，内容 = detail.standard.markdown 原文",
+    "standard 落盘 intake/standard-<日期>.md：首行只读标记「> 平台发布物只读投影（<reqId> · v<version> · 拉取于 <日期>）…」，正文 = detail.standard.markdown 原文；凭据 pulled.standard.version 已相同时跳过并提示「standard 已对齐」",
     "design finalized.md 落盘 design/design.md，头部含平台定稿锚点行（行首「> 平台定稿：」+ reqId + design v<version> + 拉取日期）",
     "cases 按用例总览/明细模板全量重建 test/cases.md：逐条走 detail 拿 pre/steps/expect（不是只用 list 面），头部审核状态写「已确认（平台 <日期>）」，风险分级 = card.riskTier",
     "gate 投影落盘 review/issues-<openedAt日期>-r1.md：头部「评审状态 | 已放行（releasedAt 日期）」（首个 ## 之前的 kv 表行），裁决列按 verdict 映射（revise→落改（note）/reject→驳回：note/query→存疑：note），落点列带 revLocation 与待执行/已执行",

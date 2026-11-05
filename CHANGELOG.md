@@ -9,6 +9,8 @@ sdlc-sync pull-artifacts 增加 standard 落盘，下游三 skill 需求基准�
 - **pull-dev-bundle 表格**：intake 行收窄为「三件套部分（digest/audit/pm-checklist）」，standard 行改为复用 pull-artifacts 第 4 步落盘规则与凭据（同键不重述）；dev-bundle-merge.md 凭据节声明 standard 键双入口共写、任一入口拉过即已对齐
 - **下游输入提档**：sdlc-design（Step 1 输入 + 路由锚点三文件日期→四文件（standard 无则记「无」）+ checklist + design-template 两处锚点行）、sdlc-test（cases 输入优先级）、sdlc-gate（CONTRACT 基准行 + Step 1/checklist/对抗 prompt 三处措辞）——三处均为「standard-*.md 最新一份存在则以定稿为最高需求口径」置于三件套之上
 - **承接口径同步**（避免与新优先级打架）：sdlc-test 进度清单/独立性红线/static 回退条件、sdlc-design 定位段/确认点②话术、gate issue-template CONTRACT 行 + cross-check-guide 独立推导前提；eval 三处同步断言（sdlc-test eval-1 输入优先、gate eval-3 独立性 ×2、design eval-6 并行纪律）；docs 四处口径（project-setup sdlc-design 行、large-req-playbook 用例并行产出节、workflow sdlc-sync 能力行、sdlc-test-design 架构图 + D11）
+- **幂等与取证补全**（验收缺口回填）：`pull-artifacts` 第 4 步落盘前先比对 `.platform.pulled.standard.version`——相同即跳过并提示「standard 已对齐」（凭据缺失视为未对齐）；此前比对口径只写在 dev-bundle-merge 的表格里，主干读到第 4 步不会自然执行。落盘内容改为「一行只读标记 + 平台原文」，标记含 reqId/version/拉取日，本地手改一眼可见（标记行不计入正文一致性比对，对齐 design.md 平台定稿锚点模式）
+- **拉取汇报**：命令收尾必须打印本次落盘路径清单，standard 给确切文件名不写通配（跨日会累积多份，下游 AI 话术要能直引），跳过产物（已对齐/未发布）逐项说明原因
 - 平台侧零改动；pull-dev-bundle 行为不变（eval-g 无需更新）
 
 sdlc-test dev 阶段简化：服务供给走死路径——local 模式（脚本构建+起停）整段移除，服务一律由外部供给（IDE/手起），默认代码已更新、服务已重启（开发者保证，脚本不核查新代码加载）。起因：实测中 agent 反复摇摆于「用已有服务还是自己打包启动」，判定成本高；且 local 模式存在端口被既有服务占用时「影子进程静默死亡、健康探测命中外部服务」的假通过缺陷。对照官方 Agent Skills 最佳实践（避免提供过多选项、只解决真实问题不预留想象需求）裁定删除而非降级保留。

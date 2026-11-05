@@ -64,15 +64,22 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 2. `intake/audit-<日期>.md`：audit 视图（分级计数 + items 明细含 relatedCases）。
 3. `intake/pm-checklist-<日期>.md`：澄清清单与答复（含 origin——P 系机器行 / L 系评论升级行）。
 4. `intake/standard-<拉取日YYYYMMDD>.md`：`detail.standard`（`{markdown,version,pushedAt}`，
-   markdown 原文落盘；**仅发布后存在**，未发布则跳过并提示）。同名先比对再覆盖，跨日重拉留旧
-   文件、下游按文件名日期最大取最新；落盘成功写回 `.platform.pulled.standard` 凭据（与
-   pull-dev-bundle 同键，结构见 dev-bundle-merge.md「凭据与重拉」）。
+   markdown 原文落盘；**仅发布后存在**，未发布则跳过并提示「需求尚未发布，无标准需求文档」）。
+   落盘前先对照 `.platform.pulled.standard.version`：相同 → 跳过并提示「standard 已对齐」
+   （凭据缺失视为未对齐）；需落盘时同名先比对再覆盖（比正文，忽略首行只读标记）、差异向用户报告，跨日重拉留旧文件、下游按
+   文件名日期最大取最新。落盘内容 = **一行只读标记 + 平台 markdown 原文**，标记格式：
+   `> 平台发布物只读投影（<reqId> · v<version> · 拉取于 <YYYY-MM-DD>），请勿本地修改；需求变更走平台变更单，变更后重新执行本命令拉取。`
+   （标记行不计入「与平台一致」的正文比对）。落盘成功写回 `.platform.pulled.standard`
+   （`{version, at: <拉取日>}`，与 pull-dev-bundle 同键，结构见 dev-bundle-merge.md「凭据与重拉」）。
 5. changed 卡（`card.status == "changed"`）：只拉不推——提示「该卡处于变更中，增量合并完成后
    digest 会刷新，届时重新拉取；standard 拉到的是变更前发布版，变更单重发布后需重拉」。
 
 **红线**：只写 intake（过程工作区）；本地已有同名文件先比对再覆盖，差异向用户报告。
 `standard-*.md` 是平台发布物的只读投影——**本地不可编辑**，需求变更走平台变更单，消化合并后
 重新拉取。
+
+**拉取汇报（必做）**：结束前打印本次实际落盘的文件路径清单；standard 给**确切文件名**、不写
+通配，并提示「后续让 AI 读这个路径」。跳过产物（version 已对齐 / 需求未发布）逐项说明跳过原因。
 
 ### 3. push-artifacts —— 推体检三件套（需求进入待澄清；changed 卡 409）
 
@@ -118,7 +125,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 2. 合成**重写版**标准文档 markdown。语义（需求方拍板）：**以原始需求全文快照为底稿**，把体检定论与已答复澄清结论逐条消化进正文，整合出完整可用的需求定稿——开发拿这一份即可开工、AI 读这一份即可获得需求的全貌（规则全集）、边界（范围/不做/假设）与逻辑（状态机/矩阵/校验链）。结构：元信息头（编号/迭代/合成时间/**质检依据快照时间**/答复进度）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案标注 + 废弃条款删除线 + ⚠️ 假设口径；逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录：澄清结论表。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台渲染时自动链接化）。**逐项过 [references/standard-doc-spec.md](references/standard-doc-spec.md) 的合成规则与质量自查清单。**
 3. **给用户过目合成结果**。
 4. `POST /api/requirements/<reqId>/publish`，body `{"standardMd":"<markdown>"}`。
-5. 本地归档 `intake/standard-<YYYYMMDD>.md`。
+5. 本地归档 `intake/standard-<YYYYMMDD>.md`（与拉取落盘同形：首行只读标记 + 刚发布的正文，格式见第 2 节第 4 步——同一文件名不能因为入口不同而形态不同）。
 
 **红线**：发布是终态动作（平台锁定答复、拒绝产物重推、快照冻结），必须用户显式确认；合成只整合不发明——发现的空白进遗留假设，不得静默决策。
 
@@ -148,6 +155,8 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 1. 定位 `sdlc/<需求名>/`；目录名歧义（多个前缀匹配）→ 列候选让用户选，不猜
 2. `GET /api/requirements/<reqId>` 看卡状态：`submitted/reviewing/clarifying` → 停（发布后才有开发包）；**`changed` → 默认停**，逐项列明中间态风险（增量合并已重写 FR 追踪表与 digest，design/issues 可能仍是旧版——拉到的是「新 FR + 旧设计 + 旧 issues」的拼接），用户确认照拉时**强制 only: 单产物**；`published` → 继续
 3. 对照 `.platform.pulled` 凭据逐产物比对（结构见 dev-bundle-merge.md「凭据与重拉」）：无变化默认跳过该产物；全部无变化 → 报告「已对齐」结束
+
+**`only:<产物>`**（`standard|design|cases|gate|intake`）：只处理该产物——前置检查链照过，比对与落盘只做这一项，其余产物**不比对、不落盘、不报缺失**。开发只要标准需求文档时的最轻路径：`pull-dev-bundle <需求名> only:standard`（旧版安装的 `pull-artifacts` 不落 standard，这条是唯一稳定通道）。
 
 **各产物拉取与落盘**：
 
