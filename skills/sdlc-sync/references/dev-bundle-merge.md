@@ -18,6 +18,7 @@ SKILL.md 第 7 节的主干在此展开。本文件是 sdlc-sync 的操作细则
 ```
 
 - 每产物**落盘成功后立即写回对应键**（半程失败时已写键即「已完成」，重跑跳过或按用户指示刷新）
+- `standard` 键由 pull-artifacts 与 pull-dev-bundle 两个入口**共写**（同一落盘规则，见 SKILL 第 2 节第 4 步）——任一入口拉过即视为已对齐，另一入口重跑按凭据跳过
 - 重拉比对口径：intake ← `detail.digest.version`；standard ← `detail.standard.version`；design ← design view `finalized.version`；cases ← list 的条数 + `max(updatedAt)`；gate ← 最新轮 `roundNo` + `releasedAt`。任一变化 → 该产物重拉（cases 变化仍走 diff+确认流程）
 - design 为 skipDeclared 时写 `"design": {"skipDeclared": {"by": "…", "at": "…"}, "at": "…"}`
 - **评论盲区**：平台用例评论不 bump updatedAt（add_comment 不写 test_case.updated_at），凭据检测不到评论变化——SKILL 主干已声明「评论不回流、人工上平台查看」，不在此重复建凭据

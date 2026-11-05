@@ -42,7 +42,7 @@ description: "Orchestrates AI testing: dev-complete verification (health probe +
 
 ```text
 Cases 进度：
-- [ ] 定位输入（sdlc/<需求名>/intake/ 三件套优先，退回原始 PRD）
+- [ ] 定位输入（sdlc/<需求名>/intake/standard-*.md 最新一份优先 → 三件套 → 原始 PRD）
 - [ ] 信息摄入（梳理文档/YApi/CodeGraph/MySQL 只读）
 - [ ] 按七种设计技术生成用例并标注技术（生成范围按 FR 级裁剪，见 design-techniques.md「分级生成范围」）
 - [ ] 填双向追踪表，未覆盖条目显式列出
@@ -50,8 +50,8 @@ Cases 进度：
 - [ ] 🔒 关卡1：暂停等人审核
 ```
 
-- 输入优先级：`sdlc/<需求名>/intake/digest-*.md` 三件套 > 原始需求文档。梳理文档的角色权限矩阵、状态机图、流程图、规则口径清单是设计直接输入；体检报告疑似问题转重点用例；PM 清单已澄清口径回填预期
-- **独立性纪律（红线）**：生成过程禁止读技术设计文档（`sdlc/<需求名>/design/design.md`、任务系统/协作工具中的设计文档等）——用例必须与设计从 intake 三件套独立推导，sdlc-gate 交叉审查才有价值。用户坚持要读时先说明后果并征得明确确认，且在 cases.md 头部注明「已读设计，交叉独立性破坏」。**C 级例外**：`design/plan.md` 属设计产物；C 级 cases 若在 plan.md 后生成，允许读取，但须在 cases 头注明「已读 plan.md，交叉独立性降级（C 级主会话自查）」；A/B 级仍按红线执行
+- 输入优先级：`sdlc/<需求名>/intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影，**存在则以定稿为最高需求口径**）> `intake/digest-*.md` 三件套 > 原始需求文档。梳理文档的角色权限矩阵、状态机图、流程图、规则口径清单是设计直接输入；体检报告疑似问题转重点用例；PM 清单已澄清口径回填预期
+- **独立性纪律（红线）**：生成过程禁止读技术设计文档（`sdlc/<需求名>/design/design.md`、任务系统/协作工具中的设计文档等）——用例必须与设计从需求基准（standard 定稿优先，无则三件套）独立推导，sdlc-gate 交叉审查才有价值。用户坚持要读时先说明后果并征得明确确认，且在 cases.md 头部注明「已读设计，交叉独立性破坏」。**C 级例外**：`design/plan.md` 属设计产物；C 级 cases 若在 plan.md 后生成，允许读取，但须在 cases 头注明「已读 plan.md，交叉独立性降级（C 级主会话自查）」；A/B 级仍按红线执行
 - 设计技术清单、优先级口径与分级生成范围见 `references/cases/design-techniques.md`，必须先读；用例文件头部「风险分级」取自 digest 头（缺失按 A 级），生成范围按 §7 规则表 FR 级逐条裁剪
 - 关卡1 措辞：「用例已生成于 <路径>，请审核；确认后我继续，需修改请直接说」。迭代直至用户确认，然后把头部 `审核状态` 改为 `已确认（日期）`
 
@@ -76,7 +76,7 @@ Dev 进度：
 
 0. 入口守卫：`python3 <skill 目录>/scripts/guard_exec.py <项目根> <需求名> static`（skill 目录 = 本 SKILL.md 所在目录：项目级安装为 `<项目根>/.claude/skills/sdlc-test`，全局安装为 `~/.claude/skills/sdlc-test`）——exit≠0 时停止并向用户呈现缺失清单（关卡1 未过/轮次命名违规/spec 资产失真），禁止绕过
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
-2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（三件套缺失时回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
+2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（需求基准：standard 定稿优先，无则三件套；均缺失才回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
 3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则降级定向 grep + 读文件，结果注明证据降级
 4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ 🤔静态无法确认
 5. ⚠️ 项写入用例文件「重点验证项」区块，阶段3 优先执行；重大偏差立即报告用户

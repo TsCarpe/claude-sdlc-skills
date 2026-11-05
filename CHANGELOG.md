@@ -2,6 +2,15 @@
 
 ## 未发布
 
+sdlc-sync pull-artifacts 增加 standard 落盘，下游三 skill 需求基准提档：此前 standard 只有 pull-dev-bundle（开发包语义）一条通道，且 pull-artifacts 红线「不改 standard-*.md」明确禁写——发布定稿拉不到轻通道；设计/用例/评审三个 skill 的输入清单里也没有 standard，即使落盘下游也不读。后端零改动（`GET /api/requirements/{id}` 详情已含 `standard{markdown,version,pushedAt}`）。
+
+- **pull-artifacts**：落盘清单三件套 → 四件（新增 `intake/standard-<拉取日YYYYMMDD>.md`，`detail.standard` 原文落盘，仅发布后存在，未发布跳过并提示）；同名先比对再覆盖、跨日重拉留旧文件下游按文件名日期最大取最新；写回 `.platform.pulled.standard` 凭据（与 pull-dev-bundle 同键）；changed 卡提示补「standard 为变更前发布版，重发布后需重拉」
+- **红线改写**：原「只写 intake，不改 standard-*.md（发布物在平台）」→「standard-*.md 是平台发布物的只读投影——本地不可编辑，需求变更走平台变更单，消化合并后重新拉取」（与 design.md 平台定稿锚点模式同构）
+- **pull-dev-bundle 表格**：intake 行收窄为「三件套部分（digest/audit/pm-checklist）」，standard 行改为复用 pull-artifacts 第 4 步落盘规则与凭据（同键不重述）；dev-bundle-merge.md 凭据节声明 standard 键双入口共写、任一入口拉过即已对齐
+- **下游输入提档**：sdlc-design（Step 1 输入 + 路由锚点三文件日期→四文件（standard 无则记「无」）+ checklist + design-template 两处锚点行）、sdlc-test（cases 输入优先级）、sdlc-gate（CONTRACT 基准行 + Step 1/checklist/对抗 prompt 三处措辞）——三处均为「standard-*.md 最新一份存在则以定稿为最高需求口径」置于三件套之上
+- **承接口径同步**（避免与新优先级打架）：sdlc-test 进度清单/独立性红线/static 回退条件、sdlc-design 定位段/确认点②话术、gate issue-template CONTRACT 行 + cross-check-guide 独立推导前提；eval 三处同步断言（sdlc-test eval-1 输入优先、gate eval-3 独立性 ×2、design eval-6 并行纪律）；docs 四处口径（project-setup sdlc-design 行、large-req-playbook 用例并行产出节、workflow sdlc-sync 能力行、sdlc-test-design 架构图 + D11）
+- 平台侧零改动；pull-dev-bundle 行为不变（eval-g 无需更新）
+
 sdlc-test dev 阶段简化：服务供给走死路径——local 模式（脚本构建+起停）整段移除，服务一律由外部供给（IDE/手起），默认代码已更新、服务已重启（开发者保证，脚本不核查新代码加载）。起因：实测中 agent 反复摇摆于「用已有服务还是自己打包启动」，判定成本高；且 local 模式存在端口被既有服务占用时「影子进程静默死亡、健康探测命中外部服务」的假通过缺陷。对照官方 Agent Skills 最佳实践（避免提供过多选项、只解决真实问题不预留想象需求）裁定删除而非降级保留。
 
 - **verify_dev.py**（637→529 行）：编排收缩为 前置校验 → 健康探测 → 冒烟（A/B）→ 留档；删除 构建/启动命令、boot 日志、进程组 SIGTERM→SIGKILL 清理整套机制；留档头部去 启动模式/boot 日志 两字段（余五字段），执行范围文案改「健康探测+冒烟(A/B 级)／健康探测(C 级)」；env/dev.md 收缩为 启动/冒烟 两节（无模式节）

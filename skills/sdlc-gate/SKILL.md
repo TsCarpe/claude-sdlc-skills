@@ -44,12 +44,12 @@ skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级�
 |---|---|
 | 技术设计 | 大需求 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；A/B 轻量任务 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页逐接口方案）。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
 | 测试用例 | `sdlc/<需求名>/test/cases.md`；A/B 必需，C 级可缺失（缺失时 issues 注明「C 级无交叉输入」，自查仅审 plan） |
-| CONTRACT 基准 | `sdlc/<需求名>/intake/` 三件套（digest/audit/pm-checklist），缺失时回退原始 PRD 并注明 |
+| CONTRACT 基准 | `sdlc/<需求名>/intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影，**存在则以定稿为最高需求口径**）> `intake/` 三件套（digest/audit/pm-checklist）> 原始 PRD，降级须注明 |
 | 高风险资产清单 | 项目自建规范目录下的 `high-risk-assets.md`（可选；读不到跳过，命中判定见 Step 2 分档规则第三重——与分层规范降级同构） |
 
 ```text
 Review-gate 进度：
-- [ ] Step 1: 定位输入（设计 / 用例 / intake 三件套），确认独立性（用例文件是否读过设计）
+- [ ] Step 1: 定位输入（设计 / 用例 / CONTRACT 基准——standard 存在时优先），确认独立性（用例文件是否读过设计）
 - [ ] Step 2: 按风险分级分档扇出预审（A=4：3 角色+交叉审查者；B=2：数据模型+交叉审查者；C=主会话自查）
 - [ ] Step 3: RECONCILE 过滤（CONTRACT 仲裁不了时定向核对代码）→ 同根因合并 → 汇总 issues 文件并机械校验，状态置「待裁决」，🔒 暂停等人
 - [ ] Step 4: 逐条裁决（落改 / 驳回 / 存疑），驳回理由沉淀
@@ -58,7 +58,7 @@ Review-gate 进度：
 
 ## Step 1: 定位输入
 
-按「前置输入」表定位三路输入（技术设计 / 测试用例 / CONTRACT 三件套；缺失则引导补齐，降级须在 issues 文件注明）。确认用例独立性：用例生成时未读过设计文档（见顶部定位段的前置条件，不满足时交叉审查退化为一致性检查）。C 级无 cases 时记「C 级无交叉输入」，不按破坏独立性处理。
+按「前置输入」表定位三路输入（技术设计 / 测试用例 / CONTRACT 基准——standard 定稿存在则以其为最高口径，无则三件套；缺失则引导补齐，降级须在 issues 文件注明）。确认用例独立性：用例生成时未读过设计文档（见顶部定位段的前置条件，不满足时交叉审查退化为一致性检查）。C 级无 cases 时记「C 级无交叉输入」，不按破坏独立性处理。
 
 ## Step 2: 扇出预审（按风险分级分档，全新上下文）
 
@@ -118,7 +118,7 @@ explicitly that you cannot find any after thorough examination.
 近期误报模式（这些方向曾被人工驳回，勿重复）：<从 false-positive-patterns.md 摘近期 3-5 条>
 上轮继承（首轮写「无」；复审轮列上轮裁决单元标题+裁决+理由一行，翻案须引用上轮编号）：<按复审轮规则注入，粒度=标题级>
 ARTIFACT: <设计文档或用例文件内容；复审轮=变更+关联章节>
-CONTRACT: <intake 三件套相关章节>
+CONTRACT: <需求基准相关章节——standard 定稿存在则取其相关章节，无则三件套>
 ```
 
 ### 输出示例（角色 1-3，供生成子代理 prompt 时参考格式，不注入子代理上下文）

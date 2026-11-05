@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers back into local intake files (pull-artifacts), aligns the local dev workspace with finalized platform artifacts - standard doc, design, cases, gate verdict projection (pull-dev-bundle) - and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases). The platform is the single source of truth; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases|pull-dev-bundle 需求名 [only:standard|design|cases|gate|intake]"
+description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers plus the published standard doc back into local intake files (pull-artifacts), aligns the local dev workspace with finalized platform artifacts - standard doc, design, cases, gate verdict projection (pull-dev-bundle) - and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases). The platform is the single source of truth; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases|pull-dev-bundle 需求名 [only:standard|design|cases|gate|intake]"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -16,14 +16,14 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 > `publish` 在 changed 卡受**影响面已消化 + 草稿一致性**双重守卫（changed 卡重算在平台完成，
 > 本地合成的文档与平台草稿哈希不一致会被拒）；`pull-answers` 遇 changed 卡建议语：「该卡处于
 > 变更中，重开项以平台为准，本地 digest 请等待增量合并后再拉取（pull-artifacts）」。
-> `pull-artifacts`（新增）：把平台权威的 digest/audit markdown 与答复拉回本地 intake——本地
-> sdlc-design / sdlc-test 兜底链的输入源与平台权威对齐。
+> `pull-artifacts`（新增）：把平台权威的 digest/audit markdown、答复与已发布 standard 拉回本地
+> intake——本地 sdlc-design / sdlc-test / sdlc-gate 兜底链的输入源与平台权威对齐。
 
 ## 前置
 
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8080`
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
-- 需求对应关系与拉取凭据记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——pulled 为 pull-dev-bundle 的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)），首次 push 后写入
+- 需求对应关系与拉取凭据记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)），首次 push 后写入
 - 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先确认服务已启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
 - 飞书快照/媒体读取：`lark-cli`（权限不足时降级为本地已有原文，不阻断）
 - 锚点附加（可选）：`python3` + sdlc-intent 的 `resolve_anchors.py`（同集合安装时；单独安装时跳过）
@@ -56,18 +56,23 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 
 ### 2. pull-artifacts —— 拉平台权威产物到本地（输入源对齐）
 
-`GET /api/requirements/<reqId>`（detail 含 digest/audit 视图与 items 答复）+ `GET …/answers`，
+`GET /api/requirements/<reqId>`（detail 含 digest/audit/standard 视图与 items 答复）+ `GET …/answers`，
 渲染回本地 `sdlc/<需求名>/intake/`：
 
 1. `intake/digest-<日期>.md`：digest 视图（summary/roles/features/fr_points/flows/states）渲染为
    markdown（平台 md 本就是重渲染的展示物——权威在结构行，本地拿到的即平台口径）。
 2. `intake/audit-<日期>.md`：audit 视图（分级计数 + items 明细含 relatedCases）。
 3. `intake/pm-checklist-<日期>.md`：澄清清单与答复（含 origin——P 系机器行 / L 系评论升级行）。
-4. changed 卡（`card.status == "changed"`）：只拉不推——提示「该卡处于变更中，增量合并完成后
-   digest 会刷新，届时重新拉取」。
+4. `intake/standard-<拉取日YYYYMMDD>.md`：`detail.standard`（`{markdown,version,pushedAt}`，
+   markdown 原文落盘；**仅发布后存在**，未发布则跳过并提示）。同名先比对再覆盖，跨日重拉留旧
+   文件、下游按文件名日期最大取最新；落盘成功写回 `.platform.pulled.standard` 凭据（与
+   pull-dev-bundle 同键，结构见 dev-bundle-merge.md「凭据与重拉」）。
+5. changed 卡（`card.status == "changed"`）：只拉不推——提示「该卡处于变更中，增量合并完成后
+   digest 会刷新，届时重新拉取；standard 拉到的是变更前发布版，变更单重发布后需重拉」。
 
-**红线**：只写 intake（过程工作区），不改 `standard-*.md`（发布物在平台）；本地已有同名文件
-先比对再覆盖，差异向用户报告。
+**红线**：只写 intake（过程工作区）；本地已有同名文件先比对再覆盖，差异向用户报告。
+`standard-*.md` 是平台发布物的只读投影——**本地不可编辑**，需求变更走平台变更单，消化合并后
+重新拉取。
 
 ### 3. push-artifacts —— 推体检三件套（需求进入待澄清；changed 卡 409）
 
@@ -148,8 +153,8 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 | 产物 | API | 落盘 | 规则要点 |
 |---|---|---|---|
-| intake | detail.digest/audit + answers | `intake/` 三件套 | **完整执行第 2 节 pull-artifacts（含其全部红线），此处不重述** |
-| standard | detail.standard | `intake/standard-<拉取日YYYYMMDD>.md` | 同名先比对再覆盖；仅发布后存在 |
+| intake | detail.digest/audit + answers | `intake/` 三件套 | **完整执行第 2 节 pull-artifacts 的三件套部分——digest/audit/pm-checklist（含其全部红线），此处不重述** |
+| standard | detail.standard | `intake/standard-<拉取日YYYYMMDD>.md` | **落盘规则与凭据复用第 2 节 pull-artifacts 第 4 步（同键），此处不重述**；仅发布后存在 |
 | design | `GET …/design` | `design/design.md` | phase=final → finalized.md 落盘 + 头部加**平台定稿锚点**（格式见 dev-bundle-merge.md，锚点后本地不可修改）；skipped → 不落文件、.platform 记 skipDeclared、提示本地 plan.md 不受锁；draft/none → 跳过 + 开发包不完整警告；本地已有**无锚点** design.md → 内容相同仅补锚点行，不同报告差异等确认后覆盖 |
 | cases | `GET /api/cases?reqId=` + **逐条 detail** | `test/cases.md` | list 面无 pre/steps/expect，明细必须逐条 detail；本地已有 → diff 报告（**删除项须列明将带走的执行历史**）等用户确认后按区块合并（见 dev-bundle-merge.md）；本地无 → 按模板全量重建；0 条跳过提示。平台用例评论不回流（凭据检测不到评论变化），提示人工上平台查看 |
 | gate | `GET …/gate` | `review/issues-<openedAt日期YYYYMMDD>-r<轮号>.md` | 取最新轮；**issuesMd=null（平台升级前存量轮未留档）→ 不产出 issues 文件**，提示两条出路：① 本地通道过关卡（guard_dev 显式豁免（基线=无）+ cases 头人工置已确认过关卡1）；② 平台后续发生实质变更自然触发 reopen，新轮有留档、届时重拉。否则以平台留档 md 原文为底 + 裁决回填（头部状态/裁决列/落点列/汇总表，见 dev-bundle-merge.md「gate 投影」） |
@@ -176,5 +181,6 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 ## 与其他 skill 的关系
 
 - 上游：sdlc-intent（三件套）、sdlc-test（cases.md）
+- pull-artifacts 下游：sdlc-design / sdlc-test / sdlc-gate（standard 投影为其需求基准最高输入档）
 - pull-dev-bundle 下游：guard_dev（review/ 投影过开发入口）、sdlc-test（cases.md 与 review 状态即关卡输入）、sdlc-design（平台定稿锚点识别）
 - 横切定位：产物出口/入口，与 guardrails 同属横切层；平台不可用时本地工作流完整可用（降级 = 现状）
