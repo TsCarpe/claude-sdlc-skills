@@ -1,52 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""开发完成验证编排(compile/boot/冒烟的确定性执行与留档)。
+"""开发完成验证编排(健康探测/冒烟的确定性执行与留档)。
 
-分工边界:冒烟清单 sdlc/<需求名>/dev/smoke.md 由 agent 在 /sdlc-test dev 第①步
-从 cases.md P0/核心用例推导落盘(计划-验证-执行:本脚本只验证结构并执行,不做
-推导);复杂业务断言(落库/权限)不在此——留 exec 阶段四类证据。
+服务供给边界:服务由外部供给(IDE/手起),默认代码已更新、服务已重启——
+新鲜度由开发者保证,本脚本不构建、不起停、不核查新代码加载。分工边界:
+冒烟清单 sdlc/<需求名>/dev/smoke.md 由 agent 在 /sdlc-test dev 第①步
+从 cases.md P0/核心用例推导落盘(计划-验证-执行:本脚本只验证结构并执行,
+不做推导);复杂业务断言(落库/权限)不在此——留 exec 阶段四类证据。
 
 配置(sdlc/env/,模板见 references/env-template.md「开发验证档」):
-    sdlc/env/dev.md           项目级入库:模式/构建/启动/冒烟 四节
+    sdlc/env/dev.md           项目级入库:启动(健康探测)/冒烟 两节
     sdlc/env/dev-auth.local.md  gitignored 本机供给,「头名: 值」逐行;免鉴权时不需要
 
 用法:
     python3 verify_dev.py <项目根> <需求名>
 
 执行编排(设计内失败:任一步失败即停后续步,仍完整留档后 exit 1;未预期异常:
-先兜底写「验证状态=未通过(异常中断)」留档、服务停止由 finally 保证,然后异常
-向上传播(exit 非零,guard_exec 检查 5 反查留档可见而非仅崩溃无档)):
+先兜底写「验证状态=未通过(异常中断)」留档,然后异常向上传播(exit 非零,
+guard_exec 检查 5 反查留档可见而非仅崩溃无档)):
   0. 前置校验:cases.md 存在;风险分级三口径(经 _shared.tier_three_ways,与
      guard_exec 检查 2.5 同源);env 必填键齐;A/B 级另要求
-     smoke.md 存在且条目全部可解析(断言语法/来源引用在构建前快失败)、
+     smoke.md 存在且条目全部可解析(断言语法/来源引用在执行前快失败)、
      来源 用例.TC-xx 在 cases.md 存在;需鉴权但 local 文件缺失 → 拒
-  1. 构建(超时默认 600s)
-  2. 启动:local 模式本地起服务(日志落 dev/boot-<日期>[-rN].log)后轮询健康;
-     unmanaged 模式跳过起停、直接探测 env 配置的目标(服务由外部供给——
-     用户手起/IDE/远程 dev 环境;仍是机器验证,非人工声明)
-  3. 冒烟(A/B 级):按 smoke.md 文件序逐条执行(前条数据后条可用),单条失败
+  1. 健康探测:就绪判据 = HTTP 2xx,单次 5s 超时、间隔 2s 轮询至「最大等待秒」
+     (外部服务通常已就绪,首探即过;上限兜底冷启动后的重启窗口)。不过 →
+     留档失败步「健康探测未过」,由用户处置外部服务后重跑,脚本不自起服务
+  2. 冒烟(A/B 级):按 smoke.md 文件序逐条执行(前条数据后条可用),单条失败
      不中断后续,全量留档
-  4. 停服务(finally:进程组 SIGTERM→10s→SIGKILL;启动命令勿自行 nohup/disown,
-     后台化由本脚本负责;多服务写单条复合启动命令,同一进程组统一清理)
-  5. 留档 dev/verify-<日期>[-rN].md(同日重跑 -r2/-r3,跨日重置):头部 kv
-     (验证状态/风险分级/启动模式/执行范围/验证时 HEAD/开发放行守卫/boot 日志)
-     + 正文逐步命令+exit/耗时+输出尾部+冒烟逐条表
+  3. 留档 dev/verify-<日期>[-rN].md(同日重跑 -r2/-r3,跨日重置):头部 kv
+     (验证状态/风险分级/执行范围/验证时 HEAD/开发放行守卫)
+     + 正文逐步结果+冒烟逐条表
 
-超时默认值依据(防巫术常量,env/dev.md 可覆盖):构建 600s(Maven 全量
-构建典型量级)、启动等待 120s(Spring Boot 启动典型上限)、轮询间隔 2s、
-单次健康探测 5s、单次冒烟请求 30s。
+超时默认值依据(防巫术常量,env/dev.md 可覆盖):启动等待 120s(外部服务
+通常已就绪,上限仅为重启窗口兜底)、轮询间隔 2s、单次健康探测 5s、
+单次冒烟请求 30s。
 
-降级边界:C 级 = 步 1-2(compile+boot);命令按整串 shell 执行(信任模型同
-Makefile,来源为入库配置);无 git 时 HEAD 记「未知(降级)」;开发放行守卫
-(guard_dev.py)尽力调用——同仓库安装 sdlc-gate 时留档记录其结果,未安装记
-「未检」,不硬依赖。
+降级边界:C 级 = 步 1(健康探测);无 git 时 HEAD 记「未知(降级)」;
+开发放行守卫(guard_dev.py)尽力调用——同仓库安装 sdlc-gate 时留档记录
+其结果,未安装记「未检」,不硬依赖。
 """
 from __future__ import annotations
 
 import json
-import os
 import re
-import signal
 import subprocess
 import sys
 import time
@@ -58,12 +54,10 @@ from urllib.parse import urlparse
 import _shared
 
 OK, NG = "✅", "🔴"
-BUILD_TIMEOUT = 600      # 构建上限(s),env「超时秒」可覆盖
-HEALTH_WAIT = 120        # 启动后健康等待上限(s)
+HEALTH_WAIT = 120        # 健康探测等待上限(s),env「最大等待秒」可覆盖
 POLL_INTERVAL = 2        # 健康轮询间隔(s)
 PROBE_TIMEOUT = 5        # 单次健康探测超时(s)
 SMOKE_TIMEOUT = 30       # 单次冒烟请求超时(s)
-KILL_GRACE = 10          # SIGTERM 后等待进程退出(s)
 
 SEC = re.compile(r"^##\s*(.+?)\s*$")
 KV = re.compile(r"^-\s*([^：:]+?)\s*[：:]\s*(.*)$")
@@ -71,11 +65,6 @@ SM_HEAD = _shared.SM_HEAD  # 冒烟条目标题(编号后至少一空白,名称�
 VAR = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 ASSERT_TOKEN = re.compile(
     r'\s*(?:HTTP\s*(\d+)|code\s*=\s*(\d+)|包含\s*["“]([^"”]+)["”]|存\s+(\w+)\s*←\s*([\w.]+))\s*(?:且|$)')
-
-
-def tail_of(text: str, n: int = 30) -> str:
-    lines = (text or "").splitlines()
-    return "\n".join(lines[-n:])
 
 
 def parse_env(path: Path, root: Path) -> tuple[dict | None, list[str]]:
@@ -250,32 +239,6 @@ def auth_gitignore_state(root: Path) -> str:
     return "unknown"  # 128=非 git 仓库等
 
 
-def run_step(cmd: str, timeout: int, cwd: Path) -> tuple[bool, str, str]:
-    """cwd=项目根:命令一律在 <项目根> 执行,与调用方 shell 所在目录无关
-    (不传 cwd 时隐式依赖调用方恰好在项目根,mvn 会因当前目录无 POM 秒败)。"""
-    t0 = time.time()
-    try:
-        p = subprocess.run(cmd, shell=True, capture_output=True, timeout=timeout, cwd=cwd)
-        out = (p.stdout or b"").decode("utf-8", "replace")
-        return p.returncode == 0, f"exit={p.returncode},耗时 {int(time.time() - t0)}s", tail_of(out)
-    except subprocess.TimeoutExpired as e:
-        out = e.output if isinstance(e.output, str) else (e.output or b"").decode("utf-8", "replace")
-        return False, f"超时(上限 {timeout}s)", tail_of(out)
-
-
-def boot_service(cmd: str, log_path: Path, cwd: Path) -> subprocess.Popen:
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    fh = open(log_path, "wb")
-    try:
-        proc = subprocess.Popen(cmd, shell=True, stdout=fh, stderr=subprocess.STDOUT,
-                                start_new_session=True, cwd=cwd)
-    except BaseException:
-        fh.close()  # Popen 失败(命令/环境异常)时日志句柄不悬空,关闭后重抛
-        raise
-    proc._log_fh = fh  # 停服务时一并关闭(见 stop_service)
-    return proc
-
-
 def wait_health(url: str, max_wait: int) -> tuple[bool, str]:
     deadline, n, last, t0 = time.time() + max_wait, 0, "", time.time()
     while time.time() < deadline:
@@ -291,31 +254,6 @@ def wait_health(url: str, max_wait: int) -> tuple[bool, str]:
             last = str(e)
         time.sleep(POLL_INTERVAL)
     return False, f"超时(上限 {max_wait}s,共 {n} 次探测,最后:{last})"
-
-
-def stop_service(proc: subprocess.Popen | None) -> None:
-    """幂等:进程未退→进程组 SIGTERM→宽限→SIGKILL;已退/重复调用→直接善后日志句柄返回。"""
-    if proc is None:
-        return
-    try:
-        if proc.poll() is None:
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-                try:
-                    proc.wait(timeout=KILL_GRACE)
-                except subprocess.TimeoutExpired:
-                    os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-                    proc.wait(timeout=5)
-            except (ProcessLookupError, PermissionError):
-                pass
-    finally:
-        fh = getattr(proc, "_log_fh", None)
-        if fh:
-            proc._log_fh = None  # 置空保证重复调用幂等
-            try:
-                fh.close()
-            except OSError:
-                pass
 
 
 def interp(s: str, variables: dict[str, str]) -> str:
@@ -401,37 +339,35 @@ def gate_guard_note(root: Path, req: str) -> str:
         return "未检(调用失败)"
 
 
-def next_name(dev_dir: Path, date: str) -> tuple[str, str]:
+def next_name(dev_dir: Path, date: str) -> str:
     existing = list(dev_dir.glob(f"verify-{date}*.md"))
     maxr = max((int(m.group(1)) for p in existing
                 if (m := re.search(r"-r(\d+)$", p.stem))), default=0)
     n = maxr + 1 if maxr else (2 if existing else 1)
     suffix = "" if n == 1 else f"-r{n}"
-    return f"verify-{date}{suffix}.md", f"boot-{date}{suffix}.log"
+    return f"verify-{date}{suffix}.md"
 
 
-def write_archive(dev_dir: Path, vname: str, req: str, tier: str, mode: str,
-                  full: bool, status: str, gate: str, head: str, boot_log: str,
+def write_archive(dev_dir: Path, vname: str, req: str, tier: str,
+                  full: bool, status: str, gate: str, head: str,
                   sections: list[tuple[str, list[str]]]) -> Path:
-    """boot_log:local 模式实际 boot 日志文件名(交叉校验锚点);unmanaged / 未起服务记「-」。"""
     today = time.strftime("%Y-%m-%d")
-    scope = "compile+boot+冒烟(A/B 级)" if full else "compile+boot(C 级)"
+    scope = "健康探测+冒烟(A/B 级)" if full else "健康探测(C 级)"
     lines = [f"# {req} 开发完成验证 {today}",
              "",
              "| 项 | 值 |",
              "|---|---|",
              f"| 验证状态 | {status} |",
              f"| 风险分级 | {tier} |",
-             f"| 启动模式 | {mode} |",
              f"| 执行范围 | {scope} |",
              f"| 验证时 HEAD | {head} |",
              f"| 开发放行守卫 | {gate} |",
-             f"| boot 日志 | {boot_log} |",
              "",
-             "> 留档正文含命令输出尾部;对外分享前注意响应片段脱敏(去手机号/token 类字段)。"]
+             "> 留档正文含冒烟响应片段;对外分享前注意脱敏(去手机号/token 类字段)。"]
     for title, body in sections:
         lines += ["", f"## {title}"] + body
     path = dev_dir / vname
+    dev_dir.mkdir(parents=True, exist_ok=True)  # dev/ 目录唯一写入点在此,首跑时目录尚不存在
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
@@ -467,15 +403,9 @@ def main() -> int:
     full = tier in ("A", "B")
     env, env_errs = parse_env(root / "sdlc" / "env" / "dev.md", root)
     pre += env_errs
-    mode = (env or {}).get("模式/启动模式", "")
-    if env is not None and mode not in ("local", "unmanaged"):
-        pre.append("sdlc/env/dev.md「模式/启动模式」缺失或非法(合法:local | unmanaged)")
     cfg = env or {}
-    build_cmd = cfg.get("构建/命令", "")
     health_url = cfg.get("启动/健康探测", "")
     if env is not None:
-        if not build_cmd:
-            pre.append("sdlc/env/dev.md 缺「构建/命令」——按「开发验证档」补齐")
         if not health_url:
             pre.append("sdlc/env/dev.md 缺「启动/健康探测」——按「开发验证档」补齐")
         else:
@@ -483,15 +413,12 @@ def main() -> int:
             if u.scheme not in ("http", "https") or not u.netloc:
                 pre.append(f"sdlc/env/dev.md「启动/健康探测」URL 非法:{health_url!r}"
                            f"(须 http(s)://<host>[:port]/<path>)")
-        if mode == "local" and not cfg.get("启动/命令"):
-            pre.append("sdlc/env/dev.md 缺「启动/命令」(local 模式必填;本地起不来服务改用 unmanaged)")
-        for k in ("构建/超时秒", "启动/最大等待秒"):
-            v = cfg.get(k, "")
-            if v:
-                try:
-                    int(v)  # 快失败:不让运行期裸 ValueError 崩 traceback
-                except ValueError:
-                    pre.append(f"sdlc/env/dev.md「{k}」值非法:{v!r}(须为整数秒数)")
+        v = cfg.get("启动/最大等待秒", "")
+        if v:
+            try:
+                int(v)  # 快失败:不让运行期裸 ValueError 崩 traceback
+            except ValueError:
+                pre.append(f"sdlc/env/dev.md「启动/最大等待秒」值非法:{v!r}(须为整数秒数)")
     entries: list[dict] = []
     base_url = cfg.get("冒烟/base URL", "")
     auth_headers: dict[str, str] = {}
@@ -540,93 +467,60 @@ def main() -> int:
     for n in notes:
         print(f"{OK} {n}")
 
-    build_to = int(cfg.get("构建/超时秒", BUILD_TIMEOUT) or BUILD_TIMEOUT)
     health_wait = int(cfg.get("启动/最大等待秒", HEALTH_WAIT) or HEALTH_WAIT)
-    boot_cmd = cfg.get("启动/命令", "")
 
     date = time.strftime("%Y%m%d")
-    vname, bname = next_name(dev_dir, date)
+    vname = next_name(dev_dir, date)
     sections: list[tuple[str, list[str]]] = []
     fail_step: str | None = None
-    proc = None
 
-    # ---- 步 1 构建 ----
-    print(f"[构建] 命令:{build_cmd}")
-    ok, det, tail = run_step(build_cmd, build_to, root)
-    print(f"{'✅ 构建通过' if ok else '🔴 构建失败'}({det})")
-    sections.append(("1 构建", [f"- 命令:`{build_cmd}`", f"- 结果:{'✅' if ok else '🔴'} {det}",
-                                "- 输出尾部:", "````", tail, "````"]))
-    if not ok:
-        fail_step = "构建失败"
-
-    # 步 2-3 包 try/except/finally:正常/KeyboardInterrupt/未预期异常路径都保证服务被停
-    # (见 docstring 步 4);未预期异常另兜底留档「异常中断」后再向上传播
+    # 步 1-2 包 try/except:未预期异常兜底留档「异常中断」后再向上传播
     try:
-        # ---- 步 2 启动/健康 ----
-        if fail_step is None:
-            body = [f"- 模式:{mode}", f"- 健康探测:{health_url}(单次 {PROBE_TIMEOUT}s,间隔 {POLL_INTERVAL}s)"]
-            if mode == "local":
-                print(f"[启动] 命令:{boot_cmd}")
-                proc = boot_service(boot_cmd, dev_dir / bname, root)
-                time.sleep(1)
-                if proc.poll() is not None:
-                    log_tail = tail_of((dev_dir / bname).read_text(encoding="utf-8", errors="replace"))
-                    print(f"🔴 启动失败(进程即退,exit={proc.returncode}),日志 {bname}")
-                    body += [f"- 命令:`{boot_cmd}`", f"- 结果:🔴 进程即退(exit={proc.returncode})",
-                             f"- 日志:{bname}", "- 日志尾部:", "````", log_tail, "````"]
-                    fail_step = "启动失败"
-            if fail_step is None:
-                ok2, det2 = wait_health(health_url, health_wait)
-                print(f"{'✅ 服务就绪' if ok2 else '🔴 健康探测未过'}({det2})")
-                body.append(f"- 结果:{'✅' if ok2 else '🔴'} {det2}")
-                if mode == "local":
-                    body.append(f"- 日志:{bname}")
-                if not ok2:
-                    fail_step = "健康探测超时" if mode != "local" else "健康探测超时(启动失败或未就绪)"
-            sections.append(("2 启动", body))
+        # ---- 步 1 健康探测 ----
+        print(f"[健康探测] {health_url}(单次 {PROBE_TIMEOUT}s,间隔 {POLL_INTERVAL}s)")
+        ok1, det1 = wait_health(health_url, health_wait)
+        print(f"{'✅ 服务就绪' if ok1 else '🔴 健康探测未过'}({det1})")
+        sections.append(("1 健康探测", [
+            f"- 探测:{health_url}",
+            f"- 结果:{'✅' if ok1 else '🔴'} {det1}",
+            "- 服务由外部供给;不过时由用户处置外部服务后重跑,脚本不自起服务"]))
+        if not ok1:
+            fail_step = "健康探测未过"
 
-        # ---- 步 3 冒烟(A/B 级) ----
+        # ---- 步 2 冒烟(A/B 级) ----
         if fail_step is None and full:
             variables: dict[str, str] = {}
             rows = ["| SM | 名称 | 结果 | 断言明细 | 来源 |", "|---|---|---|---|---|"]
             npass = 0
             for e in entries:
-                ok3, det3 = run_smoke_entry(e, base_url, auth_headers, variables)
-                npass += 1 if ok3 else 0
-                print(f"{'✅' if ok3 else '🔴'} {e['id']} {e['name']} {'通过' if ok3 else '失败'}({det3})")
-                rows.append(f"| {e['id']} | {e['name']} | {'✅' if ok3 else '🔴'} | {det3} | {e['source']} |")
-                if not ok3:
+                ok2, det2 = run_smoke_entry(e, base_url, auth_headers, variables)
+                npass += 1 if ok2 else 0
+                print(f"{'✅' if ok2 else '🔴'} {e['id']} {e['name']} {'通过' if ok2 else '失败'}({det2})")
+                rows.append(f"| {e['id']} | {e['name']} | {'✅' if ok2 else '🔴'} | {det2} | {e['source']} |")
+                if not ok2:
                     fail_step = "冒烟失败"
             print(f"[冒烟] {npass}/{len(entries)} 条通过")
-            sections.append((f"3 冒烟(共 {len(entries)} 条,{npass} 条通过)", rows))
+            sections.append((f"2 冒烟(共 {len(entries)} 条,{npass} 条通过)", rows))
 
     except BaseException as ex:  # noqa: BLE001 —— 未预期异常兜底留档后重抛(含 KeyboardInterrupt)
         head = _shared.git_head(root)
         gate = gate_guard_note(root, req)
         sections.append(("异常中断", [f"- 异常:{type(ex).__name__}: {ex}",
-                                     "- 服务停止由 finally 保证;留档后异常向上传播"]))
-        boot_log_field = bname if (mode == "local" and proc is not None) else "-"
-        write_archive(dev_dir, vname, req, tier, mode, full,
-                      f"未通过(异常中断:{type(ex).__name__})", gate, head,
-                      boot_log_field, sections)
+                                     "- 留档后异常向上传播"]))
+        write_archive(dev_dir, vname, req, tier, full,
+                      f"未通过(异常中断:{type(ex).__name__})", gate, head, sections)
         raise
-    finally:
-        # ---- 步 4 停服务(finally 统一出口;stop_service 幂等,正常路径不会双重停止) ----
-        if proc is not None:
-            stop_service(proc)
 
-    # ---- 步 5 留档 ----
+    # ---- 步 3 留档 ----
     head = _shared.git_head(root)
     gate = gate_guard_note(root, req)
     today = time.strftime("%Y-%m-%d")
     status = f"通过({today})" if fail_step is None else f"未通过({fail_step})"
     env_note = f"sdlc/env/dev.md ｜ 冒烟清单 smoke.md({smoke_count} 条)" if full else "sdlc/env/dev.md"
     sections.append(("环境", [f"- 配置:{env_note}", f"- 开发放行守卫:{gate}", f"- 验证时 HEAD:{head}"]))
-    boot_log_field = bname if (mode == "local" and proc is not None) else "-"  # local 实际日志名/其余记「-」
-    path = write_archive(dev_dir, vname, req, tier, mode, full, status, gate, head,
-                         boot_log_field, sections)
+    path = write_archive(dev_dir, vname, req, tier, full, status, gate, head, sections)
     if fail_step is None:
-        print(f"{OK} 开发完成验证通过({tier} 级:{'全量(冒烟)' if full else 'compile+boot'}),留档:{path}")
+        print(f"{OK} 开发完成验证通过({tier} 级:{'健康探测+冒烟' if full else '健康探测'}),留档:{path}")
         return 0
     print(f"{NG} 开发完成验证未通过({fail_step}),留档:{path}——按留档失败步修复后重跑本命令(新轮次留档)")
     return 1

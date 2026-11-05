@@ -2,6 +2,14 @@
 
 ## 未发布
 
+sdlc-test dev 阶段简化：服务供给走死路径——local 模式（脚本构建+起停）整段移除，服务一律由外部供给（IDE/手起），默认代码已更新、服务已重启（开发者保证，脚本不核查新代码加载）。起因：实测中 agent 反复摇摆于「用已有服务还是自己打包启动」，判定成本高；且 local 模式存在端口被既有服务占用时「影子进程静默死亡、健康探测命中外部服务」的假通过缺陷。对照官方 Agent Skills 最佳实践（避免提供过多选项、只解决真实问题不预留想象需求）裁定删除而非降级保留。
+
+- **verify_dev.py**（637→529 行）：编排收缩为 前置校验 → 健康探测 → 冒烟（A/B）→ 留档；删除 构建/启动命令、boot 日志、进程组 SIGTERM→SIGKILL 清理整套机制；留档头部去 启动模式/boot 日志 两字段（余五字段），执行范围文案改「健康探测+冒烟(A/B 级)／健康探测(C 级)」；env/dev.md 收缩为 启动/冒烟 两节（无模式节）
+- **SKILL.md**：阶段 1.5 删环境三问（③凭据纪律内联保留——DDL/token 类第一选项请用户出手）；分级措辞 C 级=健康探测；description 同步（compile/boot/smoke → health probe + smoke against an externally supplied service）
+- **guard_exec.py**：检查 5 的 boot 日志核验保留但仅为存量 local 留档兼容（现行留档无该字段，检查自然跳过，存量 local 留档缺 boot 日志会被提示按新流程重跑）；补救提示改「C 级最轻：仅启动一节」
+- **配置/文档/评估同步**：env-template 开发验证档改两节模板；eval-8 输入/expected_behavior/判负红线同步（新增红线：绕过外部服务自行打包起服务执行验证）；workflow（mermaid B6 节点＋§4/§6 表）、faq（Q69/术语表）、project-setup（dev.md 行）三处 compile/boot 表述同步
+- **迁移**：存量项目 dev.md 删 模式/构建 节与 启动命令 即可；存量 local 留档按新流程补跑一份即过
+
 新增 **sdlc-handoff**（第 10 个 skill）：跨 agent 通用的会话交接——旧会话把当前任务压成一张自足的交接卡，新会话凭卡接手并先做 git 漂移校验，再直接继续。不绑定任何具体 agent 的目录、环境变量、工具名或斜杠行为。
 
 - **write / resume / list 三动作**：write 先用脚本采集 git 硬事实再动笔，正文 8 段、≤120 行、禁贴 diff，「已完成」每项显式标注 已跑通/仅编译/未验证，并单列「已否决方案」防新会话重走死路；resume 比对 repo/branch/head/dirty_files 报告漂移（只报告不阻断），给 ≤10 行接手确认后直接执行 next，不重做已完成步骤、不推翻已记录决策；list 按修改时间列已有卡并标 stale。

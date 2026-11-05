@@ -27,9 +27,10 @@
      dev/verify-*.md 最新一份头部「验证状态」= 通过（「通过(人工降级,…))」
      形态放行但显式 ⚠️ 警示）；留档字段读取一律限定头部区块（首个 ## 标题前，
      经 _shared.header_kv——正文插行伪造状态不识别）；交叉校验四项——验证时
-     HEAD ≠ 当前 HEAD → 拦（代码已变更，验证过期）；local 模式须有同轮
+     HEAD ≠ 当前 HEAD → 拦（代码已变更，验证过期）；存量 local 留档须有同轮
      boot-*.log（优先读留档头部「boot 日志」字段，旧留档缺失时按文件名
-     verify-→boot- 推导）；A/B 级留档冒烟明细条数 = smoke.md 条数（条目标题
+     verify-→boot- 推导——现行 verify_dev 已无 local 模式，该字段缺省时
+     检查自然跳过）；A/B 级留档冒烟明细条数 = smoke.md 条数（条目标题
      口径经 _shared.SM_HEAD，与 verify_dev.parse_smoke 同源）；C 级留档遇
      A/B 分级 → 拦（tier 已升级）
 """
@@ -54,8 +55,9 @@ def fail(msgs: list[str], hints: list[str] | None = None) -> int:
 
 
 def strip_fences(text: str) -> str:
-    """剥离四反引号围栏块(verify_dev 留档用 ```` 包命令/日志输出尾部,围栏行固定
-    无缩进):围栏内形如 `| SM-xx | … |` 的构建日志引用行不参与留档反查计数。"""
+    """剥离四反引号围栏块(存量 local 留档用 ```` 包构建/日志输出尾部,围栏行固定
+    无缩进;现行留档无围栏,剥离保持无害):围栏内形如 `| SM-xx | … |` 的
+    构建日志引用行不参与留档反查计数。"""
     return re.sub(r"(?ms)^````\n.*?\n````$", "", text)
 
 
@@ -190,7 +192,7 @@ def main() -> int:
                          "或完成 sdlc-gate 裁决使「评审状态=已放行」。处理后重跑本命令）")
         if dev_failed:
             hints.append("（开发完成验证补救：按 references/env-template.md「开发验证档」创建 sdlc/env/dev.md"
-                         "（C 级最轻：仅「构建」「启动」两节），再运行 /sdlc-test dev"
+                         "（C 级最轻：仅「启动」一节），再运行 /sdlc-test dev"
                          "（或 python3 <skill 目录>/scripts/verify_dev.py <项目根> <需求名>）生成留档。"
                          "处理后重跑本命令）")
         return fail(msgs, hints)
