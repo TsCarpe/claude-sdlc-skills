@@ -122,7 +122,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 仅当平台显示全部问题已答复（`answered == totalQ`）：
 
 1. 本地重跑 sdlc-intent 得最新 digest。
-2. 合成**重写版**标准文档 markdown。语义（需求方拍板）：**以原始需求全文快照为底稿**，把体检定论与已答复澄清结论逐条消化进正文，整合出完整可用的需求定稿——开发拿这一份即可开工、AI 读这一份即可获得需求的全貌（规则全集）、边界（范围/不做/假设）与逻辑（状态机/矩阵/校验链）。结构：元信息头（编号/迭代/合成时间/**质检依据快照时间**/答复进度）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案标注 + 废弃条款删除线 + ⚠️ 假设口径；逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录：澄清结论表。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台渲染时自动链接化）。**逐项过 [references/standard-doc-spec.md](references/standard-doc-spec.md) 的合成规则与质量自查清单。**
+2. 合成**重写版**标准文档 markdown。语义（需求方拍板）：**以原始需求全文快照为底稿**，把体检定论与已答复澄清结论逐条消化进正文，整合出完整可用的需求定稿——开发拿这一份即可开工、AI 读这一份即可获得需求的全貌（规则全集）、边界（范围/不做/假设）与逻辑（状态机/矩阵/校验链）。结构：元信息头（两列表格 5 行：编号/风险分级/版本依据（含**质检依据快照时间**）/澄清进度/废弃条款，头部不含记号说明——由平台 UI 承载）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案标注 + 废弃条款删除线 + ⚠️ 假设口径；逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录：澄清结论表。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台渲染时自动链接化）。**逐项过 [references/standard-doc-spec.md](references/standard-doc-spec.md) 的合成规则与质量自查清单。**
 3. **给用户过目合成结果**。
 4. `POST /api/requirements/<reqId>/publish`，body `{"standardMd":"<markdown>"}`。
 5. 本地归档 `intake/standard-<YYYYMMDD>.md`（与拉取落盘同形：首行只读标记 + 刚发布的正文，格式见第 2 节第 4 步——同一文件名不能因为入口不同而形态不同）。
@@ -156,7 +156,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 2. `GET /api/requirements/<reqId>` 看卡状态：`submitted/reviewing/clarifying` → 停（发布后才有开发包）；**`changed` → 默认停**，逐项列明中间态风险（增量合并已重写 FR 追踪表与 digest，design/issues 可能仍是旧版——拉到的是「新 FR + 旧设计 + 旧 issues」的拼接），用户确认照拉时**强制 only: 单产物**；`published` → 继续
 3. 对照 `.platform.pulled` 凭据逐产物比对（结构见 dev-bundle-merge.md「凭据与重拉」）：无变化默认跳过该产物；全部无变化 → 报告「已对齐」结束
 
-**`only:<产物>`**（`standard|design|cases|gate|intake`）：只处理该产物——前置检查链照过，比对与落盘只做这一项，其余产物**不比对、不落盘、不报缺失**。开发只要标准需求文档时的最轻路径：`pull-dev-bundle <需求名> only:standard`（旧版安装的 `pull-artifacts` 不落 standard，这条是唯一稳定通道）。
+**`only:<产物>`**（`standard|design|cases|gate|intake`）：只处理该产物——前置检查链照过，比对与落盘只做这一项，其余产物**不比对、不落盘、不报缺失**。它是**末位修饰词**：需求名本身可含空格（如「V3.6.2 手机端集备活动优化」），`only:` 之前的内容整体即需求名。开发只要标准需求文档时的最轻路径：`pull-dev-bundle <需求名> only:standard`（旧版安装的 `pull-artifacts` 不落 standard，这条是跨版本唯一稳定通道）。
 
 **各产物拉取与落盘**：
 

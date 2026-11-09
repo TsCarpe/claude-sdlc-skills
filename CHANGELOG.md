@@ -2,6 +2,12 @@
 
 ## 未发布
 
+sdlc-sync 标准需求文档元信息头定形：spec 原来只列字段不锁形态，合成出的头部是一行多字段长段，平台前端 marked 默认 `breaks:false` 丢失单换行后 8 个字段糊成一坨。按 Agent Skills 最佳实践「一致性关键的输出用低自由度 verbatim 模板」改为内嵌模板，并同步精简字段（只留高价值信息）。平台前端配套 marked `breaks:true` 兜底已发布冻结文档。
+
+- **standard-doc-spec.md**：§2 结构骨架下方内嵌 verbatim 元信息头模板——两列表格固定 5 行（需求编号/风险分级/版本依据/澄清进度/废弃条款），头部止于表格；删迭代字段与统计类括注（块数/媒体数），三时间戳（原文版本/质检快照/合成时间）合并为「版本依据」一行；符号/引用记号的语义说明不再写入文档（平台级通用约定由平台 UI 承载，写进每份文档只是复读占注意）；§4 自查清单「元信息头完整」改为「按模板 5 行、不含记号说明」
+- **SKILL.md / payload-schema.md**：头部字段清单口径同步（编号/迭代/合成时间/质检快照/答复进度 → 两列表格 5 行；记号说明由平台 UI 承载）
+- **eval-d-publish-confirm**：expected_behavior 补头部形态断言（表格 5 行、无统计括注、头部不含记号语义说明）
+
 sdlc-sync pull-artifacts 增加 standard 落盘，下游三 skill 需求基准提档：此前 standard 只有 pull-dev-bundle（开发包语义）一条通道，且 pull-artifacts 红线「不改 standard-*.md」明确禁写——发布定稿拉不到轻通道；设计/用例/评审三个 skill 的输入清单里也没有 standard，即使落盘下游也不读。后端零改动（`GET /api/requirements/{id}` 详情已含 `standard{markdown,version,pushedAt}`）。
 
 - **pull-artifacts**：落盘清单三件套 → 四件（新增 `intake/standard-<拉取日YYYYMMDD>.md`，`detail.standard` 原文落盘，仅发布后存在，未发布跳过并提示）；同名先比对再覆盖、跨日重拉留旧文件下游按文件名日期最大取最新；写回 `.platform.pulled.standard` 凭据（与 pull-dev-bundle 同键）；changed 卡提示补「standard 为变更前发布版，重发布后需重拉」
@@ -11,6 +17,7 @@ sdlc-sync pull-artifacts 增加 standard 落盘，下游三 skill 需求基准�
 - **承接口径同步**（避免与新优先级打架）：sdlc-test 进度清单/独立性红线/static 回退条件、sdlc-design 定位段/确认点②话术、gate issue-template CONTRACT 行 + cross-check-guide 独立推导前提；eval 三处同步断言（sdlc-test eval-1 输入优先、gate eval-3 独立性 ×2、design eval-6 并行纪律）；docs 四处口径（project-setup sdlc-design 行、large-req-playbook 用例并行产出节、workflow sdlc-sync 能力行、sdlc-test-design 架构图 + D11）
 - **幂等与取证补全**（验收缺口回填）：`pull-artifacts` 第 4 步落盘前先比对 `.platform.pulled.standard.version`——相同即跳过并提示「standard 已对齐」（凭据缺失视为未对齐）；此前比对口径只写在 dev-bundle-merge 的表格里，主干读到第 4 步不会自然执行。落盘内容改为「一行只读标记 + 平台原文」，标记含 reqId/version/拉取日，本地手改一眼可见（标记行不计入正文一致性比对，对齐 design.md 平台定稿锚点模式）
 - **拉取汇报**：命令收尾必须打印本次落盘路径清单，standard 给确切文件名不写通配（跨日会累积多份，下游 AI 话术要能直引），跳过产物（已对齐/未发布）逐项说明原因
+- **`only:<产物>` 语义显式化**：pull-dev-bundle 前置检查链后写明——只做该产物的比对与落盘，其余产物不比对、不落盘、不报缺失。开发只要定稿时的最轻路径 = `pull-dev-bundle <需求名> only:standard`（旧版安装的 pull-artifacts 根本不落 standard，这条是跨版本唯一稳定通道；平台「复制给开发」按钮复制的就是它）
 - 平台侧零改动；pull-dev-bundle 行为不变（eval-g 无需更新）
 
 sdlc-test dev 阶段简化：服务供给走死路径——local 模式（脚本构建+起停）整段移除，服务一律由外部供给（IDE/手起），默认代码已更新、服务已重启（开发者保证，脚本不核查新代码加载）。起因：实测中 agent 反复摇摆于「用已有服务还是自己打包启动」，判定成本高；且 local 模式存在端口被既有服务占用时「影子进程静默死亡、健康探测命中外部服务」的假通过缺陷。对照官方 Agent Skills 最佳实践（避免提供过多选项、只解决真实问题不预留想象需求）裁定删除而非降级保留。
