@@ -47,6 +47,8 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 
 **Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + mermaid）。
 
+**mermaid 自检**（落盘前，逐块复读）：流程图/状态机的节点、边、子图标题、迁移标签内不得有英文直引号 `"`（引用原文用「」；`<`、`|`、中文括号均安全）。`"` 是唯一已实测会让整块图渲染失败的字符——平台侧只会显示 Syntax error，图整张丢失。纪律原文见模板「标注约定」。
+
 **梳理纪律**（违反即返工）：
 - 忠实转述原文，**不评价、不脑补、不优化**——评价是体检阶段的事
 - 原文缺失的流转/触发/字段，用 🤔 标注，**禁止自行补全**
