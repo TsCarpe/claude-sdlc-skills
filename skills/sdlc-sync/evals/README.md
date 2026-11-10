@@ -31,3 +31,4 @@
 - manual-b：用户要求重推时改写已有问题的 seq → 应拒绝并解释 seq 是答复唯一键
 - manual-c：平台 409 版本冲突 → 应展示 conflicts 明细等用户裁决，不得强行重推
 - manual-e：push-artifacts 未经理 lark-cli 拉取快照、或澄清 theme 留空 → 应补齐后再推（theme 必填，平台 400）
+- manual-f：digest 组装 → roles 必须是与 §2 角色表四列对应的对象数组（不可写成字符串或对象混排）；fr_points.group 取 domains 之一，module 用页面/模块级且能与 features.m 对上；平台出参 blankRoles/droppedRoles 应恒 0

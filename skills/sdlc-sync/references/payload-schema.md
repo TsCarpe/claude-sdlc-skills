@@ -44,14 +44,17 @@
   "digest": {
     "summary": "一段话需求概述（可含换行）",
     "risk_tier": "A",
-    "roles": ["参评人", "活动管理员"],
+    "roles": [
+      {"role": "参评人", "duty": "提交作品", "scene": "报名与作品提交", "src": "角色·1"},
+      {"role": "活动管理员", "duty": "创建活动、审核", "scene": "评选活动管理", "src": "角色·2"}
+    ],
     "features": [
       {"role": "运营管理员", "m": "⭐ 评选活动管理（列表）", "func": "列表/筛选/分页",
        "cov": "✅有详述", "src": "详述6.1"}
     ],
     "fr_points": [
       {"id": "需求.FR-01", "name": "向导结构：五步固定、逐级校验",
-       "source": "详述6.2.1/3", "group": "§7.1 创建评选活动（五步向导）", "module": "评选活动管理（列表）"}
+       "source": "详述6.2.1/3", "group": "评选活动管理", "module": "评选活动管理（列表）"}
     ],
     "flows": [
       {"role": "运营管理员", "step": "创建评选活动（五步向导）", "next": "提交审核",
@@ -87,6 +90,7 @@
 }
 ```
 
+- `digest.roles[]`：角色对象 `{role, duty, scene, src}`，与 digest §2 角色表四列 1:1；`role` 必填（空 role 丢弃）。旧字符串形态仍兼容——平台归一为 `{role:<str>, duty:"", scene:"", src:""}`。
 - `items[].level`: `red | yellow | blue`
 - `items[].seq` 是平台答复唯一键；平台校验 `[A-Za-z0-9._-]{1,32}`（fullmatch，非法 400——seq 进 REST 路径段），且 (req_id, seq) 唯一（payload 内 seq 重复 400）；重推按 seq 保留平台已答内容（同 seq 同问题文本才携带，P 编号漂移不携带）。**重推按来源合并**：删机器行（origin=skill/incremental）、保留 local 行（评论升级的 L 系）——`L` 前缀编号由平台分配，skill 清单不携带
 - `items[].theme` **必填**（缺失 400）；取值 = 需求域，与 `audit.items[].group` 同一体系、同一顺序
@@ -95,7 +99,7 @@
 - `items[].layer`（可选）：命中层号 `"1"-"7"` 字符串，层名与 sdlc-intent 的 dimensions.md 七层逐层对齐（1 概念 … 7 外部参照）；**不设 0 号**——维度外「补充」类命中不携带 layer（前端落「未分类」桶，不发明无出处层名）；平台宽进归一（数字 `"3"`/`3` → `"3"`，越界归空串）
 - `audit.items[].layer`（可选）：同 `items[].layer` 的 1-7 体系（已定论卡同样可见维度，点亮就绪度覆盖地图）；存量 id 带「体检.」前缀，所有消费（已定论判定、data-pid、跳转匹配）一律剥前缀——不强制规范化 id 形态
 - `fr_points[].id` 全局命名空间（`需求.FR-xx`），作为用例追溯外键与表单软校验数据源
-- `fr_points[].group` = 出处分组组头（注册表分组），`source` = 行级出处，`module` = 归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）
+- `fr_points[].group` = 需求域级出处分组组头（注册表分组），建议取 `domains[]` 之一；`source` = 行级出处，`module` = 页面/模块级归属功能模块（须与某 `features[].m` 去 `⭐ ` 后一致，双向索引）——`module` 是二级明细，禁止用子功能/子步骤另造一套名字
 - `domains[]` = 全局需求域顺序常量（平台级分组基准，体检/澄清共用）；缺省保留上次值
 - `digest.risk_tier`（可选）：需求级风险分级 `"A"|"B"|"C"`，非空时覆盖建卡值（后到为准——建卡早于定级的时序兜底）；FR 级分级不上平台
 - `digest.flows[]` / `digest.states[]`（可选）：§5 主流程步骤表 `{role,step,next,gap,src,anchor}` 与 §6 流转边表直投 `{obj,from,on,to,gap,src,anchor}`；`gap:true` = 原文断点行（`next`/`to` 填 `"?"`）；`states[].obj` 取自 §6 图题「图 N：<对象名> 状态机」的对象名；anchor 均可由 sdlc-intent 的 resolve_anchors.py 附加（同 features）
@@ -106,9 +110,10 @@
 - `fr_points[]`/`features[]`/`audit.items[]`/`items[]` 增可选 `anchor`（原文块 ID，可由 sdlc-intent 的 resolve_anchors.py 批量附加；非空时前端直达原文条款，缺省回退 needle 文本定位）
 - 副作用：状态 → `clarifying`；重复推送 = 覆盖（version+1）；`published` 后拒绝（快照随之冻结）
 - **changed 卡行为**：409「该需求处于变更中（changed），全量重推已关闭」——已发布需求的原文消化走平台增量通道（变更单 confirm → 增量质检合并 → 重新发布回 published 后全量通道重开；全量重推既会隐式吞掉 changed 态、又会按来源合并删掉增量接编的已答澄清项）；rebaseline 变更单例外，单放行一次
-- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N,"danglingPids":N}`
+- 返回 `{"ok":true,"items":N,"frPoints":N,"carriedAnswers":N,"changedQuestions":N,"snapshotUpdated":bool,"docUpdated":bool,"missingMedia":N,"danglingPids":N,"blankRoles":N,"droppedRoles":N}`
 - `missingMedia` 字段保留仅为出参形状兼容，**成功响应恒为 0**——媒体缺失即 409 拒收（缺失计数与前若干个 mediaId 见错误文案），doc 不落库，不再有宽松计数落库（媒体须全部上传成功后再推）；`changedQuestions` = seq 已存在但问题文本已变（P 编号漂移）的条数，这些条不携带旧答复
 - `danglingPids`（观察信号非守卫）：payload 内全部 `flows[].pids` 不属于（本 payload `items[].seq` ∪ 存量 `local` 行 seq）的计数——平台照常透传落库（宽进语义不变），前端点击悬空 pid 的「未定位」提示仍是交互兜底；持续 >0 说明生产端 pids 引用纪律失守，应查生成 prompt 遵循率而非平台行为
+- `blankRoles` / `droppedRoles`（观察信号非守卫）：`roles[]` 中空 `role` 与非 string/object 要素的丢弃计数——平台过滤后落库不阻断；持续 >0 说明生产端 roles 形态漂移（历史事故：对象被 `asText` 静默转空串）
 
 ## doc.guard 内容守恒契约
 
@@ -253,7 +258,7 @@ changed 卡（`card.status == "changed"`）下可正常拉取（面对重开 + �
 ## GET 端点（读）
 
 - `GET /api/requirements?iter=&status=` 需求列表（含 totalQ/answeredQ/caseCount 聚合）
-- `GET /api/requirements/{id}` 详情：card（含 riskTier、status：submitted/reviewing/clarifying/published/changed）、items（含 quote、`answerText`（同 /answers 口径）与 `options/module/layer`）、digest（features 含 src；flows/states 含 src/anchor/gap；flows 含 `pids` 数组）、audit（items 含 group/quote/relatedCases、`layer`）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、`standard{markdown,version,pushedAt}`（**仅发布后存在**；pull-dev-bundle 的 standard 来源）
+- `GET /api/requirements/{id}` 详情：card（含 riskTier、status：submitted/reviewing/clarifying/published/changed）、items（含 quote、`answerText`（同 /answers 口径）与 `options/module/layer`）、digest（`roles` 为 `{role,duty,scene,src}` 对象数组；features 含 src；flows/states 含 src/anchor/gap；flows 含 `pids` 数组）、audit（items 含 group/quote/relatedCases、`layer`）、`snapshot{md,at,version}`、`domains[]`、frPoints（含 source/group/module/**coveredBy**）、answered/totalQ、`standard{markdown,version,pushedAt}`（**仅发布后存在**；pull-dev-bundle 的 standard 来源）
 - `GET /api/requirements/{id}/design` 设计视图：`tier`、`repos[]`（多目标仓）、`skipDeclared{by,at}`（C 级轻量跳过声明，无正文）、`finalized{by,at,md,version}`（**version 每次 finalize 递增、首次 1**——重拉凭据）、`draft{md,taskId,updatedAt}`、`phase`: `skipped|final|draft|none`（pull-dev-bundle 只认 final=落盘 / skipped=记凭据不落文件）
 - `GET /api/requirements/{id}/gate` 门禁视图：`rounds[{roundNo,status:pending|released,openedAt,releasedAt,releasedBy,reviewMode,fanout,contextMode,issuesMd}]`——**issuesMd = 该轮 issues 文件 md 全文留档（ingest 时存），`null` = 平台留档功能上线前的存量轮**，此时 pull-dev-bundle 不产出 issues 投影（处置见 SKILL.md 第 7 节）；`issues[]`（最新轮结构化行：code/sev/theme/role/scene/quote/loc/basis/div/tradeoff/unit/filed/verdict(`""|revise|reject|query`)/verdictNote/verdictBy/verdictAt/revLocation/revStatus(`""|pending|done`)）；`units[]`（读面聚合，另有 `filed` 值 = 备案组）；`phase`: `blocked|running|summary|deciding|released`
 - `GET /api/fr-points?req_id=` 需求点编号集（表单软校验数据源）

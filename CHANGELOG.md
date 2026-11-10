@@ -2,6 +2,13 @@
 
 ## 未发布
 
+payload 契约 v1.7：`digest.roles[]` 由字符串数组改为角色对象 `{role, duty, scene, src}`（与 digest §2 角色表四列 1:1，`role` 必填、空值丢弃，存量字符串仍兼容归一）。起因：生成端按 §2 四列表产出对象，平台却按字符串数组消费，对象被 `asText` 静默转空串，前端角色区整排空胶囊。
+
+- **payload-schema.md**：roles 示例与键说明对象化；`fr_points[].group` 明确为需求域级出处分组（建议取 `domains[]`），`module` 为页面/模块级且须与 `features[].m` 去 `⭐ ` 一致；出参新增观察键 `blankRoles` / `droppedRoles`；GET 详情补 roles 对象形态
+- **digest-template.md**：§2 角色表补一行「每行 → `digest.roles[]` 对象（role/duty/scene/src 四列对应）」
+- **SKILL.md**：push-artifacts 的 digest 字段清单收窄为指针（字段细节只留 payload-schema，防双载体漂移）
+- **evals/README.md**：manual-f 补 roles 对象形态、group/module 粒度与观察键人工场景
+
 sdlc-sync 标准需求文档元信息头定形：spec 原来只列字段不锁形态，合成出的头部是一行多字段长段，平台前端 marked 默认 `breaks:false` 丢失单换行后 8 个字段糊成一坨。按 Agent Skills 最佳实践「一致性关键的输出用低自由度 verbatim 模板」改为内嵌模板，并同步精简字段（只留高价值信息）。平台前端配套 marked `breaks:true` 兜底已发布冻结文档。
 
 - **standard-doc-spec.md**：§2 结构骨架下方内嵌 verbatim 元信息头模板——两列表格固定 5 行（需求编号/风险分级/版本依据/澄清进度/废弃条款），头部止于表格；删迭代字段与统计类括注（块数/媒体数），三时间戳（原文版本/质检快照/合成时间）合并为「版本依据」一行；符号/引用记号的语义说明不再写入文档（平台级通用约定由平台 UI 承载，写进每份文档只是复读占注意）；§4 自查清单「元信息头完整」改为「按模板 5 行、不含记号说明」
