@@ -25,6 +25,7 @@
 - eval-g（`eval-g-pull-dev-bundle-fresh.md`）：pull-dev-bundle 空工作区全产物落盘——五类产物（intake/standard/design 锚点/cases 逐条 detail/gate 投影）+ .platform.pulled 凭据；判负含 pending 写已放行、锚点缺失、issuesMd=null 产残缺文件
 - eval-h（`eval-h-cases-block-merge.md`）：本地已有 cases.md 的 diff+确认+区块合并——过程数据保留、已下线用例保留标注、非 FR/静态.行保留；未确认即覆盖即判负
 - eval-i（`eval-i-design-anchored-reject.md`）：带平台定稿锚点的 design.md 拒绝本地增量修订、引导平台 design_rev；显式重开须警告脱离基线并随重写删锚点（sdlc-design 路由）
+- eval-j（`eval-j-standard-doc-check.md`，官方 JSON + 正反双 fixture）：publish 机检闭环——缺陷版（附录标题无 A 字样失明/矩阵 4 类 5 行/〔Pxx〕错挂/挂起预答）断言 FAIL 与失明 WARN 必报；健康版断言 0 FAIL 且 WARN ≤2（误报上限）；判负含失明报 PASS、预答未改写即放行
 
 **补充人工场景（一行清单，无独立文件）**
 

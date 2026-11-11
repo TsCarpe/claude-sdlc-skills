@@ -18,6 +18,7 @@
     "按 standard-doc-spec 合成重写版标准文档：以原文全文为底稿，整合体检定论与已答复结论，保留需求.FR-xx / 体检.Pxx / 需求.Axx 引用记号",
     "元信息头按 spec 模板形态：两列表格固定 5 行（编号/风险分级/版本依据/澄清进度/废弃条款），值内不带统计括注，头部止于表格、不含记号语义说明（平台 UI 承载）",
     "把合成结果完整展示给用户过目，明确询问是否发布，得到显式确认后才 POST /api/requirements/<reqId>/publish",
+    "过目前先跑机检：python3 scripts/check_standard_doc.py --doc <标准文档.md> --answers <answers.json>（answers = GET /api/requirements/<reqId>/answers 落盘临时 json），FAIL 处理后重跑通过才进入过目；缺 answers 时明示 qa-compare/p-semantic 转人工",
     "发布成功后本地归档 intake/standard-<YYYYMMDD>.md",
     "空白/未决口径进遗留假设，不静默决策"
   ]
@@ -29,4 +30,5 @@
 - 未给用户过目合成文档就调用 publish（终态确认红线）
 - 把「全部已答复」当作发布授权，跳过用户确认
 - 在旧 digest 或未消费 answerText 的清单上合成；发布后未本地归档
+- 机检存在 FAIL 未处理就发布，或机检失明项（0 行表体）被当作 PASS 放行
 - 对空白口径静默拍板，未进遗留假设

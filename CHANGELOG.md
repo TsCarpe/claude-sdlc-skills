@@ -2,6 +2,17 @@
 
 ## 未发布
 
+sdlc-intent / sdlc-sync 审计回流：对一次平台真实迭代的定稿产物做三方审计（盲评 + 保真度 + 机检），确认的缺陷回流进 skill；首批落地后机检脚本实测又暴露信任级缺陷——表格行正则遇「| P01 |」（竖线后空格）全失配、章标题硬依赖「附录 A」字面、且所有「检查目标 0 行」的路径都报 PASS。裁定：「没检查到 = 通过」是机检的信任级缺陷，全部检查项失明必报 WARN。
+
+- **scripts/check_standard_doc.py（sdlc-sync 新增，随目录分发）**：整体重构九点——①失明必报：qa-compare / p-coverage / strike / a-registry / matrix-assert 在附录或声明章找到 0 行时一律 WARN（提示确认标题写法），消灭「0 条一致」式假 PASS；②正则容错：章标题 `附录\s*A`、表行 `^\|\s*P\d+` / `^\|\s*\d+\s*\|`；③a-registry 口径：正文引用集排除遗留假设声明章（声明章内 A 号是登记不是使用）；④count-assert 智能滤噪：泛词/合计与分项语境/区间引用/无可数结构四类跳过且计数入明细不静默，触发面不收窄；⑤p-semantic 减噪：跳过标题/表头/短行；⑥answers 解析容错：坏 json/形态不符给明确错误并 exit 2；⑦阈值/容差/扫描窗口常量各附依据注释；⑧matrix-assert 补中文数字识别、断言后无表改 WARN；⑨argparse flag 式（--doc / --answers），用法示例带 python3 前缀
+- **standard-doc-spec.md**：§2 结构图删旧 5 列括注行（旧 5 列与真实平台产物 7 列本就不一致），定义附录 A/B/C 体系——A 澄清结论表必须（7 列）、B 章节编号与引用修正（3 列）、C 废弃条款清单（5 列），章标题须含「附录 A/B/C」字样（机检定位锚）；明确**自查结论不进定稿**（机检输出与人工档结论在发布确认时呈现，不落盘为文档章节）；§4 机检档 9 条全部加脚本项名锚、用法行改 flag 式并写明 answers 取数路径、删沿革叙事句
+- **SKILL.md / payload-schema.md**：publish 步骤 2 挂机检句（FAIL 必须处理后重跑；answers = publish 时 `GET /api/requirements/<reqId>/answers` 落盘临时 json——pull-answers 的 markdown 落盘产物机检不消费；缺 answers 时 qa-compare/p-semantic 跳过须明示）；「附录：澄清结论表」措辞同步为附录 A 口径（双载体漂移预防）
+- **sdlc-intent**：dimensions 第 2 层「触发缺失/歧义」扩模式④——异步/生成/通知类动作的触发链五要素（触发主体/时机/接收者/通道/跳转落点）未成链即阻断级；missed-patterns +3 条：触发链断节 `[已回流]`，状态时序矛盾、开放枚举封闭性留候选（审计中 P1 级、未达单次阻断回流线）
+- **evals**：sdlc-sync 新增 eval-j（官方 JSON + 正反双 fixture：缺陷版断言失明 WARN / 矩阵 FAIL / 错挂 WARN / 挂起预答由人工档发现，健康版断言 0 FAIL 且 WARN ≤2 误报上限）；sdlc-intent 新增 eval-14（触发链断节正例 + 完整动作不误报锚点）；eval-d 补「机检 FAIL 已处理才发布」断言与红线、eval-f 挂起断言补「口径列不含预答方向」；两个 evals/README.md 登记
+- **附录 D 处置**：spec 明确自查结果不落盘后，已发布文档中的「附录 D 质量自查」系按旧流程的合成发挥——存量只读不回改、按发布时行为留痕，下次发布起不再产生
+- **真实文档回归（只记数字与项名）**：qa-compare「0 条一致」假象 → 35 条逐条一致；matrix-assert FAIL 保留（自称 8 类 / 实际 9 行）；p-semantic 28 → 11（真命中 2 条保留，反向表述残余由 WARN 人工裁决兜住）；count-assert 噪音 10 → 4（真命中 1 条保留）；a-registry 口径修复后新暴露「声明未引用」2 条；fixture 双向自测：健康版 0 FAIL 0 WARN、缺陷版 FAIL 1 + WARN 4 全命中
+- **机检脚本收尾修正（评审回流）**：①p-coverage / p-semantic 正文标注正则 `〔P(\d{2})` 放宽为 `\d{1,3}`（spec §3 示例原写〔P3〕一位数，会被自己机检误报「正文无落点」，实测复现；示例同步改〔P03〕两位补零，与 qa-compare 表行/answers 键归一口径对齐）；②VAGUE_QUANTIFIERS 缩减为量词正则实际可命中的「一段/一处」（其余 8 个死条目删除，注释注明量词集扩展时同步补）；③count-assert 明细上下文折叠换行后截断（修明细内嵌跨行段落）；④SKILL.md publish 步骤 2 机检细节收缩为指针，answers 取数路径与「pull-answers 落盘产物机检不消费」辨析归 spec §4 单一权威
+
 payload 契约 v1.7：`digest.roles[]` 由字符串数组改为角色对象 `{role, duty, scene, src}`（与 digest §2 角色表四列 1:1，`role` 必填、空值丢弃，存量字符串仍兼容归一）。起因：生成端按 §2 四列表产出对象，平台却按字符串数组消费，对象被 `asText` 静默转空串，前端角色区整排空胶囊。
 
 - **payload-schema.md**：roles 示例与键说明对象化；`fr_points[].group` 明确为需求域级出处分组（建议取 `domains[]`），`module` 为页面/模块级且须与 `features[].m` 去 `⭐ ` 一致；出参新增观察键 `blankRoles` / `droppedRoles`；GET 详情补 roles 对象形态
