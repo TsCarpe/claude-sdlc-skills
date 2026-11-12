@@ -20,11 +20,11 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 2. SKILL.md frontmatter：`name` 必须 kebab-case（marketplace 校验）；`description` 中英混合（英文语义句 + 中文触发词），这是触发与 /plugin 列表展示的唯一入口
 3. **SKILL.md 保持精瘦**：细节放 references/，正文只留流程主干 + 指针；连续两层引用禁止（A 引 B、B 再引 C）
 4. 跨 skill 引用用**同级相对路径**（`../sdlc-doubt/SKILL.md`）并声明「单独安装时仅作来源说明」——不同用户安装 scope（全局/项目）不同，禁止写死绝对路径
-5. **脱敏红线**：不得出现真实项目名、公司名、内网地址、真实鉴权头字段、账号凭据；业务示例一律用中性虚构（商品/订单/评选活动类）。提交前跑：
+5. **脱敏红线**：不得出现真实项目名、公司名、内网地址、真实鉴权头字段、账号凭据；业务示例一律用中性虚构（商品/订单/评选活动类）。提交前跑机检（两级词表：fail 零容忍 / review 人工复核，词表与豁免清单在 `scripts/desens_words.json`——扩词改词表，不改脚本）：
    ```bash
-   rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\.|区域教学技能比赛|教学技能比赛" . --glob '!CHANGELOG.md' --glob '!.git' --glob '!.github/**' --glob '!CLAUDE.md'
+   python3 scripts/desens_scan.py
    ```
-   应零命中。注意：英文扫描零命中不等于脱敏通过——中文项目名、真实业务域词（比赛/培训/资源等）同样要人工核对并替换为中性虚构。
+   fail 级应零命中（CI 同款拦截，扫描范围=git 跟踪+未忽略的未跟踪文件）。注意：fail 零命中不等于脱敏通过——review 级泛词输出仍需人工核对；发现新的真实业务域词后补进词表 fail 级。
 6. 权限/配置示例只能新写条目，**禁止从任何本机 settings 文件复制**
 7.（软约定）**三段式规则三写同步**：三段式规则存在三处镜像（README「大需求三段式」/ `docs/workflow.md` §2 / `docs/large-req-playbook.md` 权威版）；改三段式规则时三处必须同步改（CI 无法机检此项，靠本条约定兜底）
 

@@ -119,15 +119,20 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 ### 5. publish —— 发布标准需求文档（重写版；changed 卡双重守卫）
 
-仅当平台显示全部问题已答复（`answered == totalQ`）：
+仅当平台显示全部问题**已处置**（`answered == totalQ`，其中挂起数看 `deferredQ`）：
 
 1. 本地重跑 sdlc-intent 得最新 digest。
-2. 合成**重写版**标准文档 markdown。语义（需求方拍板）：**以原始需求全文快照为底稿**，把体检定论与已答复澄清结论逐条消化进正文，整合出完整可用的需求定稿——开发拿这一份即可开工、AI 读这一份即可获得需求的全貌（规则全集）、边界（范围/不做/假设）与逻辑（状态机/矩阵/校验链）。结构：元信息头（两列表格 5 行：编号/风险分级/版本依据（含**质检依据快照时间**）/澄清进度/废弃条款，头部不含记号说明——由平台 UI 承载）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案标注 + 废弃条款删除线 + ⚠️ 假设口径；逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录 A · 澄清结论表（+ 按需附录 B 章节修正 / 附录 C 废弃清单，见 spec §2 附录体系）。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台渲染时自动链接化）。**逐项过 [references/standard-doc-spec.md](references/standard-doc-spec.md) 的合成规则与质量自查清单。**合成后运行 `python3 scripts/check_standard_doc.py --doc <标准文档.md> --answers <answers.json>` 机检，FAIL 必须处理后重跑（answers 取数路径与缺省行为见 spec §4 机检档）。
+2. 合成**重写版**标准文档 markdown。语义（需求方拍板）：**以原始需求全文快照为底稿**，把体检定论与已答复澄清结论逐条消化进正文，整合出完整可用的需求定稿——开发拿这一份即可开工、AI 读这一份即可获得需求的全貌（规则全集）、边界（范围/不做/假设）与逻辑（状态机/矩阵/校验链）。结构：元信息头（两列表格 5 行：编号/风险分级/版本依据（含**质检依据快照时间**）/澄清进度/废弃条款，头部不含记号说明——由平台 UI 承载）→ 概述与边界（本期范围/不做/术语/角色）→ 按业务域组织的定稿正文（原文规则全集 + ✅ 定案标注 + 废弃条款删除线 + ⚠️ 假设口径；逻辑载体文本化）→ 遗留假设（需求.Axx）→ 附录 A · 澄清结论表（+ 按需附录 B 章节修正 / 附录 C 废弃清单，见 spec §2 附录体系）。正文中保留 `需求.FR-xx`、`体检.Pxx`、`需求.Axx`、裸 `Pxx` 引用记号（平台渲染时自动链接化）。**逐项过 [references/standard-doc-spec.md](references/standard-doc-spec.md) 的合成规则与质量自查清单。**合成后运行 `python3 scripts/check_standard_doc.py --doc <标准文档.md> --answers <answers.json> [--json]` 机检（`--json` 输出供平台消费），FAIL 必须处理后重跑（answers 取数路径与缺省行为见 spec §4 机检档）。**FAIL 是平台硬门禁**：publish 侧机检 fail>0 一律 400 拒发（`confirmed` 也不放行——文档缺陷不是取舍），本地过检后再发。
 3. **给用户过目合成结果**。
-4. `POST /api/requirements/<reqId>/publish`，body `{"standardMd":"<markdown>"}`。
+4. 挂起项门禁（#11）——**前置分流**：读 `GET /api/requirements/<reqId>` 的 `deferredQ` 与 `items[].status == 'deferred'`（此步在合成前亦可先查，红级挂起不必白做一轮合成）。
+   - 存在**红级**挂起：停止发布，提示用户先答复或驳回（红级不可确认放行）。
+   - 仅有黄/蓝级挂起：向用户列出挂起清单（seq/级别/问题），**显式确认**并取得确认理由后继续。
+   `POST /api/requirements/<reqId>/publish`，body `{"standardMd":"<markdown>"}`；黄/蓝挂起确认后带
+   `{"standardMd":"<markdown>","confirmed":true,"confirmNote":"<用户确认理由>"}`——**confirmNote 必填**（空理由平台 400 拒绝，与变更单确认人留痕同基调）。平台返回
+   409 + `pendingAssumptions` 属**并发兜底**（前置分流后仍有新挂起落入时才会出现）：展示清单并等待用户确认后重发——不得静默忽略或自行确认。
 5. 本地归档 `intake/standard-<YYYYMMDD>.md`（与拉取落盘同形：首行只读标记 + 刚发布的正文，格式见第 2 节第 4 步——同一文件名不能因为入口不同而形态不同）。
 
-**红线**：发布是终态动作（平台锁定答复、拒绝产物重推、快照冻结），必须用户显式确认；合成只整合不发明——发现的空白进遗留假设，不得静默决策。
+**红线**：发布是终态动作（平台锁定答复、拒绝产物重推、快照冻结），必须用户显式确认；合成只整合不发明——发现的空白进遗留假设，不得静默决策。changed 卡重发布同样过机检硬门禁——**存量旧头文档（旧格式元信息头）重发布前须先升格到当前规范**，否则 meta-header FAIL 拒发。
 
 ### 6. push-cases —— 推测试用例登记表
 
@@ -156,7 +161,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 2. `GET /api/requirements/<reqId>` 看卡状态：`submitted/reviewing/clarifying` → 停（发布后才有开发包）；**`changed` → 默认停**，逐项列明中间态风险（增量合并已重写 FR 追踪表与 digest，design/issues 可能仍是旧版——拉到的是「新 FR + 旧设计 + 旧 issues」的拼接），用户确认照拉时**强制 only: 单产物**；`published` → 继续
 3. 对照 `.platform.pulled` 凭据逐产物比对（结构见 dev-bundle-merge.md「凭据与重拉」）：无变化默认跳过该产物；全部无变化 → 报告「已对齐」结束
 
-**`only:<产物>`**（`standard|design|cases|gate|intake`）：只处理该产物——前置检查链照过，比对与落盘只做这一项，其余产物**不比对、不落盘、不报缺失**。它是**末位修饰词**：需求名本身可含空格（如「V3.6.2 手机端集备活动优化」），`only:` 之前的内容整体即需求名。开发只要标准需求文档时的最轻路径：`pull-dev-bundle <需求名> only:standard`（旧版安装的 `pull-artifacts` 不落 standard，这条是跨版本唯一稳定通道）。
+**`only:<产物>`**（`standard|design|cases|gate|intake`）：只处理该产物——前置检查链照过，比对与落盘只做这一项，其余产物**不比对、不落盘、不报缺失**。它是**末位修饰词**：需求名本身可含空格（如「V3.6.2 手机端评选活动优化」），`only:` 之前的内容整体即需求名。开发只要标准需求文档时的最轻路径：`pull-dev-bundle <需求名> only:standard`（旧版安装的 `pull-artifacts` 不落 standard，这条是跨版本唯一稳定通道）。
 
 **各产物拉取与落盘**：
 
@@ -164,6 +169,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 |---|---|---|---|
 | intake | detail.digest/audit + answers | `intake/` 三件套 | **完整执行第 2 节 pull-artifacts 的三件套部分——digest/audit/pm-checklist（含其全部红线），此处不重述** |
 | standard | detail.standard | `intake/standard-<拉取日YYYYMMDD>.md` | **落盘规则与凭据复用第 2 节 pull-artifacts 第 4 步（同键），此处不重述**；仅发布后存在 |
+| assumptions | detail.standard.content.assumptions | `intake/assumptions-<拉取日YYYYMMDD>.md` | #14 假设投影：发布快照的遗留假设结构化清单（编号/状态/pending/refs/inBody 两列表 + assumptionSummary 汇总行）落盘给开发入口；未定案（pending）条数>0 时**开发包含未定案假设警告**；content 缺该键（旧快照/未跑机检）→ 跳过并提示，不阻断（格式见 dev-bundle-merge.md「假设投影」） |
 | design | `GET …/design` | `design/design.md` | phase=final → finalized.md 落盘 + 头部加**平台定稿锚点**（格式见 dev-bundle-merge.md，锚点后本地不可修改）；skipped → 不落文件、.platform 记 skipDeclared、提示本地 plan.md 不受锁；draft/none → 跳过 + 开发包不完整警告；本地已有**无锚点** design.md → 内容相同仅补锚点行，不同报告差异等确认后覆盖 |
 | cases | `GET /api/cases?reqId=` + **逐条 detail** | `test/cases.md` | list 面无 pre/steps/expect，明细必须逐条 detail；本地已有 → diff 报告（**删除项须列明将带走的执行历史**）等用户确认后按区块合并（见 dev-bundle-merge.md）；本地无 → 按模板全量重建；0 条跳过提示。平台用例评论不回流（凭据检测不到评论变化），提示人工上平台查看 |
 | gate | `GET …/gate` | `review/issues-<openedAt日期YYYYMMDD>-r<轮号>.md` | 取最新轮；**issuesMd=null（平台升级前存量轮未留档）→ 不产出 issues 文件**，提示两条出路：① 本地通道过关卡（guard_dev 显式豁免（基线=无）+ cases 头人工置已确认过关卡1）；② 平台后续发生实质变更自然触发 reopen，新轮有留档、届时重拉。否则以平台留档 md 原文为底 + 裁决回填（头部状态/裁决列/落点列/汇总表，见 dev-bundle-merge.md「gate 投影」） |

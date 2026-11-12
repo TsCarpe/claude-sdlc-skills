@@ -17,6 +17,8 @@
 | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) | 决策记录 | 跨产物 ID 体系（命名空间.编号）与交界衔接机制（已实施） | 产物互引断链 / 要新增产物类型时 |
 | [intent-audit-v2.md](intent-audit-v2.md) | 决策记录 | sdlc-intent 体检 v2.0：六层→七层与三引擎架构——缺失类缺陷的 oracle 在文档外（批0-3 已全部实施，三引擎齐备） | 要改体检维度、检查项或引擎前 |
 | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) | 决策记录 | 阿里《AI Native 研发范式实践手册》对照分析：一线案例数据 + 四个优化点落地记录（C/H 决策类型、L/M/H 反馈层级、证据索引）+ 平台 roadmap | 想用一线大厂案例校准方向 / 要改 C/H 或反馈层级机制前 |
+| [standard-doc-review-v3.8.0-5.md](standard-doc-review-v3.8.0-5.md) | 评估记录 | 真实迭代（REQ-2026-044）定稿复核：12 项待补清单（P0/P1/P2）+ 机检实跑结果 | 想知道标准需求文档在真实需求上还差什么 / 要改合成规范前 |
+| [platform-quality-metrics-gaps.md](platform-quality-metrics-gaps.md) | 决策记录 | 由上一次复核倒推的机检与平台度量改造规格（15 条，含文件/现状/目标/验收） | 要改 check_standard_doc.py 的检查项或平台质量门禁时 |
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
 | [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
@@ -60,4 +62,6 @@
 | 产物间怎么互相引用？ | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) §2 命名空间注册表 |
 | 装完 skill 后项目侧还要配什么？ | [project-setup.md](project-setup.md) |
 | C 约束/H 假设、反馈层级标注怎么定的？ | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §4 |
+| 标准需求文档「够不够开工/够不够验收」怎么判？ | [standard-doc-review-v3.8.0-5.md](standard-doc-review-v3.8.0-5.md) P0 六项 + 机检盲区 |
+| 机检该加哪些检查项 / 平台该加哪些质量门禁？ | [platform-quality-metrics-gaps.md](platform-quality-metrics-gaps.md) |
 | sdlc-platform 平台下一步往哪走？ | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §6 |

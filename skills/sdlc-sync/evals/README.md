@@ -27,6 +27,8 @@
 - eval-i（`eval-i-design-anchored-reject.md`）：带平台定稿锚点的 design.md 拒绝本地增量修订、引导平台 design_rev；显式重开须警告脱离基线并随重写删锚点（sdlc-design 路由）
 - eval-j（`eval-j-standard-doc-check.md`，官方 JSON + 正反双 fixture）：publish 机检闭环——缺陷版（附录标题无 A 字样失明/矩阵 4 类 5 行/〔Pxx〕错挂/挂起预答）断言 FAIL 与失明 WARN 必报；健康版断言 0 FAIL 且 WARN ≤2（误报上限）；判负含失明报 PASS、预答未改写即放行
 - eval-k（`eval-k-meta-header.md`，官方 JSON + 三 fixture）：元信息头机检正反双向——合规版（5 行/键序一致/三时间锚）PASS 防误报；缺陷版（10 行头 + 统计括注 + 记号说明）三项违规须同时命中；blockquote 头版报「h1 后首个块不是两列表格」；判负含任一项失明或合规版误报
+- eval-l（`eval-l-standard-doc-noise-and-scope.md`，官方 JSON + 双 fixture + `--json`）：机检误报修复与范围纪律——clean 版断言体检段（`体检.P18、P19、P30` 续列 / `体检.P01~P30` 区间）不计幽灵、1.2 范围清单不被当错挂、引述计数不误报、无本期不做章；bad 版断言裸 `P21` 幽灵、含「或」的「五类 vs 4 条」真计数错误仍命中、本期不做章 >5% 报 WARN；另验 `--json` 四键恒定与空 answers 时 stdout 纯净；判负含误报、漏报、JSON 混入文本
+- eval-m（`eval-m-self-contained-failure-deferred.md`，官方 JSON + 双 fixture）：三盲区补盲正反双向——clean 版自包含声明一致（含「原型…报废」反向语境白名单不误报）、失败边有判定关键词、挂起项有遗留假设投影；bad 版自包含矛盾两处（页面示例为基准+详见附件）、`→ 生成失败` 无判定条件、挂起 P05 未投影（deferred-link WARN 与 p-coverage 连带 FAIL 并存）；判负含任一项失明或 clean 误报
 
 **补充人工场景（一行清单，无独立文件）**
 

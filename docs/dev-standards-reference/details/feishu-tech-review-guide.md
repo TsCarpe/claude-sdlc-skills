@@ -349,7 +349,7 @@ curl -sS "$BASE/api/interface/list_cat?catid=$CATID&token=$TOKEN" \
 **关键约束**：
 
 1. **业务含义必填**：YApi 字段的 `description` 必须写业务含义，不只写英文字段名（例如 `meetingId` 的 description 应为"AI 活动记录 ID"）。
-2. **list 类参数必须传合法 JSON 数组字符串**，不能传逗号分隔字符串。错误：`"V3.6.7,集备手机端"`；正确：`["V3.6.7","集备手机端"]`。
+2. **list 类参数必须传合法 JSON 数组字符串**，不能传逗号分隔字符串。错误：`"V3.6.7,评选手机端"`；正确：`["V3.6.7","评选手机端"]`。
 3. **JSON Schema 不做二次转义**：`req_body_other` / `res_body` 可直接传 JSON Schema 对象或对象字符串，不要外层再包引号。
 4. **更新前必须保留原始副本**：记录原始 interfaceId、原始 req/res schema、更新时间；失败时可回滚或人工比对。
 5. **批量更新必须先试写一个接口**：第一个接口更新后立即重新读取 YApi 详情，确认原字段未丢失，人工确认无误后，再继续处理剩余接口。

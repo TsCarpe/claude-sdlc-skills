@@ -76,3 +76,14 @@ SKILL.md 第 7 节的主干在此展开。本文件是 sdlc-sync 的操作细则
    - 落盘前扫 `review/`（一层，排除 exemptions/）：同名文件先比对再覆盖
    - **双向核对**：存在**轮号 ≥ 投影轮号**的任何本地 issues 文件 → 停，列两侧文件让用户裁决（latest_by_name 是日期优先，旧日期高轮号的本地待裁决轮不能被静默绕过）
    - 向用户注明：文件名日期 = 开轮日（openedAt），头部放行日 = releasedAt，两者可以不同
+
+## 假设投影（#14）
+
+输入：`GET /api/requirements/<reqId>` → `standard.content`（发布快照）。`content.assumptions` 缺键（旧快照/机检降级发布）→ 跳过并提示「平台快照无结构化假设（旧版发布）」，不阻断开发包其余产物。
+
+1. **落盘** `intake/assumptions-<拉取日YYYYMMDD>.md`，与 standard 落盘同日同键：
+   - 首行只读标记（与 standard 投影同形），声明本地不可编辑、以平台快照为准
+   - 两列表：`| 编号 | 状态 | 未定案 | 关联澄清 | 正文有落点 |`——逐条对应 `content.assumptions[]` 的 id/status/pending/refs（顿号连接）/inBody
+   - 尾部汇总行：`content.assumptionSummary` 的 total/pending
+2. **未定案警告**：`assumptionSummary.pending > 0` 时，开发包含警告行「本需求有 <N> 条未定案假设（见 assumptions 投影）——开发按「本期行文口径」列实现，遇口径冲突回平台澄清，不得自行决策」。
+3. **凭据**：`.platform.pulled` 与 standard 同键记录版本（standard 快照刷新则假设投影随之重拉）。

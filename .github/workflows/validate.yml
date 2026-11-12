@@ -125,10 +125,8 @@ jobs:
           print(f"OK: {len(declared)} skills 一致")
           EOF
 
-      - name: 敏感词防回归（应零命中）
-        run: |
-          ! rg -i --hidden "edu-region|临平|linping|saasstaffid|saasregionid|saastenantid|skill_contest|工作室|hailiang|10\.30\.|区域教学技能比赛|教学技能比赛" . \
-            --glob '!.git' --glob '!CHANGELOG.md' --glob '!CLAUDE.md' --glob '!.github/**'
+      - name: 敏感词防回归（desens_scan，fail 级应零命中）
+        run: python3 scripts/desens_scan.py
 
       - name: 守卫脚本 Python 语法检查（py_compile 逐文件）
         run: |

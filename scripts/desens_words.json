@@ -1,0 +1,49 @@
+{
+  "fail": [
+    "edu-region",
+    "临平",
+    "linping",
+    "saasstaffid",
+    "saasregionid",
+    "saastenantid",
+    "skill_contest",
+    "工作室",
+    "hailiang",
+    "10.30.",
+    "区域教学技能比赛",
+    "教学技能比赛",
+    "教研",
+    "备课",
+    "教案",
+    "课件",
+    "学案",
+    "试卷",
+    "声纹",
+    "集备",
+    "主备",
+    "单元计划",
+    "单元设计",
+    "活动纪要"
+  ],
+  "review": [
+    "教师",
+    "学校",
+    "学生",
+    "纪要",
+    "培训",
+    "比赛",
+    "资源"
+  ],
+  "excludes": [
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    ".github/**",
+    "scripts/desens_words.json",
+    "scripts/desens_scan.py"
+  ],
+  "notes": {
+    "fail": "零容忍:真实项目/公司/内网/凭据特征与真实业务强域词,命中即退出码 1(CI 拦截)。英文词大小写不敏感。",
+    "review": "泛词:业务上可能是中性用法(如通用会议纪要、培训体系示例),命中按文件汇总提示、人工复核;--strict 时计败。",
+    "excludes": "CHANGELOG/CLAUDE.md 按文件名匹配任意目录;.github/ 整目录;词表与扫描器自引用豁免。新增豁免必须在此登记并写明理由。"
+  }
+}
