@@ -26,6 +26,7 @@
 - eval-h（`eval-h-cases-block-merge.md`）：本地已有 cases.md 的 diff+确认+区块合并——过程数据保留、已下线用例保留标注、非 FR/静态.行保留；未确认即覆盖即判负
 - eval-i（`eval-i-design-anchored-reject.md`）：带平台定稿锚点的 design.md 拒绝本地增量修订、引导平台 design_rev；显式重开须警告脱离基线并随重写删锚点（sdlc-design 路由）
 - eval-j（`eval-j-standard-doc-check.md`，官方 JSON + 正反双 fixture）：publish 机检闭环——缺陷版（附录标题无 A 字样失明/矩阵 4 类 5 行/〔Pxx〕错挂/挂起预答）断言 FAIL 与失明 WARN 必报；健康版断言 0 FAIL 且 WARN ≤2（误报上限）；判负含失明报 PASS、预答未改写即放行
+- eval-k（`eval-k-meta-header.md`，官方 JSON + 三 fixture）：元信息头机检正反双向——合规版（5 行/键序一致/三时间锚）PASS 防误报；缺陷版（10 行头 + 统计括注 + 记号说明）三项违规须同时命中；blockquote 头版报「h1 后首个块不是两列表格」；判负含任一项失明或合规版误报
 
 **补充人工场景（一行清单，无独立文件）**
 

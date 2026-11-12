@@ -38,6 +38,13 @@ LIST_WINDOW = 1500
 # 仅收录计数正则量词集(段|项|类|条|处)实际可命中的组合;量词集扩展时同步补此处。
 VAGUE_QUANTIFIERS = {"一段", "一处"}
 
+# 元信息头模板键(spec §2:两列表格固定 5 行不增删,逐字照抄形态)
+META_KEYS = ["需求编号", "风险分级", "版本依据", "澄清进度", "废弃条款"]
+# 值内统计类括注(块数/媒体数等细节不进头部——2026-11 前旧文档高频缺陷,044 实测漏网)
+STAT_BRACKET = re.compile(r"\d+\s*[块件]|块表|媒体\s*\d+|\d+\s*条评论|评论\s*\d+\s*条")
+# 记号语义说明(spec §2:头部止于表格,符号/引用记号语义由平台 UI 承载,不写入文档任何位置)
+MARK_LEGEND_PAT = re.compile(r"^##.*阅读.*约定|固定记号|引用记号四类|记号(语义)?说明", re.M)
+
 
 def norm(s: str) -> str:
     """宽松归一:去空白与常见标点,用于文本一致性比对。"""
@@ -300,6 +307,53 @@ class Checker:
         n = self.doc.count('{"kind":')
         self.add("FAIL" if n else "PASS", "raw-json", [f"出现 {n} 处裸 JSON"] if n else ["零裸 JSON"])
 
+    def check_meta_header(self):
+        """元信息头按模板(spec §2):紧跟 h1 两列表格固定 5 行、键序一致、值内无统计类括注、
+        全文无记号语义说明。旧格式(11 行头/blockquote 头/阅读约定章)在此 FAIL,合成侧重跑修复。
+        「版本依据」缺时间锚降为 WARN(原文/快照/合成三时间齐备——快照时间是依据版本的锚)。"""
+        details, warn = [], []
+        lines = self.doc.splitlines()
+        h1 = next((k for k, l in enumerate(lines) if l.startswith("# ")), None)
+        if h1 is None:
+            self.add("FAIL", "meta-header", ["未找到 h1 主标题,无法定位元信息头"])
+            return
+        k = h1 + 1
+        while k < len(lines) and not lines[k].strip():
+            k += 1
+        tbl: list[list[str]] = []
+        while k < len(lines) and lines[k].lstrip().startswith("|"):
+            tbl.append([c.strip() for c in lines[k].strip().strip("|").split("|")])
+            k += 1
+        if not tbl or not all(len(r) == 2 for r in tbl):
+            details.append("h1 后首个块不是两列表格(模板:| 项 | 内容 | + 固定 5 数据行)")
+        else:
+            if tbl[0] != ["项", "内容"]:
+                details.append(f"表头非「项|内容」:{'|'.join(tbl[0])}")
+            # 跳过分隔行(|---|---|)后即数据行
+            rows = tbl[2:] if len(tbl) >= 2 and set(tbl[1][0] or "-") <= set("-: ") else tbl[1:]
+            if len(rows) != len(META_KEYS):
+                details.append(f"数据行 {len(rows)} 行 ≠ 模板固定 {len(META_KEYS)} 行:"
+                               f"现有键({'、'.join(r[0] for r in rows) or '无'})")
+            for got, want in zip(rows, META_KEYS):
+                if got[0] != want:
+                    details.append(f"行键「{got[0]}」≠ 模板「{want}」(键序固定,不增删不改名;迭代/统计不进头部)")
+            for r in rows:
+                if STAT_BRACKET.search(r[1] if len(r) > 1 else ""):
+                    details.append(f"值内含统计类括注(块数/媒体数等细节不进头部):{r[0]}={r[1][:40]}")
+            vb = next((r[1] for r in rows if r[0] == "版本依据"), "")
+            miss_t = [t for t in ("原文", "快照", "合成") if t not in vb]
+            if miss_t:
+                warn.append(f"「版本依据」缺时间锚({'/'.join(miss_t)};应:原文 vX.Y.Z(date) · 质检快照 date · 合成 date)")
+        legend = [m.group(0) for m in MARK_LEGEND_PAT.finditer(self.doc)]
+        if legend:
+            details.append(f"含记号语义说明 {len(legend)} 处(如「{legend[0][:20]}」)——通用约定由平台 UI 承载,不写入文档")
+        if details:
+            self.add("FAIL", "meta-header", details)
+        elif warn:
+            self.add("WARN", "meta-header", warn)
+        else:
+            self.add("PASS", "meta-header", ["两列表格 5 行,键序与模板一致,无统计括注,无记号语义说明"])
+
     def check_p_semantic(self):
         if not self.answers:
             self.add("SKIP", "p-semantic(〔Pxx〕记号语义)", ["缺可用 --answers,转人工抽查"])
@@ -354,6 +408,7 @@ def main(argv: list[str] | None = None) -> int:
 
     doc = doc_path.read_text(encoding="utf-8")
     c = Checker(doc, answers)
+    c.check_meta_header()
     c.check_qa_compare()
     c.check_fr()
     c.check_p_coverage()
