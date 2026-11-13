@@ -36,7 +36,7 @@ P_SEMANTIC_OVERLAP_MIN = 0.25
 # 实测真实文档:正确挂载的条款与 answerText 字符重叠率主体 >=25%;反向表述(结论换措辞复述)
 # 等低重叠的正确挂载残余约个位数,由 WARN 级人工裁决兜住,不用 PASS/FAIL 硬判。
 STRIKE_TOLERANCE = 2
-# 多处 ~~标记~~ 对应附录 C 一条登记属正常;实测正常偏差落在 ±2 内,>2 视为疑似漏登记。
+# 多处 ~~标记~~ 对应废弃条款登记章一条登记属正常;实测正常偏差落在 ±2 内,>2 视为疑似漏登记。
 SCAN_WINDOW = 2500
 # 计数/矩阵断言后的目标表体通常在 1~2 屏内;窗口过大会数到下一个无关表格。
 LIST_WINDOW = 1500
@@ -50,9 +50,12 @@ SCOPE_HEADING = re.compile(r"^#{2,4}\s*.*(?:本期不做|⛔)")
 SELF_CONTAINED_CLAIM = re.compile(r"自包含|不依赖任何外部")
 EXTERNAL_DEP_PAT = re.compile(r"以原型为准|以页面示例为基准|详见附件|见飞书原文|以原文随附.{0,12}为基准")
 DEP_WHITELIST = re.compile(r"(?:原型|页面示例).{0,6}(?:报废|废弃)")
-# #10 失败触发:状态机边「→ X失败/失败态」所在小节须有判定条件关键词,否则该边不可测
-FAIL_EDGE = re.compile(r"[→>＞]\s*[^\s，。；、]{0,8}失败")
-FAIL_KW = re.compile(r"超时|错误码|重试|判定|阈值|降级")
+# #10 失败触发(2026-11-13 分档重构):失败态边按可判定性双档——
+# FAIL(确定性档):mermaid 状态图边描述与目标态同名或为空(同义反复=没写进入条件,纯字符串判定不误报);
+# WARN(语义档):其余边(有描述但充分性需理解/行文提及)出全量清单 data.edges,生成侧 AI 裁决补写。
+# 关键词枚举判定(超时|错误码|…)退役:真实条件形态永远追不上(050 实测「少于 10 秒」「完全无声音」3/5 误报)。
+FAIL_EDGE = re.compile(r"[→>＞]\s*([^\s，。；、|｜]{0,8}失败)")
+MERMAID_EDGE = re.compile(r"^\s*(\S[^\n:]*?)\s*-+>\s*(\S+?)(?:\s*:\s*(.*))?$")
 
 # 「数字+量词」的自然语言虚指用法(如"过了一段时间""在一处补充说明"),非计数断言。
 # 仅收录计数正则量词集(段|项|类|条|处)实际可命中的组合;量词集扩展时同步补此处。
@@ -62,13 +65,18 @@ VAGUE_QUANTIFIERS = {"一段", "一处"}
 META_KEYS = ["需求编号", "风险分级", "版本依据", "澄清进度", "废弃条款"]
 # 值内统计类括注(块数/媒体数等细节不进头部——2026-11 前旧文档高频缺陷,044 实测漏网)
 STAT_BRACKET = re.compile(r"\d+\s*[块件]|块表|媒体\s*\d+|\d+\s*条评论|评论\s*\d+\s*条")
-# 记号语义说明(spec §2:头部止于表格,符号/引用记号语义由平台 UI 承载,不写入文档任何位置)
-MARK_LEGEND_PAT = re.compile(r"^##.*阅读.*约定|固定记号|引用记号四类|记号(语义)?说明", re.M)
+# 记号语义说明(spec §2:头部止于表格,符号/引用记号语义由平台 UI 承载,不写入文档任何位置)。
+# 支四负向断言豁免「无/未记号…说明」否定语境——附录 D 质量自查表声明自身合规(「…无记号语义说明」)不算违例。
+MARK_LEGEND_PAT = re.compile(r"^##.*阅读.*约定|固定记号|引用记号四类|(?<![无未])记号(语义)?说明", re.M)
 
 
 def norm(s: str) -> str:
-    """宽松归一:去空白与常见标点,用于文本一致性比对。"""
-    return re.sub(r"[\s::,，。;;、()（）「」\[\]/·～~\-—*`]", "", s)
+    """宽松归一:去空白与常见标点,用于文本一致性比对。
+
+    全半角同形标点一并剥离(／= /、＝= =、：= :、；= ;)——合成器排版转写(半角→全角)
+    不构成语义差异,qa-compare 不得因符号宽度判不一致。
+    """
+    return re.sub(r"[\s:=,，。:;；、()（）「」\[\]/／·～~\-—*`=＝]", "", s)
 
 
 def strip_audit_refs(d: str) -> str:
@@ -132,25 +140,37 @@ def parse_answers(path: Path) -> tuple[dict[str, str], list[str]]:
     return out, deferred
 
 
-def split_sections(doc: str) -> tuple[str, str, str]:
-    """返回 (正文, 附录A段, 附录C段)。正文=附录A之前;附录段含自身标题行。
+def split_sections(doc: str) -> tuple[str, str]:
+    """返回 (正文, 附录A段)。正文=附录A之前;附录段含自身标题行。
 
     章标题匹配容错:「附录 A」「附录A」均可(`附录\\s*A`);仅写「附录:澄清结论表」
     而无 A 字样时不匹配——由各检查项的"0 行必报 WARN"兜住,不得静默通过。
     """
     m = re.search(r"^## .*附录\s*A.*$", doc, re.M)
     body = doc[: m.start()] if m else doc
-    seg_a = seg_c = ""
+    seg_a = ""
     if m:
         rest = doc[m.start():]
         m2 = re.search(r"^## (?!.*附录\s*A).*$", rest, re.M)
         seg_a = rest[: m2.start()] if m2 else rest
-    m = re.search(r"^## .*附录\s*C.*$", doc, re.M)
-    if m:
-        rest = doc[m.start():]
-        m2 = re.search(r"^## (?!.*附录\s*C).*$", rest, re.M)
-        seg_c = rest[: m2.start()] if m2 else rest
-    return body, seg_a, seg_c
+    return body, seg_a
+
+
+def locate_deprecated(doc: str) -> tuple[str, str]:
+    """废弃条款登记段定位(返回 (段, 章名);未认返回 ('', ''))。
+
+    标题须同含「附录」与「废弃/删除」:当前合成模板「附录 B　废弃条款清单(| B-1 | 序号)」
+    与老模板「附录 C 废弃条款登记(| 1 | 序号)」均命中;正文章「## 7.3 废弃与替代策略」类
+    因无「附录」不误命中。不再按「附录 C」字母盲定位——附录 C 可能是规则索引/术语表,
+    其数字行被当登记数会造成假比对(2026-11 REQ-2026-050 实测:废弃清单在 B,字母定位
+    数到 C 的 0 行,误报「登记 0 条」)。
+    """
+    m = re.search(r"^## .*附录.*(?:废弃|删除).*$", doc, re.M)
+    if not m:
+        return "", ""
+    m2 = re.search(r"^## .*$", doc[m.end():], re.M)
+    seg = doc[m.start(): m.end() + m2.start()] if m2 else doc[m.start():]
+    return seg, m.group(0).lstrip("# ").strip()
 
 
 def table_rows(seg: str, row_pat: str) -> list[list[str]]:
@@ -159,6 +179,25 @@ def table_rows(seg: str, row_pat: str) -> list[list[str]]:
         if re.match(row_pat, line.strip()):
             rows.append([c.strip() for c in line.strip().strip("|").split("|")])
     return rows
+
+
+def conclusion_col(seg: str) -> int | None:
+    """附录 A 表头「结论」列号(0 基)。只扫首个 | Pxx | 数据行之前的表行,命中含「结论」的
+    单元格即返回;分隔行(|---|)不含汉字自然跳过。列位不猜——找不到返回 None 由调用方降级。
+
+    教训:曾硬编码取第 5 列,而现契约表头为 | seq | 级别 | 问题 | 结论 | 正文落点 |——第 5 列
+    是正文落点,37/37 全部误判(2026-11 REQ-2026-050 实测)。表头定位对列序变化免疫。
+    """
+    for line in seg.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        if re.match(r"^\|\s*P\d+", s):
+            break  # 已到数据行,表头不存在
+        for i, c in enumerate(cell.strip() for cell in s.strip("|").split("|")):
+            if "结论" in c:
+                return i
+    return None
 
 
 def find_assumptions_section(doc: str) -> str:
@@ -189,7 +228,7 @@ class Checker:
         self.doc = doc
         self.answers = answers or {}
         self.deferred = list(deferred or [])
-        self.body, self.seg_a, self.seg_c = split_sections(doc)
+        self.body, self.seg_a = split_sections(doc)
         self.range_spans = find_range_sections(self.body)
         self.results: list[tuple[str, str, list[str], dict | None]] = []  # (级别, 项名, 明细, 结构化数据)
 
@@ -207,9 +246,14 @@ class Checker:
             self.add("WARN", "qa-compare(附录A vs answerText)",
                      ["附录 A 段未数到表体行——确认附录标题含「附录 A」字样、表体行以 | Pxx | 开头;澄清结论表为必须附录,0 行不得按通过处理"])
             return
+        col = conclusion_col(self.seg_a)
+        if col is None:
+            self.add("WARN", "qa-compare",
+                     ["附录 A 表头未定位到「结论」列(在首个 | Pxx | 数据行之前的表头行中找含「结论」的列)——列位不猜,转人工核对结论列与 answerText"])
+            return
         diffs = []
         for cells in rows:
-            if len(cells) < 5:
+            if len(cells) <= col:
                 continue
             seq = cells[0]
             at = self.answers.get(seq)
@@ -218,9 +262,10 @@ class Checker:
                 continue
             if not at:
                 continue  # 挂起项,answerText 为空属正常,由附录状态列表达
-            if norm(at) != norm(cells[4]) and norm(cells[4]) not in norm(at) and norm(at) not in norm(cells[4]):
-                diffs.append(f"{seq}: 结论列与 answerText 不一致 | 附录={cells[4][:60]} | answers={at[:60]}")
-        self.add("FAIL" if diffs else "PASS", "qa-compare", diffs or [f"{len(rows)} 条逐条一致"])
+            cv = cells[col]
+            if norm(at) != norm(cv) and norm(cv) not in norm(at) and norm(at) not in norm(cv):
+                diffs.append(f"{seq}: 结论列与 answerText 不一致 | 附录={cv[:60]} | answers={at[:60]}")
+        self.add("FAIL" if diffs else "PASS", "qa-compare", diffs or [f"{len(rows)} 条逐条一致(结论列=表头第 {col + 1} 列)"])
 
     def check_fr(self):
         used = sorted(set(re.findall(r"需求\.FR-(\d{2})", self.doc)), key=int)
@@ -286,24 +331,27 @@ class Checker:
                  details or [f"A{declared[0]}~A{declared[-1]} 声明与引用双向一致"], data)
 
     def check_strikes(self):
-        seg_c_rows = [r for r in table_rows(self.seg_c, r"^\|\s*\d+\s*\|") if len(r) >= 2]
+        seg, title = locate_deprecated(self.doc)
+        # 序号兼容 | 1 |(老模板纯数字)与 | B-1 |(当前模板字母-数字)
+        rows = [r for r in table_rows(seg, r"^\|\s*(?:[A-Z]-)?\d+\s*\|") if len(r) >= 2]
         strikes = re.findall(r"~~[^~]{2,80}~~", self.body)
         # 去除「阅读约定」里的记号说明行
         real = [s for s in strikes if "删除线" not in s or len(s) > 20]
-        n_c, n_s = len(seg_c_rows), len(real)
-        has_c = bool(self.seg_c)
+        n_c, n_s = len(rows), len(real)
+        where = title or "废弃条款登记章"
         if n_c == 0 and n_s == 0:
-            if has_c:
-                self.add("WARN", "strike-vs-appendixc", ["附录 C 章存在但未数到表体行——确认表体格式(| 序 | … 开头)或该章是否应有内容;0 行不得按通过处理"])
+            if seg:
+                self.add("WARN", "strike-vs-appendixc",
+                         [f"「{where}」章存在但未数到表体行——确认表体格式(| 序 | / | B-1 | … 开头)或该章是否应有内容;0 行不得按通过处理"])
             else:
-                self.add("PASS", "strike-vs-appendixc", ["正文无删除线、无附录 C——该文档无废弃条款"])
+                self.add("PASS", "strike-vs-appendixc", ["正文无删除线、无废弃条款登记章——该文档无废弃条款"])
             return
         if n_s > 0 and n_c == 0:
-            where = "未找到附录 C 章" if not has_c else "附录 C 章在但表体 0 行"
-            self.add("WARN", "strike-vs-appendixc", [f"正文删除线 {n_s} 处,而附录 C 登记 0 条({where})——疑似漏登记,人工排查"])
+            why = f"「{where}」章在但表体 0 行" if seg else "未找到废弃条款登记章(标题须同含「附录」与「废弃/删除」)"
+            self.add("WARN", "strike-vs-appendixc", [f"正文删除线 {n_s} 处,而废弃条款登记 0 条({why})——疑似漏登记,人工排查"])
             return
         level = "PASS" if abs(n_c - n_s) <= STRIKE_TOLERANCE else "WARN"
-        note = "数量吻合" if n_c == n_s else f"数量偏差(正文删除线 {n_s} 处 vs 附录C {n_c} 条)——多处标记对应一条登记属正常,偏差>{STRIKE_TOLERANCE} 需排查漏登记"
+        note = "数量吻合" if n_c == n_s else f"数量偏差(正文删除线 {n_s} 处 vs {where} {n_c} 条)——多处标记对应一条登记属正常,偏差>{STRIKE_TOLERANCE} 需排查漏登记"
         self.add(level, "strike-vs-appendixc", [note])
 
     def check_count_assert(self):
@@ -509,25 +557,54 @@ class Checker:
                  hits or ["自包含声明与正文一致,无外部依赖表述"])
 
     def check_failure_trigger(self):
-        """#10:状态机边「→ X失败」所在小节须有判定条件关键词(超时/错误码/重试/判定/阈值/降级),
-        否则该失败态不可测(FAIL)。只查状态机边形态,不查「失败了怎么办」类泛句(防误报)。"""
-        if not FAIL_EDGE.search(self.doc):
-            self.add("PASS", "failure-trigger", ["无「→ X失败」状态机边,不检查"])
-            return
+        """#10 分档(2026-11-13 重构):失败态边按可判定性双档。
+        FAIL(确定性档):mermaid 状态图边描述与目标态同名或为空——同义反复即没写进入条件,
+          纯字符串判定不误报(050 实测 2 处真问题即此形态);
+        WARN(语义档):其余边出全量清单 data.edges({line,from,to,desc,kind}),由生成侧 AI
+          裁决补写触发条件(发布不拦)——「少于 10 秒」「完全无声音」等条件形态的关键词枚举
+          永远追不上(050 实测 3/5 误报),语义判定交还语义侧。"""
         lines = self.doc.splitlines()
-        heads = [i for i, l in enumerate(lines) if re.match(r"^#{1,6}\s", l)]
-        hits = []
+        # mermaid 园栏行集合(```mermaid … ```;容错行首缩进)
+        fence, mermaid_lines = False, set()
+        for i, l in enumerate(lines):
+            t = l.strip()
+            if t.startswith("```"):
+                if not fence and "mermaid" in t:
+                    fence = True
+                elif fence:
+                    fence = False
+                continue
+            if fence:
+                mermaid_lines.add(i)
+        fails, edges = [], []
         for i, l in enumerate(lines):
             for m in FAIL_EDGE.finditer(l):
-                # 小节边界:向上最近的标题(无标题则全文档)
-                sec = next((h for h in reversed(heads) if h < i), 0)
-                sec_text = "\n".join(lines[sec:i + 1])
-                if not FAIL_KW.search(sec_text):
-                    line_no = i + 1
-                    hits.append(f"第 {line_no} 行「{m.group(0).strip()}」所在小节无判定条件关键词"
-                                f"({FAIL_KW.pattern.replace('|', '/')})——失败态无触发条件,不可测")
-        self.add("FAIL" if hits else "PASS", "failure-trigger",
-                 hits or ["状态机失败边均有判定条件关键词支撑"])
+                to = m.group(1)
+                if i in mermaid_lines:
+                    em = MERMAID_EDGE.match(l)
+                    desc = (em.group(3) or "").strip() if em else ""
+                    desc_n = desc.rstrip("。，；,;：: ")
+                    edges.append({"line": i + 1,
+                                  "from": em.group(1).strip() if em else "",
+                                  "to": to, "desc": desc, "kind": "state-diagram"})
+                    if not desc_n or desc_n == to:
+                        fails.append(f"第 {i + 1} 行「{to}」边触发条件未写明"
+                                     f"(描述{'为空' if not desc_n else '与目标态同名'})——失败态不可测,"
+                                     f"须补写进入条件(超时/错误场景/判定依据)")
+                else:
+                    edges.append({"line": i + 1, "from": "", "to": to,
+                                  "desc": l.strip()[:60], "kind": "inline"})
+        if fails:
+            self.add("FAIL", "failure-trigger", fails, {"edges": edges})
+        elif edges:
+            self.add("WARN", "failure-trigger",
+                     [f"{len(edges)} 条失败态边待语义裁决(生成侧闭环补写触发条件,发布不拦;"
+                      f"关键词枚举判定已退役)"]
+                     + [f"第 {e['line']} 行 [{e['kind']}] {e['to']}: {e['desc'] or '(无描述)'}"
+                        for e in edges],
+                     {"edges": edges})
+        else:
+            self.add("PASS", "failure-trigger", ["无「→ X失败」状态机边,不检查"])
 
     def check_deferred_link(self):
         """挂起项落点(P1-7):status=deferred 的澄清项须在正文有〔Pxx…挂起〕标注或遗留假设章登记,
