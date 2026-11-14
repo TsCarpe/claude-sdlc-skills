@@ -89,7 +89,7 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 
 - **行内子块（0.5，挂 table-row 下、parent=行块 id、紧随行块）**：内容格逐段发 `paragraph`（可选 `subheading: true` = 小标题形态，可选 `cell: <列下标 int>` = 所属列）；list-item/image 等保持原类型，同样带 `cell` 戳。列表一律挂行块（不挂段落——平台编辑面「行内子块紧随其行」拓扑约束），「PC端/H5端 段落后跟列表」的从属由前端按块序相邻做视觉挂靠。subheading 判定：0.5 = 原文整段粗体（`<p><b>…</b></p>` 独占）；**0.6 扩展** = 裸文本独占段（td 直发文本，无格式标记、≤32 字）同样标记——表格驱动需求文档的模块名/小节名常为裸文本非粗体。
 - **锚点语义**：块 `id` = 飞书原生块 ID（唯一例外：无 ID 时合成 `x-NNNN`，平台不可直达）。payload 条目的 `anchor` 填此 ID，前端按 id 直达原文条款。行内段落子块用 p 元素原生 ID（直达）。
-- media 条目：`{id: "m-<sha256[:12]>", token, kind, name, mime, file, bytes, sha256, status}`，status ∈ pending / ok / failed。
+- media 条目：`{id: "m-<sha256[:12]>", token, kind, name, mime, file, bytes, sha256, status}`，status ∈ pending / ok / failed / skipped 豁免态（`skipped:size-exceeded` 大附件超限、`skipped:source-missing` 源已失效——两者登记元数据不下载不阻断，落库与 missingMedia 面同步豁免）。
 
 ## 5. 条款级出处约定（list_clauses.py）
 

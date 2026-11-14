@@ -33,7 +33,7 @@ from collections import Counter
 from html import unescape
 from html.parser import HTMLParser
 
-GENERATOR = "sdlc-intent/parse_doc.py 0.6"
+GENERATOR = "sdlc-intent/parse_doc.py 0.6.1"
 VOID_TAGS = {"img", "source", "col", "br", "hr", "colgroup"}
 # 单元格内由子块承载的结构（文本不进 cells，防双计）：list/图/附件/画板 + 分栏容器 + 嵌套表
 # 块级子元素白名单（由子块承载，宿主 text 不收——防双计；表格单元格/列表项/标题共用）：
@@ -621,8 +621,12 @@ class DocParser:
         """单元格内段落：空文本且无 KEEP 后代/裸 source → 丢弃；空文本但带 KEEP 后代或
         source → 只承载子块；非空 → paragraph 子块（原生 id 直用，整段粗体标 subheading）。
         裸 source 附件两个分支都要发：附件卡片常与「原型：」等文本同段（实锤样本），
-        只在空段发射会漏。"""
-        text = inline_text(p)
+        只在空段发射会漏。
+        0.6.1（REQ-2026-054 实证）：inline_text 带 skip_keep=True（与顶层 dispatch 的 p
+        分支同口径）且 KEEP 子块无条件 dispatch——旧实现把 p 内 ol/ul 文本折进宿主 text、
+        且「text 非空不发子块」使 td>p>ol 形态的 list-item 块整族丢失（API=41 产物=32，
+        oracle 块面拦截；文本面因被折叠而通过，块面静默缺）。"""
+        text = inline_text(p, skip_keep=True)
         pid = self.block_id(p)
         if text:
             block = {"id": pid or self.new_id(), "type": "paragraph",
@@ -635,9 +639,8 @@ class DocParser:
         for src in self._source_descendants(p):
             self.emit_attachment(src, block_id=pid or self.new_id(), parent_id=row_id)
             pid = None
-        if not text:
-            for k in self._keep_descendants(p):
-                self.dispatch(k, parent_id=row_id)
+        for k in self._keep_descendants(p):
+            self.dispatch(k, parent_id=row_id)
 
     def _emit_cell_tree(self, td, row_id):
         """内容格子块树（仅内容格调用，与 cells 置空互斥防双计）：裸文本/段落逐个成块、
