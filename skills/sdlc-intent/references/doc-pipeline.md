@@ -83,11 +83,11 @@ python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
 | heading | level, text, path | 标题层级与路径 |
 | paragraph | text, path, comments | 正文段；comments = comment-refs（如 "c3 c11"） |
 | list-item | marker, ordinal, depth, text, parent | 条款；ordinal 即序数（如 1.a） |
-| table-row | head, cells, rowLabel, parent | 表行；rowLabel 取首格文本，即「详述N」的 N 对应物；行块本身多为 `x-` 合成 ID（DocxXML 行元素不带 id），行级锚点常不可直达——条款级出处（list-item 原生 ID）才是直达路径。**0.5 表格语义**：`head` 可由无 thead 表推断（见 §3）；`cells` 与列数等长——标量格存文本，内容格存空串 `""`（多段落/含列表图片的格，内容见行内子块） |
+| table-row | head, cells, rowLabel, rowTitle, parent | 表行；rowLabel 取首格文本，即「详述N」的 N 对应物；行块本身多为 `x-` 合成 ID（DocxXML 行元素不带 id），行级锚点常不可直达——条款级出处（list-item 原生 ID）才是直达路径。**0.5 表格语义**：`head` 可由无 thead 表推断（见 §3）；`cells` 与列数等长——标量格存文本，内容格存空串 `""`（多段落/含列表图片的格，内容见行内子块）。**0.6**：新增可选 `rowTitle` = 第一列首个非 @ 文本单元（cells[0] 直值首段，或 cells 全空时 cell=0 首个段落子块；剥尾部 @提及、≤48 字）——比 rowLabel 干净的行标题（不拼全列、不截 24 字），前端目录取值链第一优先；无有效文本（如纯附件格）不设该键 |
 | image / attachment / whiteboard | media, name | 媒体块，media 指向 media[] 条目 id |
 | comment | ref, anchorBlockId, quote, thread | 评论块；id = 飞书 comment-id |
 
-- **行内子块（0.5，挂 table-row 下、parent=行块 id、紧随行块）**：内容格逐段发 `paragraph`（可选 `subheading: true` = 原文整段粗体，可选 `cell: <列下标 int>` = 所属列）；list-item/image 等保持原类型，同样带 `cell` 戳。列表一律挂行块（不挂段落——平台编辑面「行内子块紧随其行」拓扑约束），「PC端/H5端 段落后跟列表」的从属由前端按块序相邻做视觉挂靠。
+- **行内子块（0.5，挂 table-row 下、parent=行块 id、紧随行块）**：内容格逐段发 `paragraph`（可选 `subheading: true` = 小标题形态，可选 `cell: <列下标 int>` = 所属列）；list-item/image 等保持原类型，同样带 `cell` 戳。列表一律挂行块（不挂段落——平台编辑面「行内子块紧随其行」拓扑约束），「PC端/H5端 段落后跟列表」的从属由前端按块序相邻做视觉挂靠。subheading 判定：0.5 = 原文整段粗体（`<p><b>…</b></p>` 独占）；**0.6 扩展** = 裸文本独占段（td 直发文本，无格式标记、≤32 字）同样标记——表格驱动需求文档的模块名/小节名常为裸文本非粗体。
 - **锚点语义**：块 `id` = 飞书原生块 ID（唯一例外：无 ID 时合成 `x-NNNN`，平台不可直达）。payload 条目的 `anchor` 填此 ID，前端按 id 直达原文条款。行内段落子块用 p 元素原生 ID（直达）。
 - media 条目：`{id: "m-<sha256[:12]>", token, kind, name, mime, file, bytes, sha256, status}`，status ∈ pending / ok / failed。
 

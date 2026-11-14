@@ -33,7 +33,7 @@ from collections import Counter
 from html import unescape
 from html.parser import HTMLParser
 
-GENERATOR = "sdlc-intent/parse_doc.py 0.5"
+GENERATOR = "sdlc-intent/parse_doc.py 0.6"
 VOID_TAGS = {"img", "source", "col", "br", "hr", "colgroup"}
 # 单元格内由子块承载的结构（文本不进 cells，防双计）：list/图/附件/画板 + 分栏容器 + 嵌套表
 # 块级子元素白名单（由子块承载，宿主 text 不收——防双计；表格单元格/列表项/标题共用）：
@@ -104,6 +104,15 @@ def parse_tree(xml_text):
 def _cite_name(attrs):
     """cite 展开文本：@user-name（无则 @user-id）——inline_text/_collect/plain_text/守恒原文侧四处同款"""
     return f"@{attrs.get('user-name') or attrs.get('user-id') or ''}".strip()
+
+
+_AT_TAIL_RE = re.compile(r"(?:\s*@[^\s@，,；;、]{1,40})+\s*$")
+
+
+def _strip_at_tail(t):
+    """剥尾部 @提及（cite 展开）：「系统设置@张三@李四」→「系统设置」（rowTitle 提取用，≥0.6）。
+    仅尾部（正文中段 @ 不动）；与平台前端 docview.stripAtMentions 同则。"""
+    return _AT_TAIL_RE.sub("", str(t).strip()).strip()
 
 
 def inline_text(node, skip_keep=False):
@@ -636,9 +645,15 @@ class DocParser:
         从属还原交前端渲染层）、空段丢弃；grid/column 容器透明展平；其余非 KEEP 子元素
         （b/blockquote/div 等）折为 paragraph。cell 列下标戳由 parse_table 统一补"""
         if td.text and td.text.strip():
-            self.emit({"id": self.new_id(), "type": "paragraph",
-                       "text": td.text.strip(), "path": self.path_of(),
-                       "parent": row_id, "comments": None})
+            txt = td.text.strip()
+            # 裸文本独占段（无格式标记短文本，≤32 字）→ 小标题形态（≥0.6：与整段粗体 subheading
+            # 同标——表格驱动需求文档的模块名/小节名常为裸文本非粗体，前端正文渲染按此挂 ▍ 样式）
+            block = {"id": self.new_id(), "type": "paragraph",
+                     "text": txt, "path": self.path_of(),
+                     "parent": row_id, "comments": None}
+            if len(txt) <= 32:
+                block["subheading"] = True
+            self.emit(block)
         for c in td.children:
             if c.tag in ("grid", "column"):
                 self._emit_cell_tree(c, row_id)
@@ -679,17 +694,44 @@ class DocParser:
                     row_label = (first or f"#{idx}")[:24]
             row_bid = self.block_id(tr) or self.new_id()
             path = self.path_of(row_label)
-            self.emit({"id": row_bid, "type": "table-row", "head": table_head,
-                       "cells": cells, "rowLabel": row_label, "path": path,
-                       "parent": parent_id,
-                       "comments": tr.attrs.get("comment-refs") or None})
+            row_block = {"id": row_bid, "type": "table-row", "head": table_head,
+                         "cells": cells, "rowLabel": row_label, "path": path,
+                         "parent": parent_id,
+                         "comments": tr.attrs.get("comment-refs") or None}
+            self.emit(row_block)
             # 内容格子块树挂行块（标量格文本已进 cells 不再发块——互斥防双计）；
             # 切片内新块补 cell 列下标戳（前端按列分组；旧数据无戳归 -1 组）
+            cell0_mark = None
             for ci, td in content_cols:
                 mark = len(self.blocks)
+                if ci == 0:
+                    cell0_mark = mark
                 self._emit_cell_tree(td, row_bid)
                 for b in self.blocks[mark:]:
                     b.setdefault("cell", ci)
+            # 行标题（≥0.6）：第一列首个非 @ 文本单元——比 rowLabel 干净（不拼全列文本、不截 24 字、
+            # 剥尾部 @提及）。仅增字段：rowLabel/path 不动（golden path 在比对键内）。两形态：
+            # cells[0] 标量直值（首段剥 @）或 cell=0 首个段落子块（cells 全空、标题在子块——
+            # 「系统设置@沈超杰」拆段形态）。前端目录取值链第一优先。
+            row_title = self._row_title(cells, cell0_mark)
+            if row_title:
+                row_block["rowTitle"] = row_title
+
+    def _row_title(self, cells, cell0_mark):
+        """行标题提取：cells[0] 直值首段剥 @ → cell=0 子块区首个 paragraph 文本剥 @；≤48 字。
+        cell0_mark = cell=0 内容格展开前的 blocks 下标（其后的子块均 cell=0；无 cell=0 内容格
+        为 None——全标量行）。@人名单独成段剥后为空即跳过续找（「系统设置」「@沈超杰」拆段形态）。"""
+        if cells and str(cells[0]).strip():
+            return _strip_at_tail(str(cells[0]).split("\n")[0])[:48]
+        if cell0_mark is None:
+            return ""
+        for b in self.blocks[cell0_mark:]:
+            if b.get("type") != "paragraph" or b.get("cell") != 0:
+                continue
+            t = _strip_at_tail(b.get("text") or "")
+            if t:
+                return t[:48]
+        return ""
 
     # ---- media
     def emit_image(self, node, parent_id=None):
@@ -793,9 +835,15 @@ class DocParser:
                     n += 1
                     cells = [c.strip() for c in lines[i].strip("|").split("|")]
                     row_label = (re.sub(r"\s+", "", cells[0]) if cells else "") or f"#{n}"
-                    self.emit({"id": self.new_id(), "type": "table-row", "head": head,
-                               "cells": cells, "rowLabel": row_label,
-                               "path": self.path_of(row_label), "parent": None})
+                    row_block = {"id": self.new_id(), "type": "table-row", "head": head,
+                                 "cells": cells, "rowLabel": row_label,
+                                 "path": self.path_of(row_label), "parent": None}
+                    # 行标题（≥0.6，与 XML 链路 _row_title 同义）：cells[0] 首段剥尾部 @提及。
+                    # MD 链路无子块形态（全标量），仅直值分支
+                    row_title = _strip_at_tail(cells[0]) if cells else ""
+                    if row_title:
+                        row_block["rowTitle"] = row_title[:48]
+                    self.emit(row_block)
                     i += 1
                 continue
             m = re.match(r"^(\s*)([-*+]|\d+[.、)])\s+(.*)$", line)
@@ -1034,7 +1082,15 @@ def self_test():
     assert by_id["b6"]["cells"] == ["1", "2"]  # 首行纯数字 → 全部行为数据行
     assert by_id["b4"]["cells"] == ["", "次格二"]  # 首行含 ol → 数据行；td 裸文本成段
     assert by_id["x-0010"]["text"] == "标题甲" and by_id["x-0010"]["cell"] == 0
+    assert by_id["x-0010"]["subheading"] is True  # ≥0.6 裸文本独占段（≤32 字）也标小标题
     assert by_id["bn1"]["parent"] == "b4" and by_id["bn1"]["cell"] == 0
+
+    # ---- rowTitle（≥0.6）：两形态 + rowLabel 不动
+    assert tr1["rowTitle"] == "单元格A1", tr1.get("rowTitle")  # 子块形态：cells 空、标题在 cell=0 首段
+    assert tr1["rowLabel"] == "单元格A1单元格A2"  # rowLabel 仍拼全列文本（golden path 不动）
+    assert by_id["b1"]["rowTitle"] == "单行表内容"  # 直值形态
+    assert by_id["b5"]["rowTitle"] == "数据一"
+    assert "rowTitle" not in by_id["ta1"]  # 附件格无文本 → 不设键（不产空标题）
 
     # ---- 表格内裸 source 附件（实锤 REQ-2026-004：td>p>source 曾被当空标量格吞掉，
     # 附件连同 mediaTokens 丢失 → 守恒 exit 2）：三种形态都必须成 attachment 块并登记媒体
@@ -1091,7 +1147,7 @@ def self_test():
             doc = json.load(f)
         assert doc["guard"]["algo"] == CONSERVATION_ALGO
         assert doc["guard"]["textSha"] == guard["textSha"]
-        assert doc["generator"].startswith("sdlc-intent/parse_doc.py 0.5")
+        assert doc["generator"].startswith("sdlc-intent/parse_doc.py 0.6")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"self-test 全部通过（blocks={len(blocks)} media={len(media_list)} "

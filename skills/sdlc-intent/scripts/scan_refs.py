@@ -15,7 +15,8 @@
   scan_refs.py --self-test
 
 设计约束（对齐 parse_doc.py / guardrails check.py 先例）：纯标准库；只做确定性检测，
-不做语义判定——输出是「候选/证据」，缺陷判定永远在第 7 层由 LLM 完成。
+不做语义判定——输出是「候选/证据」，缺陷判定由对应判定层（第 7 层汇流或映射
+检查项所属层）的 LLM 完成。
 """
 
 import argparse
@@ -24,7 +25,7 @@ import re
 import sys
 from pathlib import Path
 
-GENERATOR = "sdlc-intent/scan_refs.py 0.1"
+GENERATOR = "sdlc-intent/scan_refs.py 0.2"
 
 # 引用语句指示词（断链 seed 用；命中即报，落点解析交给 LLM）
 REF_PATTERNS = re.compile(r"(另行说明|另行规定|如上所述|上文提到|下文.{0,4}说明|详见|参见|见第[一二三四五六七八九十百\d]+[章节])")
@@ -133,7 +134,7 @@ def verify_mode(doc_path, refs_path):
         if not rows or "候选清单" in title:
             continue
         header, body = rows[0], rows[1:]
-        if any(k in title for k in ("数据字典", "指标字典", "平行结构", "引用图")):
+        if any(k in title for k in ("数据字典", "指标字典", "平行结构", "引用图", "任务旅程")):
             for r in body:
                 cells = r + [""] * (len(header) - len(r))
                 joined = "｜".join(cells)
@@ -202,11 +203,17 @@ def self_test():
 |---|---|---|---|---|---|
 | 贡献度指数 | — | — | — | — | 三.3 |
 | 达标率 | 达标数/总数 | 达标数 | ⚠️冲突[三.1\\|三.4]（依赖待裁决） | — | 三.1 |
+## 5. 任务旅程表
+| 任务（角色×任务） | 触发入口 | 完成终点 | 纠错出口 |
+|---|---|---|---|
+| 参与者.提交报名 | 一.1 活动页 | 三.2 统计报告 | — |
+| 教务.复核达标 | — | — | — |
 ## 候选清单
 | # | 表名 | 命中规则 | 定位 | 说明 |
 |---|---|---|---|---|
 | C1 | 数据字典 | 有录无消 | 一.1 | 机构类型 |
 | C2 | 指标字典 | 空列 | 三.3 | 贡献度指数 |
+| C3 | 任务旅程表 | 空格 | 二.复核 | 教务复核无入口/终点/纠错 |
 """
     # tempfile 隔离目录：/tmp 固定路径在并发 self-test（CI 矩阵/多 agent）下互踩
     tmp = tempfile.mkdtemp(prefix="_sr_test_")
@@ -228,7 +235,9 @@ def self_test():
         assert len(v["pending_rows"]) == 1
         mech = [c for c in v["mechanical_candidates"]]
         assert any(c["key"] == "贡献度指数" and len(c["empty_cols"]) == 4 for c in mech), mech
-        assert v["count_check"]["candidate_list_rows"] == 2
+        # 任务旅程表（≥0.2）：空格候选机械覆盖（表 5 空格即候选，判定层随映射检查项）
+        assert any(c["key"] == "教务.复核达标" and len(c["empty_cols"]) == 3 for c in mech), mech
+        assert v["count_check"]["candidate_list_rows"] == 3
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print("[scan_refs] self-test OK")
