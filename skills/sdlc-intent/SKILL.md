@@ -76,11 +76,11 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - [ ] Step 7: 交互收尾（用户逐条回应后回写梳理文档）
 ```
 
-**Step 2（阶段0·参照系）** 读取 [references/ref-tables.md](references/ref-tables.md)：从梳理产物构造四张参照表（数据字典/指标字典/平行结构矩阵/引用图，按触发特征裁剪），落盘 `sdlc/<需求名>/intake/refs-<YYYYMMDD>.md`。表中空格、断链、⚠️冲突格即缺失类候选，交给 Step 4 做语义判定；某张表构造不出来本身也是信号，如实记录。可选机械辅助：`python3 scripts/scan_refs.py --mode seeds --doc <原文|doc.json>`（构表前产断链/并列章节 seed）、`--mode verify --doc <原文> --refs <refs.md>`（构表后产字段出现位置清单——有录无消的证据义务、机械候选与计数核对）；脚本不可用或输入不含时跳过，不阻塞。
+**Step 2（阶段0·参照系）** 读取 [references/ref-tables.md](references/ref-tables.md)：从梳理产物构造五张参照表（数据字典/指标字典/平行结构矩阵/引用图/任务旅程表，按触发特征裁剪），落盘 `sdlc/<需求名>/intake/refs-<YYYYMMDD>.md`。表中空格、断链、⚠️冲突格即缺失类候选，交给 Step 4 做语义判定；某张表构造不出来本身也是信号，如实记录。可选机械辅助：`python3 scripts/scan_refs.py --mode seeds --doc <原文|doc.json>`（构表前产断链/并列章节 seed）、`--mode verify --doc <原文> --refs <refs.md>`（构表后产字段出现位置清单——有录无消的证据义务、机械候选与计数核对）；脚本不可用或输入不含时跳过，不阻塞。
 
-**Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/例子与断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
+**Step 3（阶段1·视角推导，仅 A 级）** 读取 [references/perspectives.md](references/perspectives.md)：以实现者/测试者身份执行推导任务（产出数据流草图/例子与断言草稿，缺陷是推导副产品），用 **Agent 工具**扇出全新上下文子代理（喂料纪律：只喂任务卡+模块切片+相关表行，不喂全文；任务卡 C·使用者视角条件化触发——A 级且存在跨角色流转或替换既有流程时加扇）；候选按收敛纪律（反向锚点/不与 D1 重复/待裁决只追问）回主会话，标 D2。
 
-**Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——汇流阶段0 候选（D1）、阶段1 候选（D2）与本层推导（D3）做语义判定与统一分级。该文件定义了每个检查项的命中标准与严重度；规则类/决策类命中按其「决策类型标注」规则在报告类型列标 C 约束 / H 假设（初判带问号）。
+**Step 4（七层核对）** 读取 [references/dimensions.md](references/dimensions.md)，按层序检查：概念层最先（术语表是后续所有检查的基准），第 7 层外部参照层最后——候选（D1/D2/D3）的语义判定与统一分级随层序进行：映射到具体检查项的候选在其所属层判定，其余汇流第 7 层。该文件定义了每个检查项的命中标准与严重度；规则类/决策类命中按其「决策类型标注」规则在报告类型列标 C 约束 / H 假设（初判带问号）。
 
 **体检纪律**：
 - 每条命中必须附**原文定位**（章节名 + 关键引文片段），禁止脱离原文泛泛而谈；缺失类无引文可引时按「全文未见 X」问式（见 report-template 撰写规则）
@@ -89,7 +89,7 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - **冲突不裁决**：构表或层间检查撞到的口径冲突一律记命中交 PM 裁决，禁止静默择一
 
 **Step 5** 读取 [references/report-template.md](references/report-template.md)，产出两个文件到 `sdlc/<需求名>/intake/`：
-- `audit-<YYYYMMDD>.md`（五章结构：执行摘要/阻断速览/分层明细/主题关联/状态汇总——唯一的成段文字在执行摘要，其余表格化）
+- `audit-<YYYYMMDD>.md`（五章结构+覆盖矩阵附录：执行摘要/阻断速览/分层明细/主题关联/状态汇总/覆盖矩阵——唯一的成段文字在执行摘要，其余表格化）
 - `pm-checklist-<YYYYMMDD>.md`（可直接整篇复制发给产品经理的确认清单）
 
 两个文件产出后，**必须**按 report-template.md 的「终检」清单核对（统计表重数 / 跨文件计数一致 / 主题组关联核对），通过后才进入 Step 6。
