@@ -2,6 +2,8 @@
 
 ## 未发布
 
+新增 **sdlc-platform**（第 11 个 skill）：在对话里走平台首发链路。输入 MCP 写入，输出 MCP 只读已发布定稿；采纳、逐题澄清、发布仍由人确认。交给开发的文件由本机 skill 写，服务器只返回正文和路径。
+
 sdlc-intent / sdlc-sync 审计回流：对一次平台真实迭代的定稿产物做三方审计（盲评 + 保真度 + 机检），确认的缺陷回流进 skill；首批落地后机检脚本实测又暴露信任级缺陷——表格行正则遇「| P01 |」（竖线后空格）全失配、章标题硬依赖「附录 A」字面、且所有「检查目标 0 行」的路径都报 PASS。裁定：「没检查到 = 通过」是机检的信任级缺陷，全部检查项失明必报 WARN。
 
 - **scripts/check_standard_doc.py（sdlc-sync 新增，随目录分发）**：整体重构九点——①失明必报：qa-compare / p-coverage / strike / a-registry / matrix-assert 在附录或声明章找到 0 行时一律 WARN（提示确认标题写法），消灭「0 条一致」式假 PASS；②正则容错：章标题 `附录\s*A`、表行 `^\|\s*P\d+` / `^\|\s*\d+\s*\|`；③a-registry 口径：正文引用集排除遗留假设声明章（声明章内 A 号是登记不是使用）；④count-assert 智能滤噪：泛词/合计与分项语境/区间引用/无可数结构四类跳过且计数入明细不静默，触发面不收窄；⑤p-semantic 减噪：跳过标题/表头/短行；⑥answers 解析容错：坏 json/形态不符给明确错误并 exit 2；⑦阈值/容差/扫描窗口常量各附依据注释；⑧matrix-assert 补中文数字识别、断言后无表改 WARN；⑨argparse flag 式（--doc / --answers），用法示例带 python3 前缀

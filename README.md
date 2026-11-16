@@ -42,7 +42,7 @@ flowchart LR
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。
 
-## 10 个 skill 一览
+## 11 个 skill 一览
 
 | skill | 阶段 | 干什么 · 触发示例 |
 |---|---|---|
@@ -56,6 +56,7 @@ flowchart LR
 | [sdlc-guardrails](skills/sdlc-guardrails/SKILL.md) | 横切 · 写入瞬间 | PostToolUse hook 按项目 guardrails.yaml 机械拦截违规写入，pre-commit 兜底 + 存量基线扫描。「给这个项目接红线拦截」 |
 | [sdlc-sync](skills/sdlc-sync/SKILL.md) | 横切 · 产物出口/入口 | 本地 markdown 产物推上团队平台、拉回 PM 澄清答复、发布后开发包一键拉回本地（standard/design/cases/gate 裁决投影，平台本体在独立仓 sdlc-platform）。「把三件套推上平台 / 拉一下 PM 的答复 / 拉开发包」 |
 | [sdlc-handoff](skills/sdlc-handoff/SKILL.md) | 横切 · 任意阶段 | 会话交接：把当前任务压成一张自足的交接卡（8 段 + 机器可读 frontmatter），换会话/换机器/换 agent 后凭卡直接继续，接手前自动做 git 漂移校验。「交接一下 / 接手上次那个任务 / 上下文满了」 |
+| [sdlc-platform](skills/sdlc-platform/SKILL.md) | 需求进来时 · 平台对话 | 在对话里走完平台首发链路：导入、质检、逐题澄清、发布、导出定稿或交给开发。正式数据仍在平台，人保留采纳、答题、发布三道关。「导入需求 / 到哪了 / 交给开发」 |
 
 贯穿全链路的关键机制：
 

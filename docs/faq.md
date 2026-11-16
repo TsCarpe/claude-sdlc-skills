@@ -41,7 +41,7 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**
-A：不必须。10 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
+A：不必须。11 个 skill 均可独立运行（sdlc-gate/sdlc-doubt 对项目规范目录的引用均带「读不到则降级」声明；sdlc-design 的 Trellis 交接契约框架无关；sdlc-platform 需要平台两个 MCP，没配上就停，不改走本地合成）。配合任务框架体验更好——大需求的 parent/child 切片、规范注入等由 [large-req-playbook.md](large-req-playbook.md) 描述的机制承接，任何框架或纯目录约定都能复刻。
 
 ### 使用建议
 

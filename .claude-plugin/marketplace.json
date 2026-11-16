@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "sdlc-skills",
-      "description": "Ten battle-tested SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-design (technical design: alternatives, tiered interface contracts, shared assets, C/H decisions, slicing constraints), sdlc-test (cases/dev/static/exec/spec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or self-check, plus guard_dev), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-ui-visual (design-to-code visual restoration via screenshots: DOM geometry + pixel heatmap + tiered fix rounds), sdlc-release-check (pre-release audit: config keys, job/MQ registrations, DDL/DML grading, runbook), sdlc-guardrails (write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform), sdlc-handoff (cross-agent session handoff: self-contained card, drift check, direct takeover).",
+      "description": "Eleven SDLC skills: sdlc-intent (PRD digest + seven-layer audit + A/B/C risk tiering), sdlc-design (technical design: alternatives, tiered interface contracts, shared assets, C/H decisions, slicing constraints), sdlc-test (cases/dev/static/exec/spec/report with human checkpoints), sdlc-gate (risk-tiered adversarial review gate: 4/2 fresh-context subagents or self-check, plus guard_dev), sdlc-doubt (adversarial re-check of non-trivial decisions), sdlc-ui-visual (design-to-code visual restoration via screenshots: DOM geometry + pixel heatmap + tiered fix rounds), sdlc-release-check (pre-release audit: config keys, job/MQ registrations, DDL/DML grading, runbook), sdlc-guardrails (write-time red-line engine: PostToolUse hook + pre-commit + baseline scan), sdlc-sync (artifact sync bridge between local markdown and the team-facing platform), sdlc-handoff (cross-agent session handoff: self-contained card, drift check, direct takeover), sdlc-platform (first-round flow via two MCP endpoints).",
       "author": {
         "name": "TsCarpe"
       },
@@ -26,7 +26,8 @@
         "./skills/sdlc-release-check",
         "./skills/sdlc-guardrails",
         "./skills/sdlc-sync",
-        "./skills/sdlc-handoff"
+        "./skills/sdlc-handoff",
+        "./skills/sdlc-platform"
       ]
     }
   ]
