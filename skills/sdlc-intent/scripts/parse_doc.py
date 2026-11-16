@@ -410,7 +410,7 @@ class DocParser:
                 elif c.tag in KEEP_IN_TABLE_CELL:
                     # p 内嵌块级子元素（ul/ol/img/figure/whiteboard/grid/…）由子块承载——
                     # 此前 p 分支不递归，内嵌列表整列表丢块、文本被 inline_text 压扁进段落
-                    # （守恒自检恒真盲区，oracle 块计数是唯一暴露面；实锤：主样本 p>ul×1）
+                    # （守恒自检恒真盲区，oracle 块计数是唯一暴露面）
                     self.dispatch(c, parent_id=pid or parent_id)
             return
         if tag in ("ol", "ul"):
@@ -463,9 +463,8 @@ class DocParser:
         if tag == "whiteboard":
             token = node.attrs.get("token") or ""
             # mermaid 型画板（type=mermaid）源码存于标签 text——守恒原文侧无条件收 text 节点，
-            # 产物侧此前 whiteboard 块无 text 字段 → 双侧口径不对称，指纹必差（实锤样本：AI活动
-            # 纪要技术设计，3 张 mermaid 画板 457 字符）。text 字段双侧（parse_doc/平台 block.py
-            # doc_text_stream）均无条件收，对称；普通画板 text 空，行为不变
+            # 产物侧 whiteboard 块若不带 text 字段 → 双侧口径不对称，指纹必差。text 字段双侧
+            # （parse_doc/平台 block.py doc_text_stream）均无条件收，对称；普通画板 text 空，行为不变
             self.emit({"id": self.block_id(node) or self.new_id(), "type": "whiteboard",
                        "token": token, "media": self.register_whiteboard(token),
                        "text": (node.text or "").strip(), "path": self.path_of()})
@@ -583,7 +582,7 @@ class DocParser:
     def _source_descendants(node):
         """子树内顶层裸 <source>（不钻入 KEEP 子树——figure>source 由 emit_figure 自行发射，
         此处再发即双计）。表格单元格内的附件卡片不贡献文本：标量判定与空段丢弃都会把它
-        连同 mediaTokens 一起吞掉（守恒 exit 2，实锤 REQ-2026-004 的 td>p>source）。"""
+        连同 mediaTokens 一起吞掉（守恒 exit 2：td>p>source 形态由该口径拦截）。"""
         for c in node.children:
             if c.tag == "source":
                 yield c
@@ -620,12 +619,11 @@ class DocParser:
     def _emit_cell_paragraph(self, p, row_id):
         """单元格内段落：空文本且无 KEEP 后代/裸 source → 丢弃；空文本但带 KEEP 后代或
         source → 只承载子块；非空 → paragraph 子块（原生 id 直用，整段粗体标 subheading）。
-        裸 source 附件两个分支都要发：附件卡片常与「原型：」等文本同段（实锤样本），
+        裸 source 附件两个分支都要发：附件卡片常与「原型：」等文本同段，
         只在空段发射会漏。
-        0.6.1（REQ-2026-054 实证）：inline_text 带 skip_keep=True（与顶层 dispatch 的 p
-        分支同口径）且 KEEP 子块无条件 dispatch——旧实现把 p 内 ol/ul 文本折进宿主 text、
-        且「text 非空不发子块」使 td>p>ol 形态的 list-item 块整族丢失（API=41 产物=32，
-        oracle 块面拦截；文本面因被折叠而通过，块面静默缺）。"""
+        inline_text 带 skip_keep=True（与顶层 dispatch 的 p 分支同口径），KEEP 子块无条件
+        dispatch（text 非空也发）——防 p 内 ol/ul 文本被折进宿主 text、td>p>ol 形态的
+        list-item 块整族静默丢失（oracle 块面口径：折叠进 text 不算发出）。"""
         text = inline_text(p, skip_keep=True)
         pid = self.block_id(p)
         if text:
@@ -1095,8 +1093,8 @@ def self_test():
     assert by_id["b5"]["rowTitle"] == "数据一"
     assert "rowTitle" not in by_id["ta1"]  # 附件格无文本 → 不设键（不产空标题）
 
-    # ---- 表格内裸 source 附件（实锤 REQ-2026-004：td>p>source 曾被当空标量格吞掉，
-    # 附件连同 mediaTokens 丢失 → 守恒 exit 2）：三种形态都必须成 attachment 块并登记媒体
+    # ---- 表格内裸 source 附件（td>p>source 若被当空标量格吞掉，附件连同
+    # mediaTokens 丢失 → 守恒 exit 2）：三种形态都必须成 attachment 块并登记媒体
     ta1, ta2 = by_id["ta1"], by_id["ta2"]
     assert ta1["cells"] == ["", ""], ta1["cells"]  # 附件格判内容格（cells 置空），不吞
     ta1_kids = [b for b in blocks if b.get("parent") == "ta1"]

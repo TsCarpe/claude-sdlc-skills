@@ -4,7 +4,7 @@
 七层体检照走、命中照记（留痕不降），本脚本只把「PM 入选数量与需求规模相称」变成可执行的反馈环。
 **档位线只约束未经🔴自证的问题（🟡+🔵 合计）；🔴 过自证不计数、必问不拦**——真硬伤再多也全问。
 
-重推携带豁免（--carry-file，v1.7.1）：executor 在质检任务启动时把平台已有处置痕迹的行
+重推携带豁免（--carry-file）：executor 在质检任务启动时把平台已有处置痕迹的行
 （answer 非空 ∨ status≠pending ∨ note 非空，且 origin ∈ skill/incremental）落盘为工作区
 carry.json。脚本对「seq 在清单 ∧ 问题文本 strip 后逐字一致」的项豁免——携带项不占预算、
 永不删减（重推合并按 seq+文本双键携带处置，豁免口径与之同构）；seq 复现但文本被改写 =
@@ -85,10 +85,8 @@ def main() -> None:
             payload = json.load(f)
     except FileNotFoundError:
         fail(f"payload 文件不存在：{args.payload}（先完成 resolve_anchors 再跑本脚本）")
-        return
     except json.JSONDecodeError as e:
         fail(f"payload 不是合法 JSON：{e}（检查组装/锚点附加是否破坏了结构）")
-        return
     if not isinstance(payload, dict):
         fail("payload 顶层不是 JSON 对象")
     items = payload.get("items")

@@ -86,7 +86,7 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - 每条命中必须附**原文定位**（章节名 + 关键引文片段），禁止脱离原文泛泛而谈；缺失类无引文可引时按「全文未见 X」问式（见 report-template 撰写规则）
 - 七层维度是启发式锚点而非封闭清单：发现维度外的问题也应记录，标注维度为「补充」
 - 严重度从严不从宽：拿不准阻断还是严重时，标高一级并在描述中说明（第 7 层例外见 dimensions.md）
-- **入选门槛与分档预算**：进入 PM 清单的问题过动手级红线（好奇级只留痕「未入选」）、按 digest 规模信号分档——档位线只数 🟡+🔵 合计（🔴 自证后不计数、必问）、🔵≤3、🔴 逐条自证、重推保护已答项（经 --carry-file 豁免不占预算）——纪律全文见 dimensions.md「检查顺序与使用说明」第 10 条；回传前 `scripts/check_clarify_budget.py` 硬门须过
+- **入选门槛与分档预算**：进入 PM 清单的问题过动手级红线（好奇级只留痕「未入选」）、按 digest 规模信号分档——档位线只数 🟡+🔵 合计（🔴 自证后不计数、必问）、🔵≤3、🔴 逐条自证、重推携带保护（经 --carry-file 豁免不占预算）——纪律全文见 dimensions.md「检查顺序与使用说明」第 10 条；回传前 `scripts/check_clarify_budget.py` 硬门须过（增量质检例外，见 references/incremental-guide.md）
 - **冲突不裁决**：构表或层间检查撞到的口径冲突一律记命中交 PM 裁决，禁止静默择一
 
 **Step 5** 读取 [references/report-template.md](references/report-template.md)，产出两个文件到 `sdlc/<需求名>/intake/`：
