@@ -44,6 +44,8 @@
   未解决平台评论应转化为澄清问题。`options/module/layer` 纪律同全量质检
   （冲突类/取舍类问题选项化 2-4 项、module 与功能点地图同体系、layer 1-7——契约见 sdlc-sync 的
   payload-schema.md（跨 skill，单独安装时仅作来源说明）与同目录 dimensions.md；纯缺失类/开放类不硬造选项）。
+  **入选门槛同全量**（dimensions.md 第 10 条动手级红线——好奇级不进增量包，增量本就只产受影响
+  章节的新问题）；分档预算脚本不跑（增量包无全量规模信号，增量新问题计数天然受切片约束）。
 - `summary` / `riskTier`：全局重算后覆写。
 
 ## anchor 越界纪律（硬红线）
