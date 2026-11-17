@@ -1,6 +1,6 @@
 ---
 name: sdlc-platform
-description: "在产物平台上走完首发需求：新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替人采纳、答题或发布。用法：/sdlc-platform new|status|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先列出命令，再问要做哪一步。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、到哪了。"
+description: "在产物平台上，把原始需求变成标准需求文档。新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替人采纳、答题或发布。用法：/sdlc-platform new|status|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先列出命令，再问要做哪一步。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、到哪了。"
 ---
 
 # 平台首发链路（sdlc-platform）
