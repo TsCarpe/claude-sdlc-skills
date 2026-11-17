@@ -45,9 +45,9 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - [ ] Step 4: 终端展示摘要（含风险分级提议）+ 暂停等待用户确认与分级拍板
 ```
 
-**Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + mermaid）。
+**Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + flow-viz JSON 图，协议见仓库 [references/flow-viz-protocol.md](../../references/flow-viz-protocol.md)）。
 
-**mermaid 自检**（落盘前，逐块复读）：流程图/状态机的节点、边、子图标题、迁移标签内不得有英文直引号 `"`（引用原文用「」；`<`、`|`、中文括号均安全）。`"` 是唯一已实测会让整块图渲染失败的字符——平台侧只会显示 Syntax error，图整张丢失。状态机另查三条：有 `[*]` 入口、`A --> A` 只承载原文自迁移（展示类写 note/表）、未定义流转只进边表。纪律原文见模板「标注约定」与区块 6「成图纪律」。
+**flow-viz 自检**（落盘前）：跑仓根 `python3 scripts/check_flowviz.py <digest md>`——校验全部 flow-viz 块 JSON 可解析、id 唯一、边端点存在、lane 引用存在、无自环；exit 非 0 按 stderr 提示修复后重跑至通过。人工另查三条：状态机有 `start` 入口节点、断点一律 `gap:true` 字段（不手打 ❓ 进 label）、payload `digest.flows[]`/`digest.states[]` 与图同一次梳理产出且断点对齐。纪律原文见模板「标注约定」与区块 5/6。
 
 **梳理纪律**（违反即返工）：
 - 忠实转述原文，**不评价、不脑补、不优化**——评价是体检阶段的事

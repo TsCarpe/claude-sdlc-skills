@@ -2,6 +2,17 @@
 
 ## 未发布
 
+sdlc-intent 回流：digest 流程图/状态机载体迁移 mermaid → flow-viz JSON（与平台仓渲染重构同批的三仓原子变更：平台 web 已上线 Vue Flow + ELK 通用图渲染器；本仓为生成侧、sdlc-platform-server 速查卡为镜像侧）。起因：mermaid(dagre) 对泳道 subgraph + 长中文节点的布局质量经多轮参数修补仍绕线/交叉/边标签叠字，治本路径是换布局引擎与节点表达（HTML 节点卡 + ELK 分层布局），载体由图文本换结构化 JSON——协议字段与平台渲染器 `src/flowviz/parse.js` 同源。
+
+- **references/flow-viz-protocol.md（新增，仓库级共享规范）**：flow-viz JSON 协议——`kind:"flow"`（泳道 lanes 可选：跨角色主流程泳道化、页面级流程不设泳道；dir TD/LR）/ `kind:"state"`（start 节点替代 `[*]`）；节点 type step/decision/end/start/state、no 序号、src 出处、gap:true 断点（渲染 ❓）、note 附注、pids 澄清关联；边 label 分支条件 / dashed 虚线依赖；JSON 纪律（禁注释尾逗号、断点用字段不手打标记）；文内 fv-mirror 标记段为 server 速查卡镜像引用段（单一权威来源）
+- **skills/sdlc-intent/references/digest-template.md**：标注约定「mermaid 文本纪律」→「flow-viz 载体与 JSON 纪律」（引用共享协议）；区块 5 改 flow-viz 泳道图示例 + 新增 payload 纪律（`digest.flows[]` 线性表 = 图的线性主链投影，断点两侧对齐）；区块 6 改 flow-viz state 示例，成图纪律三条改写——start 入口（未定义入口首边 label 带 ❓）、**自环不表达**（协议与渲染器均丢弃 A→A，原文自迁移写 note；替代 mermaid 自环流叠字的规避条款）、未定义状态/流转 gap 入图 + 边表 `?` 行双呈现（原「不进图只进边表」改双呈现，消除纪律与实际产物的张力）；流转边表保留（`digest.states[]` 直投源）
+- **skills/sdlc-intent/SKILL.md**：Step 2「markdown 表格 + mermaid」→「markdown 表格 + flow-viz JSON 图」；「mermaid 自检」→「flow-viz 自检」（机检命令 + 三条人工检查：start 入口 / gap 字段 / payload 投影对齐）
+- **scripts/check_flowviz.py（新增，仓根通用机检）**：校验 md 内全部 flow-viz 块——JSON 可解析、kind 合法、nodes 非空、id 唯一、边端点存在、lane 引用存在、无自环；`FLOWVIZ_FAIL` stderr 契约带块位置与修复建议（对齐 check_clarify_budget 风格，可被平台流水线 run_command 直调）；`--selftest` 内置四例自测
+- **scripts/check_digest_mirror.py（新增，跨仓护栏）**：逐字节比对本仓协议文档 fv-mirror 段与 sdlc-platform-server prompts.py 速查卡镜像段（check_adversarial_core.py 同模式）——速查卡是线上 agent 必读权威，只改模板不改速查卡 = 纪律到不了 agent
+- **sdlc-platform-server/src/platform_sdlc/agent/prompts.py（同批镜像同步）**：速查卡 §5/§6 描述与「mermaid 成图纪律」段整体替换为 fv-mirror 镜像三行；质检工作流步骤 4 追加「落盘后跑 check_flowviz.py，exit 非 0 修复重跑」
+- evals 无需同批更新（全量扫描：evals/ 与 perspectives/ref-tables 零 mermaid 格式断言；README/docs 的 mermaid 为文档自身示意图，与产物格式无关）
+- 部署顺序约束：**平台 web 渲染器先行生效，本仓与 server 仓同一变更窗合入**——web 未升级时新 digest 的图块按原始 JSON 降级展示（诚实失败不吞数据）；存量已采纳 digest 的 mermaid 块由 web 端 drainMermaid 原样继续渲染，不重生成
+
 sdlc-intent 回流：澄清量治理 v1.7 + v1.7.1（v1.7.1 为双轮 CR + 全新上下文代理独立方案审核后的修复批：3 阻断同步遗漏 + 9 改进建议全数吸收）。起因：真实质检产出的 PM 澄清清单量与需求规模不相称（好奇级/顺带级混入），且平台侧重推携带保护与预算硬门存在机械面冲突——携带项被当新问题计数，超线删减指令会诱导删除平台已答/已拒项（处置永久丢失，触碰「重推按 seq+问题文本保留已答内容」红线）。
 
 - **dimensions.md 第 10 条（新增）**：入选门槛与分档预算——动手级红线（好奇级只留痕「未入选」不进清单/payload）、🔵 例外通道 ≤3、🔴 逐条自证不计数必问、分档预算（轻量 ≤12 / 标准 ≤25 / 重型不封顶）、重推已答保护（原文未变即原样保留 seq+文本）；增量例外口径（门槛同全量、档位预算与硬门不跑）
