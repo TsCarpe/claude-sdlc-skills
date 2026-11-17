@@ -50,12 +50,52 @@ SCOPE_HEADING = re.compile(r"^#{2,4}\s*.*(?:本期不做|⛔)")
 SELF_CONTAINED_CLAIM = re.compile(r"自包含|不依赖任何外部")
 EXTERNAL_DEP_PAT = re.compile(r"以原型为准|以页面示例为基准|详见附件|见飞书原文|以原文随附.{0,12}为基准")
 DEP_WHITELIST = re.compile(r"(?:原型|页面示例).{0,6}(?:报废|废弃)")
-# #10 失败触发(2026-11-13 分档重构):失败态边按可判定性双档——
-# FAIL(确定性档):mermaid 状态图边描述与目标态同名或为空(同义反复=没写进入条件,纯字符串判定不误报);
-# WARN(语义档):其余边(有描述但充分性需理解/行文提及)出全量清单 data.edges,生成侧 AI 裁决补写。
+# #10 失败触发(2026-11-13 分档重构;载体迁移 flow-viz 后判定结构化):失败态边按可判定性双档——
+# FAIL(确定性档):flow-viz kind:"state" 图中指向「失败」态节点的边,label 与目标态同名或为空
+#   (同义反复=没写进入条件,纯字符串判定不误报);
+# WARN(语义档):其余边(有 label 但充分性需理解/行文提及)出全量清单 data.edges,生成侧 AI 裁决补写。
 # 关键词枚举判定(超时|错误码|…)退役:真实条件形态永远追不上(050 实测「少于 10 秒」「完全无声音」3/5 误报)。
+# kind:"flow" 流程图的失败分支是路径条件不是状态进入条件,不参与判定(延续旧 flowchart 管道标签不误判锚)。
 FAIL_EDGE = re.compile(r"[→>＞]\s*([^\s，。；、|｜]{0,8}失败)")
-MERMAID_EDGE = re.compile(r"^\s*(\S[^\n:]*?)\s*-+>\s*(\S+?)(?:\s*:\s*(.*))?$")
+
+FV_BLOCK = re.compile(r"```flow-viz[ \t]*\n(.*?)```", re.DOTALL)
+# 与仓根 scripts/check_flowviz.py 的 FLOW_RE 逐字一致——改任一侧必须同步另一侧
+# (check_flowviz.py --selftest 带跨文件一致软断言)。用于 raw-json 豁免与 P 号防御掩码。
+
+MERMAID_FENCE = re.compile(r"^[ \t]*```[^\n]*mermaid", re.MULTILINE)
+# mermaid 开栅栏行(载体已统一 flow-viz,出现即 flowviz-carrier FAIL;闭合与否不影响拦截)。
+
+
+def scan_fences(doc: str):
+    """行级图围栏扫描(容错行首缩进)。返回 (fv_lines, mm_lines, fv_blocks, fv_unclosed):
+    fv_lines/mm_lines——围栏内容行 0 基行号集合(不含围栏行自身;未闭合围栏不收);
+    fv_blocks——[{no(1 基块序), start_line(围栏行 1 基), raw(块文本)}];
+    fv_unclosed——存在开栅栏无闭栅栏的 flow-viz 围栏(flowviz-carrier 显式报)。
+    其他语言围栏不跟踪(现粒度与迁移前一致)。"""
+    lines = doc.splitlines()
+    fv, mm, blocks = set(), set(), []
+    fence = None  # None | (lang, start_idx, buf)
+    for i, l in enumerate(lines):
+        t = l.strip()
+        if fence is None:
+            if t.startswith("```"):
+                lang = t[3:].strip()
+                if lang == "flow-viz":
+                    fence = ("flow-viz", i, [])
+                elif "mermaid" in lang:
+                    fence = ("mermaid", i, [])
+            continue
+        if t.startswith("```"):  # 闭合
+            lang, start, buf = fence
+            if lang == "flow-viz":
+                fv.update(range(start + 1, i))
+                blocks.append({"no": len(blocks) + 1, "start_line": start + 1, "raw": "\n".join(buf)})
+            else:
+                mm.update(range(start + 1, i))
+            fence = None
+        elif fence[0] == "flow-viz":
+            fence[2].append(l)
+    return fv, mm, blocks, fence is not None and fence[0] == "flow-viz"
 
 # 「数字+量词」的自然语言虚指用法(如"过了一段时间""在一处补充说明"),非计数断言。
 # 仅收录计数正则量词集(段|项|类|条|处)实际可命中的组合;量词集扩展时同步补此处。
@@ -295,7 +335,9 @@ class Checker:
                      ["未数到附录 A 澄清结论表表体——确认附录标题含「附录 A」字样、表体行以 | Pxx | 开头;0 行不得按通过处理"],
                      {"declared": [], "missing": [], "ghosts": []})
             return
-        body_tags = set(re.findall(r"(?<![.．A-Za-z0-9])(?:〔)?P(\d{1,3})", strip_audit_refs(self.body)))
+        # flow-viz 围栏先掩掉:图 JSON 内 "pids":["P12"] 等字段文本不是正文引用(裸 P 正则会命中引号后 P 号,实测必误报)
+        body_tags = set(re.findall(r"(?<![.．A-Za-z0-9])(?:〔)?P(\d{1,3})",
+                                   strip_audit_refs(FV_BLOCK.sub("", self.body))))
         missing = [p for p in declared if p[1:] not in body_tags]
         declared_n = {int(p[1:]) for p in declared}
         ghosts = sorted({f"P{n:02d}" for n in (int(x) for x in body_tags) if n not in declared_n}, key=lambda s: int(s[1:]))
@@ -438,8 +480,11 @@ class Checker:
             self.add("PASS", "matrix-assert", ["矩阵自称动作数与行数一致(未发现该类断言时视为通过)"])
 
     def check_raw_json(self):
-        n = self.doc.count('{"kind":')
-        self.add("FAIL" if n else "PASS", "raw-json", [f"出现 {n} 处裸 JSON"] if n else ["零裸 JSON"])
+        # flow-viz 围栏内豁免(图载体本身即 {"kind": 起);围栏外出现=答复取自 payload 而非 answerText
+        n = FV_BLOCK.sub("", self.doc).count('{"kind":')
+        self.add("FAIL" if n else "PASS", "raw-json",
+                 [f"围栏外出现 {n} 处裸 JSON——答复应取自 answerText,不得内嵌 payload"] if n
+                 else ["零裸 JSON(flow-viz 围栏内豁免)"])
 
     def check_meta_header(self):
         """元信息头按模板(spec §2):紧跟 h1 两列表格固定 5 行、键序一致、值内无统计类括注、
@@ -494,14 +539,18 @@ class Checker:
             self.add("SKIP", "p-semantic(〔Pxx〕记号语义)", ["缺可用 --answers,转人工抽查"])
             return
         hits = []
-        for m in re.finditer(r"〔P(\d{1,3})[·]?[^〕]*〕", self.body):
+        # 与 p-coverage 同掩 flow-viz 围栏:图 JSON 文本里的 P 号形态非正文条款引用(一致性防御);
+        # 掩码后偏移整体前移,行定位与范围章节 span 均在掩码文本上取,保证坐标一致
+        body = FV_BLOCK.sub("", self.body)
+        spans = find_range_sections(body)
+        for m in re.finditer(r"〔P(\d{1,3})[·]?[^〕]*〕", body):
             seq = f"P{m.group(1)}"
             at = self.answers.get(seq)
             if not at:
                 continue
-            line_start = self.body.rfind("\n", 0, m.start())
-            line_end = self.body.find("\n", m.end())
-            line = self.body[line_start: line_end if line_end != -1 else len(self.body)]
+            line_start = body.rfind("\n", 0, m.start())
+            line_end = body.find("\n", m.end())
+            line = body[line_start: line_end if line_end != -1 else len(body)]
             s = line.strip()
             # 减噪:标题/表头/短行的记号是落点标注而非条款语义,天然低重叠,不参与抽查
             if s.startswith("#") or s.startswith("|") or len(s) < 15:
@@ -510,7 +559,7 @@ class Checker:
             if len(re.findall(r"〔P\d{1,3}", line)) >= 2:
                 continue
             # 1.2 本期范围/不做/边界清单是「影响章节」登记,非条款本身
-            if any(s <= m.start() < e for s, e in self.range_spans):
+            if any(s <= m.start() < e for s, e in spans):
                 continue
             overlap = len(set(norm(at)) & set(norm(line))) / max(1, len(set(norm(at))))
             if overlap < P_SEMANTIC_OVERLAP_MIN:
@@ -555,44 +604,101 @@ class Checker:
         self.add("FAIL" if hits else "PASS", "self-contained",
                  hits or ["自包含声明与正文一致,无外部依赖表述"])
 
+    def check_flowviz_carrier(self):
+        """图载体合法性(FAIL 级):①全文零 ```mermaid 围栏(载体已统一 flow-viz JSON,文本图
+        不可程序解析;存量旧图重发布须升格——同 meta-header 旧头 FAIL 先例);②每个 flow-viz
+        块为可解析的单一 JSON 对象、kind∈{"flow","state"}、nodes 非空、edges 为数组;
+        ③flow-viz 围栏必须闭合(开栅栏无闭栅栏显式报,不留给 raw-json 兜底误导)。
+        深度结构(重复 id/悬空边/自环)不在本项——平台渲染端宽容规则丢弃并提示,
+        落盘前宜跑仓根 scripts/check_flowviz.py(存在时)复核,此处避免第三份副本。"""
+        details = []
+        if MERMAID_FENCE.search(self.doc):
+            first = next((i + 1 for i, l in enumerate(self.doc.splitlines())
+                          if l.strip().startswith("```") and "mermaid" in l[3:]), 0)
+            details.append(f"第 {first} 行起 mermaid 围栏——图载体已统一 flow-viz JSON"
+                           "(references/flow-viz-protocol.md),状态机/流程图须 flow-viz 图+流转边表双呈现")
+        _, _, blocks, unclosed = scan_fences(self.doc)
+        if unclosed:
+            details.append("存在未闭合的 ```flow-viz 围栏(开栅栏无闭栅栏)——补闭合围栏后重跑")
+        for b in blocks:
+            where = f"第 {b['no']} 个 flow-viz 块(第 {b['start_line']} 行起)"
+            try:
+                obj = json.loads(b["raw"])
+            except json.JSONDecodeError as e:
+                details.append(f"{where} JSON 解析失败({e.msg})——检查尾逗号/注释/引号配对")
+                continue
+            if not isinstance(obj, dict):
+                details.append(f"{where} 不是 JSON 对象(单一 JSON 对象)")
+                continue
+            kind = obj.get("kind")
+            if kind not in ("flow", "state"):
+                details.append(f"{where} kind 必须是 \"flow\" 或 \"state\"(当前:{kind!r})")
+                continue
+            nodes, edges = obj.get("nodes"), obj.get("edges")
+            if not isinstance(nodes, list) or not nodes:
+                details.append(f"{where} nodes 为空或缺失——无可渲染内容")
+                continue
+            if edges is not None and not isinstance(edges, list):
+                details.append(f"{where} edges 必须是数组")
+        self.add("FAIL" if details else "PASS", "flowviz-carrier",
+                 details or ["无 mermaid 围栏;flow-viz 块全部可解析、kind 合法且围栏闭合"])
+
     def check_failure_trigger(self):
-        """#10 分档(2026-11-13 重构):失败态边按可判定性双档。
-        FAIL(确定性档):mermaid 状态图边描述与目标态同名或为空——同义反复即没写进入条件,
-          纯字符串判定不误报(050 实测 2 处真问题即此形态);
+        """#10 分档(2026-11-13 重构;载体迁移 flow-viz 后确定性档改结构化判定):失败态边按可判定性双档。
+        FAIL(确定性档):flow-viz kind:"state" 图中指向「失败」态节点的边,label 与目标态同名或为空
+          ——同义反复即没写进入条件,纯字符串判定不误报(050 实测 2 处真问题即此形态);
         WARN(语义档):其余边出全量清单 data.edges({line,from,to,desc,kind}),由生成侧 AI
           裁决补写触发条件(发布不拦)——「少于 10 秒」「完全无声音」等条件形态的关键词枚举
-          永远追不上(050 实测 3/5 误报),语义判定交还语义侧。"""
+          永远追不上(050 实测 3/5 误报),语义判定交还语义侧。
+        kind:"flow" 流程图不参与失败态判定(失败分支是路径条件不是状态进入条件);
+        判定域=目标节点有效 label(缺省回退 id)含中文「失败」——与旧 FAIL_EDGE 行文正则同域,
+        英文 fail/error 不识别;围栏外行文「→ X失败」inline 档照旧行文正则。"""
         lines = self.doc.splitlines()
-        # mermaid 园栏行集合(```mermaid … ```;容错行首缩进)
-        fence, mermaid_lines = False, set()
-        for i, l in enumerate(lines):
-            t = l.strip()
-            if t.startswith("```"):
-                if not fence and "mermaid" in t:
-                    fence = True
-                elif fence:
-                    fence = False
-                continue
-            if fence:
-                mermaid_lines.add(i)
+        fv_lines, mm_lines, blocks, _ = scan_fences(self.doc)
+
         fails, edges = [], []
+        for b in blocks:
+            try:
+                obj = json.loads(b["raw"])
+            except json.JSONDecodeError:
+                continue  # carrier 项已 FAIL 拦发布,此处不重复报
+            if not isinstance(obj, dict) or obj.get("kind") != "state":
+                continue
+            label_of = {}
+            for n in obj.get("nodes") or []:
+                if isinstance(n, dict) and isinstance(n.get("id"), str):
+                    label_of[n["id"]] = str(n.get("label") or n["id"])  # 有效 label,缺省回退 id
+            cursor = 0
+            for e in obj.get("edges") or []:
+                if not isinstance(e, dict) or not isinstance(e.get("to"), str):
+                    continue
+                to_label = label_of.get(e["to"], e["to"])  # 悬空边回退 id 文本参与判定
+                if "失败" not in to_label:
+                    continue
+                desc = str(e.get("label") or "").strip()
+                desc_n = desc.rstrip("。，；,;：: ")
+                # 逐边行定位(仅工单辅助,不影响判定):块内自 cursor 起找 "to": <json.dumps(to_id)>;
+                # 压缩单行/形态怪找不到时回退块围栏行
+                pat = re.compile(r'"to"\s*:\s*' + re.escape(json.dumps(e["to"])))
+                m2 = pat.search(b["raw"], cursor)
+                line = b["start_line"] + b["raw"][:m2.start()].count("\n") if m2 else b["start_line"]
+                if m2:
+                    cursor = m2.end()
+                from_label = label_of.get(e.get("from"), str(e.get("from") or ""))
+                edges.append({"line": line, "from": from_label, "to": to_label,
+                              "desc": desc, "kind": "state"})
+                if not desc_n or desc_n == to_label.strip():
+                    fails.append(f"第 {b['no']} 块第 {line} 行「{to_label}」边触发条件未写明"
+                                 f"(描述{'为空' if not desc_n else '与目标态同名'})——失败态不可测,"
+                                 f"须补写进入条件(超时/错误场景/判定依据)")
+
         for i, l in enumerate(lines):
+            if i in fv_lines or i in mm_lines:
+                continue  # 图围栏内的行不算行文(JSON 字符串值里的「→X失败」不误报)
             for m in FAIL_EDGE.finditer(l):
-                to = m.group(1)
-                if i in mermaid_lines:
-                    em = MERMAID_EDGE.match(l)
-                    desc = (em.group(3) or "").strip() if em else ""
-                    desc_n = desc.rstrip("。，；,;：: ")
-                    edges.append({"line": i + 1,
-                                  "from": em.group(1).strip() if em else "",
-                                  "to": to, "desc": desc, "kind": "state-diagram"})
-                    if not desc_n or desc_n == to:
-                        fails.append(f"第 {i + 1} 行「{to}」边触发条件未写明"
-                                     f"(描述{'为空' if not desc_n else '与目标态同名'})——失败态不可测,"
-                                     f"须补写进入条件(超时/错误场景/判定依据)")
-                else:
-                    edges.append({"line": i + 1, "from": "", "to": to,
-                                  "desc": l.strip()[:60], "kind": "inline"})
+                edges.append({"line": i + 1, "from": "", "to": m.group(1),
+                              "desc": l.strip()[:60], "kind": "inline"})
+
         if fails:
             self.add("FAIL", "failure-trigger", fails, {"edges": edges})
         elif edges:
@@ -603,7 +709,7 @@ class Checker:
                         for e in edges],
                      {"edges": edges})
         else:
-            self.add("PASS", "failure-trigger", ["无「→ X失败」状态机边,不检查"])
+            self.add("PASS", "failure-trigger", ["无失败态边(state 图边与行文提及均无),不检查"])
 
     def check_deferred_link(self):
         """挂起项落点(P1-7):status=deferred 的澄清项须在正文有〔Pxx…挂起〕标注或遗留假设章登记,
@@ -667,6 +773,7 @@ def main(argv: list[str] | None = None) -> int:
     c.check_strikes()
     c.check_scope_discipline()
     c.check_self_contained()
+    c.check_flowviz_carrier()
     c.check_failure_trigger()
     c.check_count_assert()
     c.check_matrix_assert()

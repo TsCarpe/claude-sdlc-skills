@@ -2,13 +2,24 @@
 
 ## 未发布
 
+sdlc-sync 回流：standard doc 状态机载体迁移 mermaid → flow-viz JSON（digest 线迁移的收尾批，与平台仓同批原子变更：本仓生成侧规范与机检、sdlc-platform-server vendor 镜像+pytest+金丝雀+prompts、sdlc-platform-web CHECK_META 词条）。经全新上下文代理对抗式审查（10 组断言 8 组实证为真、2 MAJOR 全部吸收：web CHECK_META 白名单遗漏、部署口径失真）。起因：digest 线已切 flow-viz 且平台 web 渲染器通用化（drainMermaid+drainFlowViz 全站接管），standard doc 的 mermaid 状态图是该载体切换的最后一环；failure-trigger 机检锚 mermaid 文本正则，结构化判定治本。
+
+- **check_standard_doc.py**：①`check_failure_trigger` 确定性档改结构化判定——kind:"state" 图中指向「失败」态节点（有效 label 缺省回退 id）的边，label 与目标态同名/为空即 FAIL（判定域与分档语义不变，kind:"flow" 失败分支不参与判定，inline 行文档保留且永不 FAIL）；`data.edges[].kind` 值 `"state-diagram"` → `"state"`（breaking，消费方三仓枚举全在批内同步）；②新增 `flowviz-carrier` 机检项（FAIL 级）：mermaid 围栏残留拦截（存量旧图重发布 FAIL 逼升格，对齐 meta-header 旧头先例）+ flow-viz 块基本合法性（JSON 可解析/单一对象/kind 合法/nodes 非空/edges 数组/围栏闭合——未闭合显式报，不留 raw-json 兜底误导）；③`check_raw_json` 豁免 flow-viz 围栏内 `{"kind":`（原与图载体起始串硬冲突必误杀发布，围栏外仍 FAIL 保原意）；④p-coverage/p-semantic 扫描前掩 flow-viz 围栏（防图内 `"pids":["P12"]` 等字段文本误成幽灵 P 号——p_coverage 正则实证必命中；p_semantic 掩码后偏移一致重算 spans）；⑤不保留 mermaid 边解析（用户拍板「只判 flow-viz」：存量 mermaid 图中失败态边不再检出为已知取舍，inline 行文仍查，mermaid 残留由 carrier 显式拒绝而非静默漏检）
+- **standard-doc-spec.md**：§2 逻辑载体条款改「flow-viz JSON 图＋流转边表双呈现」（与 digest §6 边表同构、禁 mermaid、成图纪律对齐 digest：start 入口/自环不表达/gap:true 双呈现）；§4 新增 flowviz-carrier 机检条 + failure-trigger 条改 flow-viz 边判定措辞 + raw-json 条补围栏豁免括注；§0/§4 人工档枚举闭包措辞改锚流转边表
+- **evals**：eval-n fixture 两个 mermaid 块迁 flow-viz（state 块同义反复+空 label FAIL 锚、flow 块失败分支不误判锚、新增 raw-json 豁免/carrier 拦截/坏 JSON 不崩溃断言）；eval-m 存量债销账（其断言在 2026-11-13 分档重构后已自相矛盾——clean 行文边实跑 WARN 而期望 PASS/任一 WARN 判负，bad 实际 2 FAIL 而非 3；期望对齐分档现实，fixture 的 inline 纯行文形态保留为与 eval-n 图形态互补锚）；README 登记 eval-n + eval-m 行措辞修旧
+- **check_flowviz.py（权威源+skill 副本双写）**：--selftest 增跨文件围栏正则一致软断言（check_standard_doc.py 内嵌 FV_BLOCK 漂移即 FAIL，单装环境跳过；负例实测生效）
+- **SKILL.md**：publish 合成步骤补「状态机＝flow-viz 图＋流转边表双呈现」；升格口径扩「存量旧格式文档（旧头 / mermaid 旧图载体）」
+- **sdlc-platform-server（同批）**：vendor 5 文件（spec/check/eval-n/eval-m/README）逐字节同步；tests/test_standard_check.py failure-trigger 组 fixture 迁 flow-viz + 新增坏 JSON/raw-json 豁免/mermaid 拦截三测；canary-m 金丝雀换等义 flow-viz 块；prompts.py standard_doc 速查卡「state-diagram 边」措辞改「state 图边…写进边 label」（fv-mirror 段未触碰）
+- **sdlc-platform-web（同批）**：StdTab.vue CHECK_META 增 flowviz-carrier 词条 + failure-trigger 词条 fix 文案随载体更新（对抗式审查发现：web 非零改动，「机检项白名单」是枚举外消费点，不登记则 fallback 英文裸名）
+- **部署口径（对抗式审查修正）**：vendor 机检是 standard-check/publish 时实时执行——**server 合入部署即对平台已存 mermaid 旧格式草稿生效发布拦截（预期行为）**，非「只影响其后重合成」；changed 卡重发布自动按新 spec 重合成 flow-viz 版（迁移生效主通道）；存量已发布文档不重检、web drainMermaid 继续渲染
+- 销账：上一批待办「sdlc-sync standard-doc-spec 的 failure-trigger 机检仍锚 mermaid 状态图边（standard doc 产物线未迁移），迁移评估另行批次」——本批落地
+
 审核修复批（对照 agent-skills best-practices 审核上一条载体迁移提交后的修正，push 前完成）：
 
 - **references/flow-viz-protocol.md**：kind=flow 合法示例补 `C1` 节点声明（原 edges 有 `B1→C1` 悬空边——权威示例违反自家协议；因示例原用 ```json 围栏而机检只扫 ```flow-viz 块，一直逃过自检）；两个示例围栏改 ```flow-viz——此后 `check_flowviz.py references/flow-viz-protocol.md` 即可持续守护示例合法性（fv-mirror 镜像段不含示例，无跨仓同步影响）
 - **skills/sdlc-intent/scripts/check_flowviz.py（新增，随 skill 分发副本）**：与仓根权威源同内容、头部互注双写纪律——修复单装渠道断链（此前 SKILL.md 无条件要求跑仓根脚本，skills CLI 单装 sdlc-intent 时不存在，违背「避免假设工具已安装」与既有先例 parse_doc 等随 skill 分发）
 - **skills/sdlc-intent/SKILL.md + references/digest-template.md**：仓根协议文档引用处加「单独安装时仅作来源说明，不依赖其存在」护栏句（模板区块 5/6 已内联完整字段纪律，引用降级不损失自足性）；机检脚本调用改指 skill 内副本；模板目录补漏列的「产物骨架」节
 - **skills/sdlc-intent/evals/eval-1-full-prd.md**：状态机成图纪律锚点同步——原「未定义流转不画只进边表」改为「`gap:true` 入图 + 边表 ? 行双呈现」（迁移提交改了纪律但漏同步 eval 行为断言，旧锚点会把符合新纪律的产物判负）
-- 待办（后续批次）：sdlc-sync standard-doc-spec 的 failure-trigger 机检仍锚 mermaid 状态图边（standard doc 产物线未迁移），迁移评估另行批次
 
 sdlc-intent 回流：digest 流程图/状态机载体迁移 mermaid → flow-viz JSON（与平台仓渲染重构同批的三仓原子变更：平台 web 已上线 Vue Flow + ELK 通用图渲染器；本仓为生成侧、sdlc-platform-server 速查卡为镜像侧）。起因：mermaid(dagre) 对泳道 subgraph + 长中文节点的布局质量经多轮参数修补仍绕线/交叉/边标签叠字，治本路径是换布局引擎与节点表达（HTML 节点卡 + ELK 分层布局），载体由图文本换结构化 JSON——协议字段与平台渲染器 `src/flowviz/parse.js` 同源。
 

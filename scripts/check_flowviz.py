@@ -117,6 +117,17 @@ def _selftest() -> int:
         if status == "FAIL":
             failed += 1
         print(f"selftest {name}: {status}")
+    # 跨文件围栏正则一致软断言:check_standard_doc.py 内嵌同款 FV_BLOCK 定义,漂移即 FAIL。
+    # 候选按部署形态探测(skill 树内 / 仓根 skills 树),均不存在(单装环境)则跳过。
+    fence_def = 'FV_BLOCK = re.compile(r"```flow-viz[ \\t]*\\n(.*?)```", re.DOTALL)'
+    here = Path(__file__).resolve().parent
+    for cand in (here.parent / "skills" / "sdlc-sync" / "scripts" / "check_standard_doc.py",
+                 here.parent.parent / "sdlc-sync" / "scripts" / "check_standard_doc.py"):
+        if cand.is_file():
+            ok = fence_def in cand.read_text(encoding="utf-8")
+            print(f"selftest fv-fence-drift({cand.parents[2].name}/sdlc-sync): {'PASS' if ok else 'FAIL'}")
+            if not ok:
+                failed += 1
     return 1 if failed else 0
 
 

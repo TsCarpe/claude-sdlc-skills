@@ -3,6 +3,7 @@
 > 官方 JSON 结构场景（CONTRIBUTING「evals 规范格式」）；正例防漏报、反例防误报。
 > 来源：度量缺口 #7（自包含声明与正文矛盾）、#10（失败态无判定条件）、P1-7（挂起项未投影为遗留假设）——复核结论「P0 级缺陷 100% 落在机检盲区」的三项补盲。
 > 覆盖 `self-contained`、`failure-trigger`、`deferred-link` 三个机检项。
+> failure-trigger 断言对齐 2026-11-13 分档重构（关键词枚举退役、inline 边归 WARN 语义档）与 2026-11-17 载体迁移（图边判定走 flow-viz kind:"state"，本场景 fixture 是 inline 纯行文形态，与 eval-n 的图形态互补）。
 
 ```json
 {
@@ -12,13 +13,13 @@
   "expected_behavior": [
     "clean：self-contained PASS——附录声明自包含，正文无「以原型为准/以页面示例为基准/详见附件/见飞书原文」表述",
     "clean：白名单不误报——「以原型为准方案已报废」属反向语境（原型…报废），不计入矛盾",
-    "clean：failure-trigger PASS——状态机「→ 生成失败」边所在小节含「超过 5 分钟未返回即判定超时失败」判定条件",
+    "clean：failure-trigger WARN（预期语义档，1 条 inline 边进清单）——行文「榜单生成中 → 生成失败」被收进 data.edges（kind=inline）待裁决，小节含「超过 5 分钟未返回即判定超时失败」属有条件表述不 FAIL",
     "clean：deferred-link PASS——挂起项 P05 在遗留假设章有〔P05·挂起〕登记",
     "bad：self-contained FAIL——声明自包含的同时正文含「以原文随附页面示例为基准」与「详见附件」两处矛盾（明细列行号）",
-    "bad：failure-trigger FAIL——「→ 生成失败」边所在小节无任何判定关键词（超时/错误码/重试/判定/阈值/降级），报失败态不可测",
+    "bad：failure-trigger WARN（非 FAIL）——行文「榜单生成中 → 生成失败」无条件表述，inline 边进语义档清单待裁决（分档后关键词枚举已退役，inline 无条件不拦截）",
     "bad：deferred-link WARN——挂起项 P05 正文无〔P05·挂起〕标注、遗留假设章未登记，报挂起未投影",
     "bad：p-coverage 连带 FAIL——挂起 P05 未投影导致「附录有但正文无落点」（与 deferred-link 同根，两报并存属预期）",
-    "bad：整体 ≥2 FAIL（实际 3：self-contained/failure-trigger/p-coverage，退出码 1），FAIL 处理后重跑才可通过"
+    "bad：整体 ≥2 FAIL（实际 2：self-contained/p-coverage，退出码 1），FAIL 处理后重跑才可通过"
   ]
 }
 ```
@@ -105,9 +106,9 @@
 
 ## 判负红线
 
-- clean 的 `self-contained` / `failure-trigger` / `deferred-link` 任一报 FAIL/WARN（误报）→ 判负
+- clean 的 `self-contained` / `deferred-link` 任一报 FAIL/WARN（误报）→ 判负；clean 的 `failure-trigger` 报 FAIL → 判负（WARN 属预期语义档，但清单须恰为 1 条 inline 边，多条或 kind 异常为锚点漂移）
 - clean 的白名单句「以原型为准方案已报废」被计入 self-contained 矛盾 → 判负（反向语境豁免失效）
 - bad 的自包含矛盾（页面示例为基准 + 详见附件）任一处未报出 → 判负
-- bad 的「→ 生成失败」边未报 failure-trigger FAIL（漏报）→ 判负
+- bad 的行文「榜单生成中 → 生成失败」未进 failure-trigger WARN 清单（漏报）→ 判负
 - bad 的挂起 P05 未报 deferred-link WARN（漏报）→ 判负
 - 附带项不受影响：bad/clean 的 fr-continuity（无 FR）与 a-registry（clean 的 A01 声明未引用属已知提示）WARN 不计入本项判定，但不得出现其他新增 FAIL
