@@ -2,6 +2,14 @@
 
 ## 未发布
 
+审核修复批（对照 agent-skills best-practices 审核上一条载体迁移提交后的修正，push 前完成）：
+
+- **references/flow-viz-protocol.md**：kind=flow 合法示例补 `C1` 节点声明（原 edges 有 `B1→C1` 悬空边——权威示例违反自家协议；因示例原用 ```json 围栏而机检只扫 ```flow-viz 块，一直逃过自检）；两个示例围栏改 ```flow-viz——此后 `check_flowviz.py references/flow-viz-protocol.md` 即可持续守护示例合法性（fv-mirror 镜像段不含示例，无跨仓同步影响）
+- **skills/sdlc-intent/scripts/check_flowviz.py（新增，随 skill 分发副本）**：与仓根权威源同内容、头部互注双写纪律——修复单装渠道断链（此前 SKILL.md 无条件要求跑仓根脚本，skills CLI 单装 sdlc-intent 时不存在，违背「避免假设工具已安装」与既有先例 parse_doc 等随 skill 分发）
+- **skills/sdlc-intent/SKILL.md + references/digest-template.md**：仓根协议文档引用处加「单独安装时仅作来源说明，不依赖其存在」护栏句（模板区块 5/6 已内联完整字段纪律，引用降级不损失自足性）；机检脚本调用改指 skill 内副本；模板目录补漏列的「产物骨架」节
+- **skills/sdlc-intent/evals/eval-1-full-prd.md**：状态机成图纪律锚点同步——原「未定义流转不画只进边表」改为「`gap:true` 入图 + 边表 ? 行双呈现」（迁移提交改了纪律但漏同步 eval 行为断言，旧锚点会把符合新纪律的产物判负）
+- 待办（后续批次）：sdlc-sync standard-doc-spec 的 failure-trigger 机检仍锚 mermaid 状态图边（standard doc 产物线未迁移），迁移评估另行批次
+
 sdlc-intent 回流：digest 流程图/状态机载体迁移 mermaid → flow-viz JSON（与平台仓渲染重构同批的三仓原子变更：平台 web 已上线 Vue Flow + ELK 通用图渲染器；本仓为生成侧、sdlc-platform-server 速查卡为镜像侧）。起因：mermaid(dagre) 对泳道 subgraph + 长中文节点的布局质量经多轮参数修补仍绕线/交叉/边标签叠字，治本路径是换布局引擎与节点表达（HTML 节点卡 + ELK 分层布局），载体由图文本换结构化 JSON——协议字段与平台渲染器 `src/flowviz/parse.js` 同源。
 
 - **references/flow-viz-protocol.md（新增，仓库级共享规范）**：flow-viz JSON 协议——`kind:"flow"`（泳道 lanes 可选：跨角色主流程泳道化、页面级流程不设泳道；dir TD/LR）/ `kind:"state"`（start 节点替代 `[*]`）；节点 type step/decision/end/start/state、no 序号、src 出处、gap:true 断点（渲染 ❓）、note 附注、pids 澄清关联；边 label 分支条件 / dashed 虚线依赖；JSON 纪律（禁注释尾逗号、断点用字段不手打标记）；文内 fv-mirror 标记段为 server 速查卡镜像引用段（单一权威来源）

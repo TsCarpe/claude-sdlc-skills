@@ -45,9 +45,9 @@ description: "Digests and health-checks product requirement documents (PRD). Sta
 - [ ] Step 4: 终端展示摘要（含风险分级提议）+ 暂停等待用户确认与分级拍板
 ```
 
-**Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + flow-viz JSON 图，协议见仓库 [references/flow-viz-protocol.md](../../references/flow-viz-protocol.md)）。
+**Step 2** 是核心：读取 [references/digest-template.md](references/digest-template.md)，严格按模板 8 区块产出，功能地图、流程图、状态机、规则表必须图表化（markdown 表格 + flow-viz JSON 图；模板区块 5/6 已内联完整字段纪律与合法示例，完整协议见仓库 [references/flow-viz-protocol.md](../../references/flow-viz-protocol.md)——单独安装时该引用仅作来源说明，不依赖其存在）。
 
-**flow-viz 自检**（落盘前）：跑仓根 `python3 scripts/check_flowviz.py <digest md>`——校验全部 flow-viz 块 JSON 可解析、id 唯一、边端点存在、lane 引用存在、无自环；exit 非 0 按 stderr 提示修复后重跑至通过。人工另查三条：状态机有 `start` 入口节点、断点一律 `gap:true` 字段（不手打 ❓ 进 label）、payload `digest.flows[]`/`digest.states[]` 与图同一次梳理产出且断点对齐。纪律原文见模板「标注约定」与区块 5/6。
+**flow-viz 自检**（落盘前）：跑 `python3 scripts/check_flowviz.py <digest md>`（脚本随本 skill 分发；仓库开发场景仓根同名文件为权威源）——校验全部 flow-viz 块 JSON 可解析、id 唯一、边端点存在、lane 引用存在、无自环；exit 非 0 按 stderr 提示修复后重跑至通过。人工另查三条：状态机有 `start` 入口节点、断点一律 `gap:true` 字段（不手打 ❓ 进 label）、payload `digest.flows[]`/`digest.states[]` 与图同一次梳理产出且断点对齐。纪律原文见模板「标注约定」与区块 5/6。
 
 **梳理纪律**（违反即返工）：
 - 忠实转述原文，**不评价、不脑补、不优化**——评价是体检阶段的事

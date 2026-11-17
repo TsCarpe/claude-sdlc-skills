@@ -6,6 +6,9 @@ id 全图唯一、边 from/to 指向已声明节点、节点 lane 引用已声�
 只验协议本身（图结构与字段形态），不验语义出处——出处与 payload 投影对齐由
 digest 梳理纪律与平台 dangling 校验承担。
 
+本文件是权威源（平台流水线直调路径）；skills/sdlc-intent/scripts/check_flowviz.py
+是随 sdlc-intent skill 分发的副本——修改必须双写两份，先改本文件再同步副本。
+
 退出码：0 = 全部通过；1 = 有违规（stderr 逐条给块位置与修复建议）。
 用法：
   check_flowviz.py <md 文件>...          # 一个或多个产物 markdown

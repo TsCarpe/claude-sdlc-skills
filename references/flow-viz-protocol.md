@@ -16,7 +16,7 @@ JSON 纪律：键名固定小写驼峰、**禁止注释与尾逗号**、字符�
 
 ## kind=flow（业务流程图，泳道可选）
 
-```json
+```flow-viz
 {
   "kind": "flow",
   "dir": "TD",
@@ -26,7 +26,8 @@ JSON 纪律：键名固定小写驼峰、**禁止注释与尾逗号**、字符�
     { "id": "A2", "lane": "L1", "type": "decision", "no": 2, "label": "是否具备权限" },
     { "id": "A2X", "lane": "L1", "type": "end", "label": "无入口提示", "gap": true,
       "note": "原文未给其他入口", "src": "详述1·1", "pids": ["P12"] },
-    { "id": "B1", "lane": "L2", "type": "step", "no": 3, "label": "审核", "src": "详述2·1" }
+    { "id": "B1", "lane": "L2", "type": "step", "no": 3, "label": "审核", "src": "详述2·1" },
+    { "id": "C1", "lane": "L2", "type": "end", "no": 4, "label": "归档完成", "src": "详述2·2" }
   ],
   "edges": [
     { "from": "A1", "to": "A2" },
@@ -49,7 +50,7 @@ JSON 纪律：键名固定小写驼峰、**禁止注释与尾逗号**、字符�
 
 ## kind=state（状态机图）
 
-```json
+```flow-viz
 {
   "kind": "state",
   "nodes": [
