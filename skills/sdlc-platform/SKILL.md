@@ -24,7 +24,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `synthesize [迭代名]` | 生成标准文档 | 发起平台合成，不等草稿 |
 | `publish [迭代名]` | 发布标准文档 | 发布平台上已有的草稿 |
 | `export [迭代名]` | 导出定稿 | 把已发布 Markdown 回到对话 |
-| `handoff [迭代名]` | 交给开发 | 写本地定稿和 `.platform`，给出开工句 |
+| `handoff [迭代名]` | 交给开发 | 把定稿写到用户主目录，给出平台链接和开工句 |
 
 没写子命令，也没给迭代名：把这张表给人，问要做哪一步。不要一上来只问迭代名。
 
@@ -111,12 +111,17 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 交给开发
 
-调用 `handoff_to_developer`。`ok: false` 时不要写任何文件。成功后在当前开发仓库根目录写两份，路径用工具返回的，不要改名：
+调用 `handoff_to_developer`。`ok: false` 时不要写任何文件。成功后写到**用户主目录**，不要写进当前 git 仓库。路径用工具返回的，前面加上 `~/`，不要改名：
 
-1. 把 `markdown` 写到 `markdownPath`。目录没有就建。同一天的同名文件覆盖。
-2. `.platform` 按 `platformWrite` = `keep-if-same-req`：文件已在，且 JSON 里的 `reqId` 等于返回的 `requirementId`，则一个字都不要改（里面可能有拉取凭据）。文件没有、读不出 JSON、或 `reqId` 是另一张卡，则把 `platformJson` 原样写入 `platformPath`。
+1. 把 `markdown` 写到 `~/` + `markdownPath`。目录没有就建。同一天的同名文件覆盖。
+2. `.platform` 写到 `~/` + `platformPath`。`platformWrite` = `keep-if-same-req`：文件已在，且 JSON 里的 `reqId` 等于返回的 `requirementId`，则一个字都不要改（里面可能有拉取凭据）。文件没有、读不出 JSON、或 `reqId` 是另一张卡，则把 `platformJson` 原样写入。
 
-写完后，把返回的 `starter` 原句交给人。不要改写。
+写完后按这个顺序交给人。`copyForDeveloper` 和 `starter` 都不要改写：
+
+1. `docUrl`。这是产物平台上打开标准需求文档的链接。工具没返回 `docUrl` 时，用 `http://10.30.6.41:5177/reqs/` 接上 `requirementId`，再接 `?tab=std`。
+2. 本地定稿的打开链接。Markdown 链接，文字是「打开本地定稿」，地址是刚写好的绝对路径的 `file://` URL。空格和中文要百分号编码。不要只写 `~/` 开头的路径。
+3. `copyForDeveloper`。与平台「复制给开发」同一段四节文本，原样贴在本地链接和开工句之间。工具没返回这个字段时，按同一模板现拼，平台地址用 `http://10.30.6.41:5177`。人在本机页面上点按钮时，地址栏是什么就写成什么。
+4. `starter` 原句。
 
 ## 命令速查
 
@@ -129,6 +134,6 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `/sdlc-platform synthesize` | `start_standard_doc` |
 | `/sdlc-platform publish` | `publish_standard` |
 | `/sdlc-platform export` | `export_standard` |
-| `/sdlc-platform handoff` | `handoff_to_developer`，然后按上面写文件 |
+| `/sdlc-platform handoff` | `handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
 | `/sdlc-platform status` | 只调用 `get_iteration_status` |
 | `/sdlc-platform new` | 按「新建迭代」 |
