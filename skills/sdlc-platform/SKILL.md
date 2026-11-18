@@ -111,7 +111,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
 | `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
 | `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
-| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。推荐项只标注「推荐」，不要替人选、不要替人打字 |
+| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。推荐项只标注「推荐」，不要替人选、不要替人打字。人附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替人打字 |
 | `synthesize_ready` | 说「synthesize_ready」那一句 |
 | `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
 | `published` | 说「published」那一句 |
@@ -138,10 +138,12 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | 人的决定 | action | 其他字段 |
 |---|---|---|
 | 选某个选项 | `option` | `option_key` |
-| 选某个选项，再补一句 | `option` | `option_key` 加 `extra`。告诉人这会记成「选项全文（补充：…）」 |
-| 选项不对，或这题没有选项 | `text` | `text` 为人的原话。不传 `option_key` |
+| 选某个选项，再补一句 | `option` | `option_key` 加 `extra`。告诉人这会记成「选项全文（补充：…）」。补充来自图片时，`extra` 写从图里读出的内容 |
+| 选项不对，或这题没有选项 | `text` | `text` 为人的原话。人附了图片或原话指向图片时，把从图里读出的有效信息一并写入。不传 `option_key` |
 | 驳回 | `reject` | `note` 必填。这句话不进定稿 |
 | 挂起 | `defer` | 可带 `note` |
+
+人附了图片，或原话指向图片（如「前三个在图里」「见图」）时：产物平台只存文字，澄清页没有展示图片的地方。提交前先读图。`text` 先留人的原话，再写从图里读到的、能回答这题的内容；选了选项再补图时，这些内容写进 `extra`。不要只提交「见图」「在图里」。只写图里看得见的事实。图里和原话都没写的，不要编，也不替人做决定。提交后用一句话告诉人从图里记下了什么。以后每一题都按这条做。
 
 一次只处置人正在答的那一题。答完再取下一题，不要连答。
 
