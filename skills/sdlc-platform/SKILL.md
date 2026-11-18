@@ -111,7 +111,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
 | `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
 | `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
-| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。推荐项只标注「推荐」，不要替人选、不要替人打字 |
+| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。推荐项只标注「推荐」，不要替人选、不要替人打字 |
 | `synthesize_ready` | 说「synthesize_ready」那一句 |
 | `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
 | `published` | 说「published」那一句 |
@@ -130,6 +130,8 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 质检和标准文档合成发起后都不要等。发起成功后分别说「quality 已发起」或「synthesize 已发起」那一句。不要复述 `taskId`、`taskStatus`。
 
 ## 澄清这一题
+
+展示当前题时，题干下面原样带上原文摘引。`quote` 有内容才写，写成「原文摘引：…」，不要改写、不要摘要。空的不写。不写出处。
 
 `submit_clarification` 的 `action` 只能是 `option`、`text`、`reject`、`defer` 之一，而且必须是人刚刚说的：
 
