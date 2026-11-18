@@ -7,7 +7,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 人在对话里输入 `/sdlc-platform`，再跟子命令。正式数据在产物平台。本 skill 只调用两个 MCP，不自己做质检、不自己写标准文档、不调用 `sdlc-sync`。
 
-设计、用例、门禁、变更重走不在这一版。卡片 `step` 为 `changed` 时，只告诉人这张卡在变更流程里，然后停下。点名了步骤也一样。
+设计、用例、门禁、变更重走不在这一版。卡片 `step` 为 `changed` 时，说「对人怎么说」里「changed」那一句，然后停下。点名了步骤也一样。
 
 ## 用法
 
@@ -26,11 +26,39 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `export [迭代名]` | 导出定稿 | 把已发布 Markdown 回到对话 |
 | `handoff [迭代名]` | 交给开发 | 把定稿写到用户主目录，给出平台链接和开工句 |
 
-没写子命令，也没给迭代名：把这张表给人，问要做哪一步。不要一上来只问迭代名。
+没写子命令，也没给迭代名：把这张表给人，并说「对人怎么说」里「没写子命令」那一句。不要一上来只问迭代名。
 
-只给了迭代名、没有子命令：先 `get_iteration_status`，按卡片状态继续。
+只给了迭代名、没有子命令：先 `get_iteration_status`，按卡片状态继续。对人只说「对人怎么说」里对应的那一句。
 
-人的整条消息就是 `/sdlc-platform new`、后面没有迭代名：不要问迭代名。先说明要填的四项，再按「新建迭代」给可复制的多行代码块。`new` 后面已经写了迭代名、但还缺项目名称、需求名或来源：缺哪样问哪样。其他子命令缺迭代名才只问迭代名。状态里已有 `projectName` 就不要再问。中文命令和子命令同等。
+人的整条消息就是 `/sdlc-platform new`、后面没有迭代名：不要问迭代名。先说「对人怎么说」里「new 且没给迭代名」那一句，再按「新建迭代」给可复制的多行代码块。`new` 后面已经写了迭代名、但还缺项目名称、需求名或来源：只问缺的那一项，用「对人怎么说」里的口语。其他子命令缺迭代名时，只说「缺迭代名」那一句。状态里已有 `projectName` 就不要再问。中文命令和子命令同等。
+
+## 对人怎么说
+
+对人说话像客服：用「您」，短句，先说现在到哪了，再说可以做什么。不训人。下面表里的句子照着用，花括号换成这次的内容，其余不要改，也不要再补一句内部状态。
+
+这些只给代理看，不要念给用户：任务编号、`taskId`、`currentTask`、`running`、`queued`、`done`、`failed`、`cancelled`、`step`、`ok`，以及平台 `message` 的原文。查进度时不说卡号。卡号和版本只在导出定稿、交给开发时说。
+
+平台 `message` 用来判断步骤，不原样念。失败时把原因说成白话；原因本身已是一句中文时，整理后告诉人，不要带字段名。
+
+| 场合 | 对人说 |
+|---|---|
+| 没写子命令 | 您想做哪一步？从下面选一个发我就行。需要迭代名的，写在命令后面。 |
+| new 且没给迭代名 | 新建迭代需要一次给齐迭代名、项目名称、需求名、来源。来源可以填飞书链接，也可以直接把需求正文贴过来。请把下面代码块改成这次的内容，一次发回来就行。需求名不要和迭代名写成同一个。 |
+| 缺迭代名 | 请把迭代名发我，例如 v1.0-登录。 |
+| 缺项目名称、需求名或来源 | 只问缺的那一项。例如：还缺来源，飞书链接或需求正文都可以。 |
+| 导入成功 | 原文已经到了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。需要的话，我可以帮您开始质检。 |
+| importing 满 30 秒 | 原文还在导入，大概还要 10 分钟，请您耐心等一下。稍后可以用同一个迭代名让我再看一下，也可以直接到产物平台上看。 |
+| import_failed | 原文没有导入成功。{白话原因} 您看是改来源后再试，还是先到产物平台上看一下。 |
+| quality_ready | 原文已经到了。需要的话，我可以帮您开始质检。 |
+| quality 已发起 | 质检已经开始了，结果还要等一会儿。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| quality_running | 质检还在进行，结果还没出来。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| adopt | 质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。 |
+| synthesize_ready | 澄清都处理完了。需要的话，我可以帮您生成标准文档。 |
+| synthesize 已发起，或 synthesize_running | 标准文档正在生成，稿子还没出来。可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| publish | 标准文档草稿好了，请核对下面这篇。确认要发布的话，跟我说「发布标准文档」。 |
+| published | 标准文档已经发布。您可以让我导出定稿，也可以交给开发。 |
+| changed | 这张需求已经在变更流程里，我这边先不继续往下走。请到产物平台上处理。 |
+| 工具返回 ok: false | 这一步没有完成。{白话原因} |
 
 ## 前置
 
@@ -41,7 +69,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | 输入 `sdlc-in` | `/mcp/in` | `get_iteration_status`、`import_requirement`、`start_quality_check`、`adopt_quality_draft`、`submit_clarification`、`start_standard_doc`、`publish_standard` |
 | 输出 `sdlc-out` | `/mcp/out` | `export_standard`、`handoff_to_developer` |
 
-平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、导出、交给开发不带。工具返回 `ok: false` 时，把 `error` 告诉人并停下。有 `pendingAssumptions` 时向人要放行理由，再带 `confirm_note` 重发。有 `machineCheck` 时把失败项给人，不要改文档。
+平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、导出、交给开发不带。工具返回 `ok: false` 时，用「对人怎么说」里那一句告诉人并停下，不要贴 `error` 字段名。有 `pendingAssumptions` 时向人要一句放行理由，再带 `confirm_note` 重发。有 `machineCheck` 时把失败项改成白话给人，不要改文档。
 
 ## 装完确认
 
@@ -57,7 +85,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 入口是 `/sdlc-platform new`。人的整条消息就是这一句、后面没有迭代名：不要调用工具，也不要先问任何一项。禁止先说「先给我迭代名」或「等迭代名到了再问」。回复分成两段，顺序不能反。
 
-先写这一句：新建迭代要一次给齐迭代名、项目名称、需求名、来源。来源填飞书链接，或直接贴需求正文。请把下面代码块改成这次的内容，一次发回来。需求名不要和迭代名写成同一个。
+先写「对人怎么说」里「new 且没给迭代名」那一句，一个字不要改。
 
 然后另起一个 Markdown 代码块，用三个反引号围住，聊天里才会出现复制按钮。块里只有下面这五行，每项单独一行。不要并成一行，不要改成普通段落，说明不要写进代码块：
 
@@ -69,25 +97,25 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 来源：https://example.feishu.cn/wiki/……
 ```
 
-已经给了其中几样、还缺的：缺哪样问哪样。四样齐了立刻 `import_requirement`，`project_name` 传项目名称，并复述这四样。状态里 `projectName` 已有就沿用这个值，不要再问。项目名称为空或迭代还不存在才问。这和 `step` 为 `new` 是同一条。导入成功后只问要不要 `/sdlc-platform quality`，不要连着质检、采纳或发布。这个迭代名已经有卡：不要再建，改按那张卡的 `step` 继续。
+已经给了其中几样、还缺的：只问缺的那一项。四样齐了立刻 `import_requirement`，`project_name` 传项目名称。导入成功后说「导入成功」那一句，把四项填进去，不要连着质检、采纳或发布。状态里 `projectName` 已有就沿用这个值，不要再问。项目名称为空或迭代还不存在才问。这和 `step` 为 `new` 是同一条。这个迭代名已经有卡：不要再建，改按那张卡的 `step` 继续。
 
 ## 进入哪一步
 
-先看子命令或中文命令（命令速查）。点了就做那一步。没点名，但给了迭代名，就先 `get_iteration_status`。两样都没有，先列出命令，不要只问迭代名。
+先看子命令或中文命令（命令速查）。点了就做那一步。没点名，但给了迭代名，就先 `get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
 
 | `step` | 做什么 |
 |---|---|
-| `new` | 按新建。整条消息只有 `new`：先说明要一次给齐四项，再给「新建迭代」里的多行代码块。禁止先问迭代名，禁止把四项并成一行。`new` 后已经写了迭代名、还缺别的：缺什么单独问什么。`projectName` 已有则沿用。四样都在就立刻导入，并复述这四样。需求名不要照抄迭代名 |
+| `new` | 按新建。整条消息只有 `new`：先说「new 且没给迭代名」那一句，再给「新建迭代」里的多行代码块。不要先问迭代名，不要把四项并成一行。`new` 后已经写了迭代名、还缺别的：只问缺的那一项。`projectName` 已有则沿用。四样都在就立刻导入，成功后说「导入成功」那一句。需求名不要照抄迭代名 |
 | `importing` | 见下方「等导入」 |
-| `import_failed` | 立刻停下，转述 `message` |
-| `quality_ready` | 告诉人原文已在，问要不要 `quality`。不要自己开跑 |
-| `quality_running` / `synthesize_running` | 告诉人还在跑。不要在对话里等。让人去平台看，或稍后再发 `/sdlc-platform status` |
-| `adopt` | 把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
+| `import_failed` | 停下。说「import_failed」那一句，不要原样念 `message` |
+| `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
+| `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
+| `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
 | `clarify` | 只展示 `nextQuestion` 这一题，然后等人。推荐项只标注「推荐」，不要替人选、不要替人打字 |
-| `synthesize_ready` | 告诉人澄清已全部处置，问要不要 `synthesize` |
-| `publish` | 把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
-| `published` | 告诉人已发布，可以 `export` 或 `handoff` |
-| `changed` | 只提示，停下 |
+| `synthesize_ready` | 说「synthesize_ready」那一句 |
+| `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
+| `published` | 说「published」那一句 |
+| `changed` | 说「changed」那一句，然后停下 |
 
 人发的是 `new`，但这张卡其实已经在：改走上表，不要再建一张。
 
@@ -95,11 +123,11 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 `import_requirement` 返回后开始计时，反复调用 `get_iteration_status`，累计不超过 30 秒。
 
-- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。复述迭代名、项目名称、需求名、来源，然后问要不要 `quality`。不要调用 `start_quality_check`。
-- `import_failed`，或当前任务已是失败/取消：立刻停下，转述原因。
-- 满 30 秒仍是 `importing`：对话里不再等。导入还在平台上进行。不要说「这一轮已等够」「先停在这里」。原文状态只说这一句：原文还在导入中，预计导入时间10分钟，请耐心等待～ 接着可以说：稍后可以用同一个迭代名发 `/sdlc-platform status` 看原文有没有落库，或直接在产物平台上查看。
+- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。说「导入成功」那一句，把四项填进去。不要调用 `start_quality_check`。
+- `import_failed`，或当前任务已是失败/取消：停下，说「import_failed」那一句。
+- 满 30 秒仍是 `importing`：对话里不再等。说「importing 满 30 秒」那两句。不要说「这一轮已等够」「先停在这里」。
 
-质检和标准文档合成发起后都不要等。
+质检和标准文档合成发起后都不要等。发起成功后分别说「quality 已发起」或「synthesize 已发起」那一句。不要复述 `taskId`、`taskStatus`。
 
 ## 澄清这一题
 
@@ -151,3 +179,5 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `/sdlc-platform handoff` | `handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
 | `/sdlc-platform status` | 只调用 `get_iteration_status` |
 | `/sdlc-platform new` | 按「新建迭代」 |
+
+对人说的话只使用「对人怎么说」。不要把工具返回的 `status`、`taskId`、`message` 念出来。
