@@ -111,7 +111,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
 | `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
 | `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
-| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干前写需求域（`theme`）和类型（`levelLabel`），有内容才写，分别写成「需求域：…」「类型：…」。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。图片（`images`）有内容才列在摘引下面，每张单独一行，用 Markdown 图片，替代文字用图注，地址用 `url` 原样。推荐项只标注「推荐」，不要替人选、不要替人打字。人附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替人打字 |
+| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干前写需求域（`theme`）和类型（`levelLabel`），有内容才写，分别写成「需求域：…」「类型：…」。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。图片（`images`）有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。推荐项只标注「推荐」，不要替人选、不要替人打字。人附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替人打字 |
 | `synthesize_ready` | 说「synthesize_ready」那一句 |
 | `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
 | `published` | 说「published」那一句 |
@@ -131,7 +131,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 澄清这一题
 
-展示当前题时，先写需求域和类型。`theme` 有内容才写，写成「需求域：…」；`levelLabel` 有内容才写，写成「类型：…」。空的不写。题干下面原样带上原文摘引。`quote` 有内容才写，写成「原文摘引：…」，不要改写、不要摘要。空的不写。不写出处。图片有内容才列在摘引下面，每张单独一行，用 Markdown 图片，替代文字用图注，地址用 `url` 原样。空的不写。
+展示当前题时，先写需求域和类型。`theme` 有内容才写，写成「需求域：…」；`levelLabel` 有内容才写，写成「类型：…」。空的不写。题干下面原样带上原文摘引。`quote` 有内容才写，写成「原文摘引：…」，不要改写、不要摘要。空的不写。不写出处。图片有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。空的不写。
 
 `submit_clarification` 的 `action` 只能是 `option`、`text`、`reject`、`defer` 之一，而且必须是人刚刚说的：
 
