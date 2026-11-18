@@ -2,6 +2,11 @@
 
 ## 未发布
 
+审核修复批（对照 agent-skills best-practices 审核「载体迁移收尾批 + 泳道收口」两提交后的三处小修）：
+
+- **references/flow-viz-protocol.md**：①头部补目录（>100 行 references 按 best practices 约定配目录，同仓 digest-template/standard-doc-spec 先例；fv-mirror 镜像段未触碰）；②机检节「泳道数 >4」WARN 补阈值依据（列数越多列宽越摊薄、长中文节点卡挤行，阈值与平台前端泳道渲染口径同步）——消巫术常量
+- **skills/sdlc-sync/SKILL.md**：publish 合成步骤「逻辑载体文本化」对齐 spec §2 措辞「逻辑载体双呈现」（图非文本化载体，术语统一）
+
 sdlc-sync 回流：standard doc 状态机载体迁移 mermaid → flow-viz JSON（digest 线迁移的收尾批，与平台仓同批原子变更：本仓生成侧规范与机检、sdlc-platform-server vendor 镜像+pytest+金丝雀+prompts、sdlc-platform-web CHECK_META 词条）。经全新上下文代理对抗式审查（10 组断言 8 组实证为真、2 MAJOR 全部吸收：web CHECK_META 白名单遗漏、部署口径失真）。起因：digest 线已切 flow-viz 且平台 web 渲染器通用化（drainMermaid+drainFlowViz 全站接管），standard doc 的 mermaid 状态图是该载体切换的最后一环；failure-trigger 机检锚 mermaid 文本正则，结构化判定治本。
 
 - **check_standard_doc.py**：①`check_failure_trigger` 确定性档改结构化判定——kind:"state" 图中指向「失败」态节点（有效 label 缺省回退 id）的边，label 与目标态同名/为空即 FAIL（判定域与分档语义不变，kind:"flow" 失败分支不参与判定，inline 行文档保留且永不 FAIL）；`data.edges[].kind` 值 `"state-diagram"` → `"state"`（breaking，消费方三仓枚举全在批内同步）；②新增 `flowviz-carrier` 机检项（FAIL 级）：mermaid 围栏残留拦截（存量旧图重发布 FAIL 逼升格，对齐 meta-header 旧头先例）+ flow-viz 块基本合法性（JSON 可解析/单一对象/kind 合法/nodes 非空/edges 数组/围栏闭合——未闭合显式报，不留 raw-json 兜底误导）；③`check_raw_json` 豁免 flow-viz 围栏内 `{"kind":`（原与图载体起始串硬冲突必误杀发布，围栏外仍 FAIL 保原意）；④p-coverage/p-semantic 扫描前掩 flow-viz 围栏（防图内 `"pids":["P12"]` 等字段文本误成幽灵 P 号——p_coverage 正则实证必命中；p_semantic 掩码后偏移一致重算 spans）；⑤不保留 mermaid 边解析（用户拍板「只判 flow-viz」：存量 mermaid 图中失败态边不再检出为已知取舍，inline 行文仍查，mermaid 残留由 carrier 显式拒绝而非静默漏检）
