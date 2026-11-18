@@ -27,23 +27,31 @@ JSON 纪律：键名固定小写驼峰、**禁止注释与尾逗号**、字符�
     { "id": "A2X", "lane": "L1", "type": "end", "label": "无入口提示", "gap": true,
       "note": "原文未给其他入口", "src": "详述1·1", "pids": ["P12"] },
     { "id": "B1", "lane": "L2", "type": "step", "no": 3, "label": "审核", "src": "详述2·1" },
+    { "id": "B1X", "type": "end", "label": "字典口径未定义", "gap": true, "note": "原文未给选项来源" },
     { "id": "C1", "lane": "L2", "type": "end", "no": 4, "label": "归档完成", "src": "详述2·2" }
   ],
   "edges": [
     { "from": "A1", "to": "A2" },
     { "from": "A2", "to": "A2X", "label": "否" },
     { "from": "A2", "to": "B1", "label": "是" },
-    { "from": "B1", "to": "C1", "dashed": true }
+    { "from": "B1", "to": "B1X", "dashed": true },
+    { "from": "B1", "to": "C1" }
   ]
 }
 ```
 
 - `lanes`：泳道（角色/系统分区），`id` 唯一、`label` 为泳道标题。**页面级操作流程（表单/
-  向导步骤）不设泳道**：省略 `lanes` 且节点不带 `lane` 字段
+  向导步骤）不设泳道**：省略 `lanes` 且节点不带 `lane` 字段。跨角色主流程泳道化时，泳道
+  是**角色职责段的聚簇**而非逐步交替：主链连续步骤同泳道，系统判定/页面展示/接口响应类
+  节点归**当前操作角色**的泳道（不为「页面/系统」单设泳道与操作者逐边换道）；仅当流程
+  真正交棒给另一角色（其连续负责后续多步）才换道。机检：非 dashed 边中跨泳道占比 >50%
+  且计数边 ≥4 时 FAIL
 - `dir`：`TD`（自上而下，缺省）/ `LR`（自左向右，横向主链长流程用）
 - 节点 `type`：`step`（缺省，普通步骤）/ `decision`（判定分支）/ `end`（终止/出口）
 - 节点字段：`no` 步骤序号（主链 1 起连续）、`label` 节点文本（短句，细则写 note 或表）、
-  `src` 出处（条款级出处列口径同表格）、`gap:true` 原文未定义断点（渲染为 ❓ 虚线卡）、
+  `src` 出处（条款级出处列口径同表格）、`gap:true` 原文未定义断点（渲染为 ❓ 虚线卡。
+  **纯标注断点**——全部入边均 dashed 且无出边，如上例 B1X——不写 `lane`，渲染时贴宿主
+  浮放不占泳道与层位；实线到达的断点是真分支终点，如上例 A2X，照常写 `lane` 入网格）、
   `note` 附注便签、`pids` 关联澄清题编号（仅 digest 场景使用）
 - 边字段：`label` 分支条件（是/否、成功/失败等）、`dashed:true` 依赖/弱关联虚线
 - 宽容规则（消费端）：未知字段忽略；重复 id、悬空边（端点不在 nodes）、自环边丢弃并提示
@@ -79,13 +87,16 @@ JSON 纪律：键名固定小写驼峰、**禁止注释与尾逗号**、字符�
 ## 机检
 
 仓根 `scripts/check_flowviz.py`：对产物 markdown 的全部 ```flow-viz 块校验 JSON 可解析、
-kind 合法、id 唯一、边端点存在、lane 引用存在、无自环。exit 非 0 时 stderr 带块位置与
-修复建议，处置后重跑至通过。
+kind 合法、id 唯一、边端点存在、lane 引用存在、无自环；kind=flow 且泳道化时校验跨泳道
+边占比（非 dashed 边、计数边 ≥4、严格 >50% 时 FAIL，stderr 带逐条跨道边清单与修复
+指引）。另有 WARN 级观察（stdout 提示、exit 0 不阻断）：纯标注断点带 `lane`（渲染将
+忽略）、泳道数 >4（建议按角色合并）。exit 非 0 时 stderr 带块位置与修复建议，处置后
+重跑至通过。
 
 <!-- 以下 fv-mirror 标记段是 sdlc-platform-server agent/prompts.py 速查卡的镜像引用段：
-     两处内容必须逐字节同步，scripts/check_digest_mirror.py 逐字节比对（改任何一侧必须同步另一侧）。 -->
+     两处内容必须逐字节同步，scripts/check_digest_mirror.py 跨仓比对（server 仓内另有 tests/test_flowviz_check.py 同口径守护；改任何一侧必须同步另一侧）。 -->
 <!-- fv-mirror-start -->
-5 业务主流程 flow-viz JSON 图（fenced 块语言标 flow-viz；泳道图 kind:"flow"+lanes[{id,label}]，节点带 lane 归属、type step/decision/end、no 主链序号、src 条款级出处、gap:true=原文断点❓、note 附注、边 label 分支条件/dashed 虚线依赖；页面级流程省略 lanes 不泳道化；长主链可 dir:"LR"；图题行加粗置于块上方：图 1：<流程名>（主流程，跨角色泳道），页面级流程续编号）｜
+5 业务主流程 flow-viz JSON 图（fenced 块语言标 flow-viz；泳道图 kind:"flow"+lanes[{id,label}]，节点带 lane 归属、type step/decision/end、no 主链序号、src 条款级出处、gap:true=原文断点❓、note 附注、边 label 分支条件/dashed 虚线依赖；泳道=角色职责段聚簇——主链连续步骤同泳道，系统判定/页面展示节点归当前操作角色泳道，勿按操作/响应逐边换道；纯标注断点（全部入边 dashed 且无出边）不写 lane；页面级流程省略 lanes 不泳道化；长主链可 dir:"LR"；图题行加粗置于块上方：图 1：<流程名>（主流程，跨角色泳道），页面级流程续编号）｜
 6 状态机(每个带状态对象一张 kind:"state" JSON 图+流转边表；入口 type:"start" 节点，原文未定义入口时首边 label 带 ❓；自环不表达——原文自迁移/状态展示类写节点 note 或图后表；未定义流转 gap:true 入图并在边表以?行双呈现；图题固定 图 N：<对象名> 状态机——对象名是 states.obj 的唯一载体；边表：从|触发|至|出处)｜
-flow-viz JSON 纪律（§5/§6 全部图，落盘前逐块复读，违反即返工）：单一 JSON 对象、键名固定、禁止注释与尾逗号、字符串双引号内中文直接写；id 全图唯一、边 from/to 必须指向已声明节点、无自环；节点 label 写短句（细则写 note 或图后表）、断点一律 gap:true（不手打 ❓ 进 label）；块过不了仓根 scripts/check_flowviz.py 机检即返工重写。
+flow-viz JSON 纪律（§5/§6 全部图，落盘前逐块复读，违反即返工）：单一 JSON 对象、键名固定、禁止注释与尾逗号、字符串双引号内中文直接写；id 全图唯一、边 from/to 必须指向已声明节点、无自环；节点 label 写短句（细则写 note 或图后表）、断点一律 gap:true（不手打 ❓ 进 label）；泳道图跨泳道边占比>50%（非 dashed 边、计数≥4）机检即 FAIL；块过不了仓根 scripts/check_flowviz.py 机检即返工重写。
 <!-- fv-mirror-end -->

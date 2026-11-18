@@ -23,10 +23,17 @@ from pathlib import Path
 FLOW_RE = re.compile(r"```flow-viz[ \t]*\n(.*?)```", re.DOTALL)
 
 
-def check_md_text(text: str, src: str) -> list[str]:
-    """返回违规列表（空 = 通过）。"""
+def check_md_text(text: str, src: str) -> tuple[list[str], list[str]]:
+    """返回 (违规列表, 观察列表)（违规空 = 通过；观察不阻断 exit 0）。"""
     problems: list[str] = []
-    for i, m in enumerate(FLOW_RE.finditer(text), start=1):
+    warns: list[str] = []
+    blocks = list(FLOW_RE.finditer(text))
+    if text.strip() and not blocks:
+        # 调用面是 digest 产物（§5/§6 必有图）：0 块 = 图载体退化（如画成 mermaid），必须打回
+        problems.append(f"{src}：未找到任何 flow-viz 块——流程/状态图必须用 flow-viz fenced JSON 载体"
+                        f"（mermaid 或纯文字描述不接受，改写后重跑）")
+        return problems, warns
+    for i, m in enumerate(blocks, start=1):
         block_no = f"{src} 第 {i} 个 flow-viz 块"
         raw = m.group(1)
         try:
@@ -88,7 +95,38 @@ def check_md_text(text: str, src: str) -> list[str]:
             if fr == to and fr is not None:
                 problems.append(f"{block_no}：自环边 {fr!r}→{to!r}——协议不表达自环，"
                                 f"原文明说的自迁移写节点 note")
-    return problems
+
+        # ---- 泳道质量（kind=flow 且泳道化；口径与前端 swimlane.js 同步，改须双侧）----
+        if kind == "flow" and lane_ids:
+            group = {n.get("id"): n.get("lane") or "__free__"
+                     for n in nodes if isinstance(n, dict) and n.get("id")}
+            valid_edges = [e for e in edges if isinstance(e, dict)
+                           and e.get("from") in group and e.get("to") in group]
+            out_ids = {e.get("from") for e in valid_edges}
+            in_solid = {e.get("to") for e in valid_edges if not e.get("dashed")}
+            in_any = {e.get("to") for e in valid_edges}
+            # 纯标注断点（前端 splitFloatGaps 浮放集同判定）：gap 且有入边、入边全 dashed、无出边
+            float_ids = {nid for n in nodes if isinstance(n, dict)
+                         for nid in [n.get("id")]
+                         if nid and n.get("gap") is True and nid in in_any
+                         and nid not in in_solid and nid not in out_ids}
+            if len(lane_ids) > 4:
+                warns.append(f"{block_no}：泳道数 {len(lane_ids)} >4——粒度过细，"
+                             f"建议按角色职责段合并泳道")
+            for nid in float_ids:
+                if group.get(nid, "__free__") != "__free__":
+                    warns.append(f"{block_no}：纯标注断点 {nid!r} 带 lane——断点不写 lane"
+                                 f"（渲染贴宿主浮放，泳道归属被忽略）")
+            # 跨泳道率：非 dashed 边、计数 ≥4、严格 >50%（free 组独立，同 '__free__' 不算跨）
+            counted = [(e["from"], e["to"]) for e in valid_edges if not e.get("dashed")]
+            cross = [(fr, to) for fr, to in counted if group[fr] != group[to]]
+            if len(counted) >= 4 and len(cross) / len(counted) > 0.5:
+                detail = "、".join(f"{fr}({group[fr]})→{to}({group[to]})" for fr, to in cross)
+                problems.append(f"{block_no}：跨泳道边 {len(cross)}/{len(counted)}"
+                                f"（{len(cross) * 100 // len(counted)}%）——泳道应按角色职责段聚簇，"
+                                f"系统判定/页面展示类节点归当前操作角色泳道，勿按操作/响应逐边换道；"
+                                f"跨道边：{detail}")
+    return problems, warns
 
 
 def _selftest() -> int:
@@ -105,18 +143,57 @@ def _selftest() -> int:
                                "nodes": [{"id": "s1", "type": "state", "label": "x"}],
                                "edges": [{"from": "s1", "to": "s1"}]}, ensure_ascii=False)
     cases = [
-        ("ok", f"```flow-viz\n{ok}\n```", 0),
-        ("bad-json", f"```flow-viz\n{bad_json}\n```", 1),
-        ("dangling", f"```flow-viz\n{bad_dangling}\n```", 1),
-        ("selfloop", f"```flow-viz\n{bad_selfloop}\n```", 1),
+        ("ok", f"```flow-viz\n{ok}\n```", "clean"),
+        ("bad-json", f"```flow-viz\n{bad_json}\n```", "fail"),
+        ("dangling", f"```flow-viz\n{bad_dangling}\n```", "fail"),
+        ("selfloop", f"```flow-viz\n{bad_selfloop}\n```", "fail"),
+    ]
+    # 泳道质量：锯齿换道 FAIL / 健康聚簇干净 / 断点带 lane WARN / 泳道>4 WARN
+    high_cross = json.dumps({"kind": "flow",
+                             "lanes": [{"id": "L1"}, {"id": "L2"}],
+                             "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
+                                       {"id": "A2", "lane": "L2", "label": "b"},
+                                       {"id": "A3", "lane": "L1", "label": "c"},
+                                       {"id": "A4", "lane": "L2", "label": "d"},
+                                       {"id": "A5", "lane": "L1", "label": "e"}],
+                             "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "A3"},
+                                       {"from": "A3", "to": "A4"}, {"from": "A4", "to": "A5"}]},
+                            ensure_ascii=False)
+    clustered = json.dumps({"kind": "flow",
+                            "lanes": [{"id": "L1"}, {"id": "L2"}],
+                            "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
+                                      {"id": "A2", "lane": "L1", "label": "b"},
+                                      {"id": "A3", "lane": "L1", "label": "c"},
+                                      {"id": "B1", "lane": "L2", "label": "d"}],
+                            "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "A3"},
+                                      {"from": "A3", "to": "B1"}, {"from": "B1", "to": "A3", "dashed": True}]},
+                           ensure_ascii=False)
+    gap_lane = json.dumps({"kind": "flow",
+                           "lanes": [{"id": "L1"}],
+                           "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
+                                     {"id": "A2", "lane": "L1", "label": "b"},
+                                     {"id": "G", "lane": "L1", "label": "断点", "gap": True}],
+                           "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "G", "dashed": True}]},
+                          ensure_ascii=False)
+    lanes5 = json.dumps({"kind": "flow",
+                         "lanes": [{"id": f"L{i}"} for i in range(1, 6)],
+                         "nodes": [{"id": f"n{i}", "lane": f"L{i}", "label": "x"} for i in range(1, 6)],
+                         "edges": []}, ensure_ascii=False)
+    cases += [
+        ("high-cross", f"```flow-viz\n{high_cross}\n```", "fail"),
+        ("clustered", f"```flow-viz\n{clustered}\n```", "clean"),
+        ("gap-lane-warn", f"```flow-viz\n{gap_lane}\n```", "warn"),
+        ("lanes-over-4", f"```flow-viz\n{lanes5}\n```", "warn"),
+        ("no-block", "正文无图（mermaid 退化形态）\n```mermaid\nflowchart TD\n  A-->B\n```\n", "fail"),
     ]
     failed = 0
     for name, text, want in cases:
-        got = len(check_md_text(text, "selftest"))
-        status = "PASS" if (got > 0) == (want == 1) else "FAIL"
+        problems, warns = check_md_text(text, "selftest")
+        got = "fail" if problems else ("warn" if warns else "clean")
+        status = "PASS" if got == want else "FAIL"
         if status == "FAIL":
             failed += 1
-        print(f"selftest {name}: {status}")
+        print(f"selftest {name}: {status} (want={want}, got={got})")
     # 跨文件围栏正则一致软断言:check_standard_doc.py 内嵌同款 FV_BLOCK 定义,漂移即 FAIL。
     # 候选按部署形态探测(skill 树内 / 仓根 skills 树),均不存在(单装环境)则跳过。
     fence_def = 'FV_BLOCK = re.compile(r"```flow-viz[ \\t]*\\n(.*?)```", re.DOTALL)'
@@ -143,20 +220,26 @@ def main() -> None:
 
     total_blocks = 0
     problems: list[str] = []
+    warns: list[str] = []
     for f in args.files:
         p = Path(f)
         if not p.exists():
             sys.exit(f"FLOWVIZ_FAIL: 文件不存在 {f}")
         text = p.read_text(encoding="utf-8")
         total_blocks += len(FLOW_RE.findall(text))
-        problems += check_md_text(text, p.name)
+        block_problems, block_warns = check_md_text(text, p.name)
+        problems += block_problems
+        warns += block_warns
 
+    # WARN 只进 stdout（agent 按 stderr+exit 码驱动修复循环，exit-0 输出混入 stderr 会被误读）
+    for msg in warns:
+        print(f"FLOWVIZ_WARN: {msg}")
     if problems:
         print("FLOWVIZ_FAIL: flow-viz 块未过协议机检，逐条修复后重跑：", file=sys.stderr)
         for msg in problems:
             print(f"  - {msg}", file=sys.stderr)
         sys.exit(1)
-    print(f"FLOWVIZ {json.dumps({'files': len(args.files), 'blocks': total_blocks, 'problems': 0}, ensure_ascii=False)}")
+    print(f"FLOWVIZ {json.dumps({'files': len(args.files), 'blocks': total_blocks, 'problems': 0, 'warns': len(warns)}, ensure_ascii=False)}")
 
 
 if __name__ == "__main__":
