@@ -2,6 +2,13 @@
 
 ## 未发布
 
+泳道退役批（2026-11-19，与 sdlc-platform-web 渲染重构、sdlc-platform-server 机检/prompts 同批原子变更）：泳道图经多轮优化仍无法达标（跨层边穿框/侧通道巨线绕图），平台裁决弃泳道——全部流程图一律普通流程图（ELK 平铺）渲染。
+
+- **references/flow-viz-protocol.md**：kind=flow 去「泳道可选」；示例 JSON 删 `lanes`/`lane`；删泳道聚簇规则与「纯标注断点不写 lane」（平铺渲染里 gap 断点照常入图）；机检节改新口径（块含 lanes/lane 字段仅 WARN）；fv-mirror 段 §5 行图题「（主流程，跨角色泳道）」→「（主流程）」、纪律行删跨泳道 FAIL 句（镜像侧 prompts.py 同步）
+- **skills/sdlc-intent/references/digest-template.md**：区块 5 指引/示例/图题同步去泳道；payload 纪律「role 取泳道角色」→「取步骤执行角色」
+- **scripts/check_flowviz.py（仓根为权威源，skills/sdlc-intent/scripts/check_flowviz.py 为 skill 分发副本，双写同步）**：删泳道质量三检查（跨泳道率 FAIL、泳道>4 WARN、断点带 lane WARN）与「lane 引用未声明」FAIL；块含 lanes/lane 字段改单条 WARN「泳道已废弃——建议删除」（存量文档重跑机检 exit 0 不炸）；selftest 语料同步（lanes-deprecated 样例 expect warn）
+- 审核补丁（对照 agent-skills best-practices 复审本批）：skill 分发副本漏双写同步（单装环境机检口径与协议矛盾）——已同步；废弃标注去日期（skill 文档只陈述现行行为，日期归本 CHANGELOG）；权威源口径对齐脚本 docstring（仓根权威源）
+
 审核修复批（对照 agent-skills best-practices 审核「载体迁移收尾批 + 泳道收口」两提交后的三处小修）：
 
 - **references/flow-viz-protocol.md**：①头部补目录（>100 行 references 按 best practices 约定配目录，同仓 digest-template/standard-doc-spec 先例；fv-mirror 镜像段未触碰）；②机检节「泳道数 >4」WARN 补阈值依据（列数越多列宽越摊薄、长中文节点卡挤行，阈值与平台前端泳道渲染口径同步）——消巫术常量

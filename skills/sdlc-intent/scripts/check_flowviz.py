@@ -2,7 +2,7 @@
 """check_flowviz.py — flow-viz 图协议机检（references/flow-viz-protocol.md 的机械面）
 
 校验 markdown 产物中全部 ```flow-viz 代码块：JSON 可解析、kind 合法、nodes 非空、
-id 全图唯一、边 from/to 指向已声明节点、节点 lane 引用已声明泳道、无自环。
+id 全图唯一、边 from/to 指向已声明节点、无自环。泳道已废弃：块含 lanes/lane 字段仅 WARN 提示删除（渲染端一律普通流程图平铺）。
 只验协议本身（图结构与字段形态），不验语义出处——出处与 payload 投影对齐由
 digest 梳理纪律与平台 dangling 校验承担。
 
@@ -50,12 +50,6 @@ def check_md_text(text: str, src: str) -> tuple[list[str], list[str]]:
             problems.append(f"{block_no}：kind 必须是 \"flow\" 或 \"state\"（当前：{kind!r}）")
             continue
 
-        lanes = data.get("lanes") or []
-        if not isinstance(lanes, list):
-            problems.append(f"{block_no}：lanes 必须是数组")
-            lanes = []
-        lane_ids = [l.get("id") for l in lanes if isinstance(l, dict) and l.get("id")]
-
         nodes = data.get("nodes")
         if not isinstance(nodes, list) or not nodes:
             problems.append(f"{block_no}：nodes 为空或缺失——无可渲染内容")
@@ -72,10 +66,10 @@ def check_md_text(text: str, src: str) -> tuple[list[str], list[str]]:
                 problems.append(f"{block_no}：节点 id {nid!r} 重复——id 全图唯一（重复即渲染丢弃，意图丢失）")
             else:
                 seen.add(nid)
-            lane = n.get("lane")
-            if lane is not None and lane not in lane_ids:
-                problems.append(f"{block_no}：节点 {nid!r} 引用未声明泳道 {lane!r}——"
-                                f"在 lanes 中声明或删除该 lane 字段")
+        # 泳道已废弃：渲染端一律普通流程图平铺——字段残留仅提示，不阻断
+        if data.get("lanes") or any(isinstance(n, dict) and n.get("lane") is not None
+                                    for n in nodes if isinstance(n, dict)):
+            warns.append(f"{block_no}：泳道已废弃（渲染按普通流程图）——建议删除 lanes/lane 字段")
 
         edges = data.get("edges") or []
         if not isinstance(edges, list):
@@ -96,41 +90,16 @@ def check_md_text(text: str, src: str) -> tuple[list[str], list[str]]:
                 problems.append(f"{block_no}：自环边 {fr!r}→{to!r}——协议不表达自环，"
                                 f"原文明说的自迁移写节点 note")
 
-        # ---- 泳道质量（kind=flow 且泳道化；口径与前端 swimlane.js 同步，改须双侧）----
-        if kind == "flow" and lane_ids:
-            group = {n.get("id"): n.get("lane") or "__free__"
-                     for n in nodes if isinstance(n, dict) and n.get("id")}
-            valid_edges = [e for e in edges if isinstance(e, dict)
-                           and e.get("from") in group and e.get("to") in group]
-            out_ids = {e.get("from") for e in valid_edges}
-            in_solid = {e.get("to") for e in valid_edges if not e.get("dashed")}
-            in_any = {e.get("to") for e in valid_edges}
-            # 纯标注断点（前端 splitFloatGaps 浮放集同判定）：gap 且有入边、入边全 dashed、无出边
-            float_ids = {nid for n in nodes if isinstance(n, dict)
-                         for nid in [n.get("id")]
-                         if nid and n.get("gap") is True and nid in in_any
-                         and nid not in in_solid and nid not in out_ids}
-            if len(lane_ids) > 4:
-                warns.append(f"{block_no}：泳道数 {len(lane_ids)} >4——粒度过细，"
-                             f"建议按角色职责段合并泳道")
-            for nid in float_ids:
-                if group.get(nid, "__free__") != "__free__":
-                    warns.append(f"{block_no}：纯标注断点 {nid!r} 带 lane——断点不写 lane"
-                                 f"（渲染贴宿主浮放，泳道归属被忽略）")
-            # 跨泳道率：非 dashed 边、计数 ≥4、严格 >50%（free 组独立，同 '__free__' 不算跨）
-            counted = [(e["from"], e["to"]) for e in valid_edges if not e.get("dashed")]
-            cross = [(fr, to) for fr, to in counted if group[fr] != group[to]]
-            if len(counted) >= 4 and len(cross) / len(counted) > 0.5:
-                detail = "、".join(f"{fr}({group[fr]})→{to}({group[to]})" for fr, to in cross)
-                problems.append(f"{block_no}：跨泳道边 {len(cross)}/{len(counted)}"
-                                f"（{len(cross) * 100 // len(counted)}%）——泳道应按角色职责段聚簇，"
-                                f"系统判定/页面展示类节点归当前操作角色泳道，勿按操作/响应逐边换道；"
-                                f"跨道边：{detail}")
     return problems, warns
 
 
 def _selftest() -> int:
     ok = json.dumps({
+        "kind": "flow",
+        "nodes": [{"id": "n1", "label": "x"}],
+        "edges": [],
+    }, ensure_ascii=False)
+    lanes_deprecated = json.dumps({
         "kind": "flow", "lanes": [{"id": "L1", "label": "A"}],
         "nodes": [{"id": "n1", "lane": "L1", "label": "x"}],
         "edges": [],
@@ -144,46 +113,13 @@ def _selftest() -> int:
                                "edges": [{"from": "s1", "to": "s1"}]}, ensure_ascii=False)
     cases = [
         ("ok", f"```flow-viz\n{ok}\n```", "clean"),
+        ("lanes-deprecated", f"```flow-viz\n{lanes_deprecated}\n```", "warn"),
         ("bad-json", f"```flow-viz\n{bad_json}\n```", "fail"),
         ("dangling", f"```flow-viz\n{bad_dangling}\n```", "fail"),
         ("selfloop", f"```flow-viz\n{bad_selfloop}\n```", "fail"),
     ]
-    # 泳道质量：锯齿换道 FAIL / 健康聚簇干净 / 断点带 lane WARN / 泳道>4 WARN
-    high_cross = json.dumps({"kind": "flow",
-                             "lanes": [{"id": "L1"}, {"id": "L2"}],
-                             "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
-                                       {"id": "A2", "lane": "L2", "label": "b"},
-                                       {"id": "A3", "lane": "L1", "label": "c"},
-                                       {"id": "A4", "lane": "L2", "label": "d"},
-                                       {"id": "A5", "lane": "L1", "label": "e"}],
-                             "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "A3"},
-                                       {"from": "A3", "to": "A4"}, {"from": "A4", "to": "A5"}]},
-                            ensure_ascii=False)
-    clustered = json.dumps({"kind": "flow",
-                            "lanes": [{"id": "L1"}, {"id": "L2"}],
-                            "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
-                                      {"id": "A2", "lane": "L1", "label": "b"},
-                                      {"id": "A3", "lane": "L1", "label": "c"},
-                                      {"id": "B1", "lane": "L2", "label": "d"}],
-                            "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "A3"},
-                                      {"from": "A3", "to": "B1"}, {"from": "B1", "to": "A3", "dashed": True}]},
-                           ensure_ascii=False)
-    gap_lane = json.dumps({"kind": "flow",
-                           "lanes": [{"id": "L1"}],
-                           "nodes": [{"id": "A1", "lane": "L1", "label": "a"},
-                                     {"id": "A2", "lane": "L1", "label": "b"},
-                                     {"id": "G", "lane": "L1", "label": "断点", "gap": True}],
-                           "edges": [{"from": "A1", "to": "A2"}, {"from": "A2", "to": "G", "dashed": True}]},
-                          ensure_ascii=False)
-    lanes5 = json.dumps({"kind": "flow",
-                         "lanes": [{"id": f"L{i}"} for i in range(1, 6)],
-                         "nodes": [{"id": f"n{i}", "lane": f"L{i}", "label": "x"} for i in range(1, 6)],
-                         "edges": []}, ensure_ascii=False)
+    # 泳道已废弃：带 lanes 的块 → WARN 不 FAIL（存量文档重跑机检不炸）
     cases += [
-        ("high-cross", f"```flow-viz\n{high_cross}\n```", "fail"),
-        ("clustered", f"```flow-viz\n{clustered}\n```", "clean"),
-        ("gap-lane-warn", f"```flow-viz\n{gap_lane}\n```", "warn"),
-        ("lanes-over-4", f"```flow-viz\n{lanes5}\n```", "warn"),
         ("no-block", "正文无图（mermaid 退化形态）\n```mermaid\nflowchart TD\n  A-->B\n```\n", "fail"),
     ]
     failed = 0
