@@ -2,6 +2,8 @@
 
 ## 未发布
 
+sdlc-platform evals 补齐（销账：全仓唯一无 evals 的 skill；对齐 CONTRIBUTING「新场景一律官方 JSON 结构」与官方 best-practices「至少三个评估场景」）：四场景覆盖状态机路由与采纳人工关（eval-1）、澄清附图处置（eval-2：读图写 extra/只写看得见的/不替人决定/不连答）、子命令幂等防护（eval-3：importing 中重发 import 不重发动作——锚定同日审核修复批 M1）、四项引导（eval-4：两段式 new 引导）；全部官方 JSON 结构 + 判负红线节，files 内联卡状态 fixture，业务词中性虚构、平台地址 `<平台地址>` 占位；evals/README.md 索引同步登记。
+
 审核修复批（对 gitlab 合入的 sdlc-platform 做双维度 CR——业务连续性/数据一致性 + 官方 agent-skills best-practices 对照——后的回流修复）：补 MCP 工具完全限定名、子命令幂等防护、话术表缺口、安装文档时效口径、README 图表对齐；安装命令实测留档。
 
 - **skills/sdlc-platform/SKILL.md**：①MCP 工具调用全部改完全限定名（`sdlc-in:get_iteration_status` 等 20 行，best-practices「MCP 工具引用」要求 ServerName:tool_name 防多 MCP 环境解析歧义；前置表工具列保留裸名——它是 server→工具归属定义表，行内已绑定）；②「进入哪一步」补幂等防护句：子命令动作与卡 `step` 对不上时不重发动作（importing 中重发 import 不再调 `sdlc-in:import_requirement`；已 published 的卡收到 quality/synthesize 先查状态按状态说话）；③「对人怎么说」表补两行——importing 被动查到专用话术（原只有 30 秒超时句）、clarify 场合句归位总表（原游离在 step 表，违背「对人只说表里的句子」自我声明），step 表 clarify 行加回指
