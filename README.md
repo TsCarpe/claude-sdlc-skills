@@ -38,6 +38,7 @@ flowchart LR
     DB[sdlc-doubt<br/>决策对抗复查] -. 任意阶段旁路 .-> F
     UV[sdlc-ui-visual<br/>设计稿视觉还原] -. 开发后旁路 .-> G
     CR[sdlc-release-check<br/>上线前检查] -. 发版前旁路 .-> G
+    PF[sdlc-platform<br/>平台首发链路] -. 独立平台链路，产出标准文档 .-> F
 ```
 
 六边形 = 人工关口，只有两处；旁路机制随时可插。带真实产物片段的 6 步走查见 [example-walkthrough](docs/example-walkthrough.md)。

@@ -2,6 +2,13 @@
 
 ## 未发布
 
+审核修复批（对 gitlab 合入的 sdlc-platform 做双维度 CR——业务连续性/数据一致性 + 官方 agent-skills best-practices 对照——后的回流修复）：补 MCP 工具完全限定名、子命令幂等防护、话术表缺口、安装文档时效口径、README 图表对齐；安装命令实测留档。
+
+- **skills/sdlc-platform/SKILL.md**：①MCP 工具调用全部改完全限定名（`sdlc-in:get_iteration_status` 等 20 行，best-practices「MCP 工具引用」要求 ServerName:tool_name 防多 MCP 环境解析歧义；前置表工具列保留裸名——它是 server→工具归属定义表，行内已绑定）；②「进入哪一步」补幂等防护句：子命令动作与卡 `step` 对不上时不重发动作（importing 中重发 import 不再调 `sdlc-in:import_requirement`；已 published 的卡收到 quality/synthesize 先查状态按状态说话）；③「对人怎么说」表补两行——importing 被动查到专用话术（原只有 30 秒超时句）、clarify 场合句归位总表（原游离在 step 表，违背「对人只说表里的句子」自我声明），step 表 clarify 行加回指
+- **docs/sdlc-platform-安装.md**：「公开地址不一定含 sdlc-platform」时效表述改确定性口径（两仓同源同步都含；best-practices 避免时效性信息）
+- **README.md**：flowchart 补 sdlc-platform 旁路节点（独立平台链路→切片开发；「11 个 skill 一览」表已有而图无的图表不同代收口）
+- **安装命令实测（L4，只验证未改文件）**：`-g -a claude-code -s sdlc-platform` 参数组合隔离 HOME 实跑通过（产物落 `~/.claude/skills/sdlc-platform/SKILL.md`、frontmatter 可解析）；gitlab URL 源在无 git 凭据环境报 `SKILLS_GIT_AUTH_FAILED`——已配 git credential helper（如 macOS keychain）的用户环境可行，未配者走文档手动 clone 路径（同样需要凭据，交互式输入即可）
+
 泳道退役批（2026-11-19，与 sdlc-platform-web 渲染重构、sdlc-platform-server 机检/prompts 同批原子变更）：泳道图经多轮优化仍无法达标（跨层边穿框/侧通道巨线绕图），平台裁决弃泳道——全部流程图一律普通流程图（ELK 平铺）渲染。
 
 - **references/flow-viz-protocol.md**：kind=flow 去「泳道可选」；示例 JSON 删 `lanes`/`lane`；删泳道聚簇规则与「纯标注断点不写 lane」（平铺渲染里 gap 断点照常入图）；机检节改新口径（块含 lanes/lane 字段仅 WARN）；fv-mirror 段 §5 行图题「（主流程，跨角色泳道）」→「（主流程）」、纪律行删跨泳道 FAIL 句（镜像侧 prompts.py 同步）

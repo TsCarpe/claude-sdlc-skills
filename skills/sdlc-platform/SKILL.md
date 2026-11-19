@@ -28,7 +28,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 没写子命令，也没给迭代名：把这张表给人，并说「对人怎么说」里「没写子命令」那一句。不要一上来只问迭代名。
 
-只给了迭代名、没有子命令：先 `get_iteration_status`，按卡片状态继续。对人只说「对人怎么说」里对应的那一句。
+只给了迭代名、没有子命令：先 `sdlc-in:get_iteration_status`，按卡片状态继续。对人只说「对人怎么说」里对应的那一句。
 
 人的整条消息就是 `/sdlc-platform new`、后面没有迭代名：不要问迭代名。先说「对人怎么说」里「new 且没给迭代名」那一句，再按「新建迭代」给可复制的多行代码块。`new` 后面已经写了迭代名、但还缺项目名称、需求名或来源：只问缺的那一项，用「对人怎么说」里的口语。其他子命令缺迭代名时，只说「缺迭代名」那一句。状态里已有 `projectName` 就不要再问。中文命令和子命令同等。
 
@@ -47,12 +47,14 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | 缺迭代名 | 请把迭代名发我，例如 v1.0-登录。 |
 | 缺项目名称、需求名或来源 | 只问缺的那一项。例如：还缺来源，飞书链接或需求正文都可以。 |
 | 导入成功 | 原文已经到了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。需要的话，我可以帮您开始质检。 |
+| importing（不是刚发起导入查到的） | 原文还在导入中。稍后可以再让我看一下，也可以到产物平台上看。 |
 | importing 满 30 秒 | 原文还在导入，大概还要 10 分钟，请您耐心等一下。稍后可以用同一个迭代名让我再看一下，也可以直接到产物平台上看。 |
 | import_failed | 原文没有导入成功。{白话原因} 您看是改来源后再试，还是先到产物平台上看一下。 |
 | quality_ready | 原文已经到了。需要的话，我可以帮您开始质检。 |
 | quality 已发起 | 质检已经开始了，结果还要等一会儿。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
 | quality_running | 质检还在进行，结果还没出来。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
 | adopt | 质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。 |
+| clarify | 先写需求域和类型（有内容才写），再贴题干、原文摘引和图片链接（空的不写），推荐项只标「推荐」。请您答复这一题。 |
 | synthesize_ready | 恭喜🎉，需求澄清都处理完了。您可以到产物平台上查看和修改已有答复。需要的话，我帮您生成标准文档。 |
 | synthesize 已发起，或 synthesize_running | 标准文档正在生成，稿子还没出来。可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
 | publish | 标准文档草稿好了，请核对下面这篇。确认要发布的话，跟我说「发布标准文档」。 |
@@ -97,11 +99,11 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 来源：https://example.feishu.cn/wiki/……
 ```
 
-已经给了其中几样、还缺的：只问缺的那一项。四样齐了立刻 `import_requirement`，`project_name` 传项目名称。导入成功后说「导入成功」那一句，把四项填进去，不要连着质检、采纳或发布。状态里 `projectName` 已有就沿用这个值，不要再问。项目名称为空或迭代还不存在才问。这和 `step` 为 `new` 是同一条。这个迭代名已经有卡：不要再建，改按那张卡的 `step` 继续。
+已经给了其中几样、还缺的：只问缺的那一项。四样齐了立刻 `sdlc-in:import_requirement`，`project_name` 传项目名称。导入成功后说「导入成功」那一句，把四项填进去，不要连着质检、采纳或发布。状态里 `projectName` 已有就沿用这个值，不要再问。项目名称为空或迭代还不存在才问。这和 `step` 为 `new` 是同一条。这个迭代名已经有卡：不要再建，改按那张卡的 `step` 继续。
 
 ## 进入哪一步
 
-先看子命令或中文命令（命令速查）。点了就做那一步。没点名，但给了迭代名，就先 `get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
+先看子命令或中文命令（命令速查）。点了就做那一步。子命令的动作与卡的 `step` 对不上时，不重发动作，按 `step` 对应那一步走：卡在 `importing`，重发 `import` 不再调 `sdlc-in:import_requirement`，改说「importing」对应话术；已 `published` 的卡收到 `quality` 或 `synthesize`，先 `sdlc-in:get_iteration_status`，按状态说话，不发起。没点名，但给了迭代名，就先 `sdlc-in:get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
 
 | `step` | 做什么 |
 |---|---|
@@ -110,10 +112,10 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 | `import_failed` | 停下。说「import_failed」那一句，不要原样念 `message` |
 | `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
 | `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
-| `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `adopt_quality_draft` |
-| `clarify` | 只展示 `nextQuestion` 这一题，然后等人。题干前写需求域（`theme`）和类型（`levelLabel`），有内容才写，分别写成「需求域：…」「类型：…」。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。图片（`images`）有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。推荐项只标注「推荐」，不要替人选、不要替人打字。人附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替人打字 |
+| `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给人看。人说「采纳质检」或发 `adopt` 才调用 `sdlc-in:adopt_quality_draft` |
+| `clarify` | 只展示 `nextQuestion` 这一题，展示按「对人怎么说」clarify 句，然后等人。题干前写需求域（`theme`）和类型（`levelLabel`），有内容才写，分别写成「需求域：…」「类型：…」。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。图片（`images`）有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。推荐项只标注「推荐」，不要替人选、不要替人打字。人附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替人打字 |
 | `synthesize_ready` | 说「synthesize_ready」那一句 |
-| `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `publish_standard`。不要改这篇草稿 |
+| `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给人核对。人说「发布标准文档」或发 `publish` 才调用 `sdlc-in:publish_standard`。不要改这篇草稿 |
 | `published` | 说「published」那一句 |
 | `changed` | 说「changed」那一句，然后停下 |
 
@@ -121,9 +123,9 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 等导入
 
-`import_requirement` 返回后开始计时，反复调用 `get_iteration_status`，累计不超过 30 秒。
+`sdlc-in:import_requirement` 返回后开始计时，反复调用 `sdlc-in:get_iteration_status`，累计不超过 30 秒。
 
-- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。说「导入成功」那一句，把四项填进去。不要调用 `start_quality_check`。
+- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。说「导入成功」那一句，把四项填进去。不要调用 `sdlc-in:start_quality_check`。
 - `import_failed`，或当前任务已是失败/取消：停下，说「import_failed」那一句。
 - 满 30 秒仍是 `importing`：对话里不再等。说「importing 满 30 秒」那两句。不要说「这一轮已等够」「先停在这里」。
 
@@ -133,7 +135,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 展示当前题时，先写需求域和类型。`theme` 有内容才写，写成「需求域：…」；`levelLabel` 有内容才写，写成「类型：…」。空的不写。题干下面原样带上原文摘引。`quote` 有内容才写，写成「原文摘引：…」，不要改写、不要摘要。空的不写。不写出处。图片有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。空的不写。
 
-`submit_clarification` 的 `action` 只能是 `option`、`text`、`reject`、`defer` 之一，而且必须是人刚刚说的：
+`sdlc-in:submit_clarification` 的 `action` 只能是 `option`、`text`、`reject`、`defer` 之一，而且必须是人刚刚说的：
 
 | 人的决定 | action | 其他字段 |
 |---|---|---|
@@ -149,15 +151,15 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 发布
 
-`publish_standard` 提交的是平台上已有的标准文档草稿，不是你重写的正文。红级挂起不能发布。黄级或蓝级挂起时，工具会拒绝并给出 `pendingAssumptions`：向人要一句放行理由，放进 `confirm_note` 再发。理由必须是人写的。
+`sdlc-in:publish_standard` 提交的是平台上已有的标准文档草稿，不是你重写的正文。红级挂起不能发布。黄级或蓝级挂起时，工具会拒绝并给出 `pendingAssumptions`：向人要一句放行理由，放进 `confirm_note` 再发。理由必须是人写的。
 
 ## 导出定稿
 
-调用 `export_standard`。把返回的 `markdown` 贴回对话，并带上卡号和版本。不要写文件。`ok: false` 时什么都不要写。
+调用 `sdlc-out:export_standard`。把返回的 `markdown` 贴回对话，并带上卡号和版本。不要写文件。`ok: false` 时什么都不要写。
 
 ## 交给开发
 
-调用 `handoff_to_developer`。`ok: false` 时不要写任何文件。成功后写到**用户主目录**，不要写进当前 git 仓库。路径用工具返回的，前面加上 `~/`，不要改名：
+调用 `sdlc-out:handoff_to_developer`。`ok: false` 时不要写任何文件。成功后写到**用户主目录**，不要写进当前 git 仓库。路径用工具返回的，前面加上 `~/`，不要改名：
 
 1. 把 `markdown` 写到 `~/` + `markdownPath`。目录没有就建。同一天的同名文件覆盖。
 2. `.platform` 写到 `~/` + `platformPath`。`platformWrite` = `keep-if-same-req`：文件已在，且 JSON 里的 `reqId` 等于返回的 `requirementId`，则一个字都不要改（里面可能有拉取凭据）。文件没有、读不出 JSON、或 `reqId` 是另一张卡，则把 `platformJson` 原样写入。
@@ -173,15 +175,15 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 | 命令 | 调用 |
 |---|---|
-| `/sdlc-platform import` | `import_requirement`，然后按「等导入」 |
-| `/sdlc-platform quality` | `start_quality_check` |
-| `/sdlc-platform adopt` | `adopt_quality_draft` |
-| `/sdlc-platform clarify` | `submit_clarification` |
-| `/sdlc-platform synthesize` | `start_standard_doc` |
-| `/sdlc-platform publish` | `publish_standard` |
-| `/sdlc-platform export` | `export_standard` |
-| `/sdlc-platform handoff` | `handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
-| `/sdlc-platform status` | 只调用 `get_iteration_status` |
+| `/sdlc-platform import` | `sdlc-in:import_requirement`，然后按「等导入」 |
+| `/sdlc-platform quality` | `sdlc-in:start_quality_check` |
+| `/sdlc-platform adopt` | `sdlc-in:adopt_quality_draft` |
+| `/sdlc-platform clarify` | `sdlc-in:submit_clarification` |
+| `/sdlc-platform synthesize` | `sdlc-in:start_standard_doc` |
+| `/sdlc-platform publish` | `sdlc-in:publish_standard` |
+| `/sdlc-platform export` | `sdlc-out:export_standard` |
+| `/sdlc-platform handoff` | `sdlc-out:handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
+| `/sdlc-platform status` | 只调用 `sdlc-in:get_iteration_status` |
 | `/sdlc-platform new` | 按「新建迭代」 |
 
 对人说的话只使用「对人怎么说」。不要把工具返回的 `status`、`taskId`、`message` 念出来。

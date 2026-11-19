@@ -46,7 +46,7 @@ cp -R /tmp/claude-sdlc-skills/skills/sdlc-platform ~/.claude/skills/
 npx skills add <gitlab-host>/sdlc/claude-sdlc-skills.git -g -a claude-code -s sdlc-platform -y
 ```
 
-公开地址 `TsCarpe/claude-sdlc-skills` 不一定含这次的 `sdlc-platform`。内网安装用上面的 GitLab 地址。
+公开仓库 `TsCarpe/claude-sdlc-skills` 与内网 GitLab 同源同步，两边都含 `sdlc-platform`。内网安装用上面的 GitLab 地址即可。
 
 ## 装完怎么确认
 
