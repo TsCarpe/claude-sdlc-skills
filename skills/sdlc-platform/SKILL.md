@@ -11,7 +11,7 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 用法
 
-菜单里这一项是 `/sdlc-platform`，旁边的说明来自上面的 description。MCP 工具不是给人点的命令，由本 skill 按子命令去调。
+菜单里这一项是 `/sdlc-platform`（Codex 里是 `$sdlc-platform`），旁边的说明来自上面的 description。MCP 工具不是给人点的命令，由本 skill 按子命令去调。
 
 | 子命令 | 等同 | 做什么 |
 |---|---|---|
@@ -75,13 +75,21 @@ description: "在产物平台上，把原始需求变成标准需求文档。新
 
 ## 装完确认
 
-人问「装好了没 / 怎么验证」时：让人新开一轮对话。刚装上的 skill，当前这轮看不见。
+人问「装好了没 / 怎么验证」时：先认出自己跑在哪个平台（Cursor、Claude Code、Devin、Codex），只说这个平台那一行的路径和命令，不要把四个平台都列给人。认不出就问人用的是哪个。然后让人新开一轮对话。刚装上的 skill，当前这轮看不见。
 
-新对话里输入 `/`，菜单里应有 `sdlc-platform`，旁边是说明。选中后不写子命令就发送。
+| 平台 | skill 文件（只给当前仓库用时） | MCP 配在哪 | 查 MCP | 新对话里怎么调 |
+|---|---|---|---|---|
+| Cursor | `~/.cursor/skills/sdlc-platform/SKILL.md`（`.cursor/skills/…`） | `~/.cursor/mcp.json` | 设置里的 MCP 页，`sdlc-in`、`sdlc-out` 亮绿点 | 输入 `/` |
+| Claude Code | `~/.claude/skills/sdlc-platform/SKILL.md`（`.claude/skills/…`） | `claude mcp add -s user` | `claude mcp list` | 输入 `/` |
+| Devin | `~/.config/devin/skills/sdlc-platform/SKILL.md`（`.devin/skills/…`） | `~/.config/devin/mcp_config.json` | `devin mcp list` | 输入 `/` |
+| Codex | `~/.agents/skills/sdlc-platform/SKILL.md`（`.agents/skills/…`） | `~/.codex/config.toml` | `codex mcp list` | 输入 `$` 或 `/skills` |
+
+新对话里按上表调出 `sdlc-platform`，旁边是说明。选中后不写子命令就发送。
 
 - 装好了：列出上面的子命令，问要做哪一步。不要自己写需求文档。
-- 菜单里没有这一项：skill 没被认到。让人核对 `~/.cursor/skills/sdlc-platform/SKILL.md`（Claude Code 是 `~/.claude/skills/sdlc-platform/SKILL.md`）后新开对话。
-- 人说没有这些工具：MCP 没接上，不是 skill 没装。让人核对 `mcp.json` 后新开对话。
+- 列表里没有这一项：skill 没被认到。让人核对本平台那一行的 skill 文件，开头应是 `name: sdlc-platform`，然后新开对话。
+- 人说没有这些工具：MCP 没接上，不是 skill 没装。让人按本平台那一行核对 MCP 配置，改完新开对话。
+- 本机几处都装了 `sdlc-platform`、行为和本文不一致：可能读到了旧版。让人只留本平台那一份，或都换成最新版。
 
 ## 新建迭代
 
