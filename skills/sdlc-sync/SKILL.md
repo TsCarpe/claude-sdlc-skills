@@ -22,6 +22,7 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 ## 前置
 
 - 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8888`（与 server config.py / web vite 代理一致）
+- 写令牌：环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配）——所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空则省略该头，off 档平台不校验）
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
 - 需求对应关系与拉取凭据记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)），首次 push 后写入
 - 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先确认服务已启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
@@ -191,7 +192,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 | 连接拒绝 | 平台未启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh` |
 | 404 需求不存在 | `.platform` 里 reqId 错误或卡片被删，向用户确认 |
 | 409 版本冲突 | 展示 conflicts 明细，等用户裁决 |
-| 401 | 平台启用了 X-Token（write-token），向用户要 token 并加请求头 |
+| 401 | 平台写保护：先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确（非 GET 请求须带 `-H "X-Token: …"`）；确认无误仍 401 再向用户要 token 并 export 后重试 |
 
 ## 与其他 skill 的关系
 

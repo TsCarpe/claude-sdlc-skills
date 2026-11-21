@@ -2,6 +2,11 @@
 
 ## 未发布
 
+server 仓功能改动回流（对齐检查发现三处漂移，本批回流其中两处；vendor 镜像机制断链修复——server 侧改动未经上游回流直接改镜像，下次下行同步会覆盖丢失）：
+
+- **skills/sdlc-sync/SKILL.md**（回流 server d4c1404，飞书用户体系二期 §12）：前置节补写令牌条款——环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配），所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空省略该头，off 档平台不校验）；故障处置表 401 行改「先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确，确认无误仍 401 再向用户要 token 并 export 后重试」（原版本只说向用户要 token，不引导先查环境变量）
+- **skills/sdlc-intent/references/doc-pipeline.md**（回流 server 侧未提交工作区改动）：parse_doc 调用示例改平台链路真实形态——纯结构化单跑（不传 `--media-dir`/`--download`），媒体由平台 feishu_fetch 下载直传不经本脚本；`--download`/`--media-manifest` 降级为「仅手动离线诊断场景（依赖 lark-cli）」，参数表同步标注
+
 sdlc-platform evals 补齐（销账：全仓唯一无 evals 的 skill；对齐 CONTRIBUTING「新场景一律官方 JSON 结构」与官方 best-practices「至少三个评估场景」）：四场景覆盖状态机路由与采纳人工关（eval-1）、澄清附图处置（eval-2：读图写 extra/只写看得见的/不替人决定/不连答）、子命令幂等防护（eval-3：importing 中重发 import 不重发动作——锚定同日审核修复批 M1）、四项引导（eval-4：两段式 new 引导）；全部官方 JSON 结构 + 判负红线节，files 内联卡状态 fixture，业务词中性虚构、平台地址 `<平台地址>` 占位；evals/README.md 索引同步登记。
 
 审核修复批（对 gitlab 合入的 sdlc-platform 做双维度 CR——业务连续性/数据一致性 + 官方 agent-skills best-practices 对照——后的回流修复）：补 MCP 工具完全限定名、子命令幂等防护、话术表缺口、安装文档时效口径、README 图表对齐；安装命令实测留档。

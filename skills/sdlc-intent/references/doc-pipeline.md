@@ -44,16 +44,18 @@
 
 ```bash
 python3 scripts/parse_doc.py --xml /tmp/content.xml --refmap /tmp/refmap.json \
-  --out sdlc/<需求名>/intake/doc-<YYYYMMDD>.json \
-  --media-dir sdlc/<需求名>/intake/media --download --url "<URL>"
+  --out sdlc/<需求名>/intake/doc-<YYYYMMDD>.json --url "<URL>"
 ```
+
+平台链路（feishu_fetch）即此形态——纯结构化单跑，媒体由平台下载直传（不经本脚本）；
+`--download`/`--media-manifest` 仅保留给手动离线诊断场景（依赖 lark-cli）。
 
 | 参数 | 说明 |
 |---|---|
 | `--xml` / `--md` | DocxXML 内容文件 / 纯 markdown 回退模式（二选一） |
 | `--refmap` | reference_map.comments JSON 文件（无评论可省略） |
 | `--out` / `--media-dir` | doc.json 与媒体目录落盘位置 |
-| `--download` | 调 lark-cli 下载媒体（图片/附件/画板缩略图）；不加则媒体条目停留 pending |
+| `--download` | 调 lark-cli 下载媒体（仅手动离线诊断场景，依赖 lark-cli；平台链路不传——媒体由平台直传）；不加则媒体条目停留 pending |
 | `--url` / `--document-id` / `--revision-id` | 写入 doc.json source 字段，供溯源 |
 
 - `--md` 回退模式合成 `x-` 前缀 ID（无原生锚点、平台不可直达），仅调试/补位用，正常飞书输入不走；产物 `generator` 标注 `markdown-fallback`，并在 stderr 打警告——该模式下 list-item 的 `ordinal`=marker、`parent`=None，resolve_anchors 条款级解析与 list_clauses 全量列表不可用。
