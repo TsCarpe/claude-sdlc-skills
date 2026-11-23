@@ -88,7 +88,7 @@ evals 冗余评估（全仓 10 skill × 平台仓联动，经全新上下文代�
 - **sdlc-doubt evals 新增 eval-4（官方 JSON 形态）**：干净决策零误报反例——ARTIFACT/CONTRACT 完整、已检查点在案的健康决策输入，断言诚实产出「维持原决策」、空问题清单合法、低价值观察至多归噪音；判负红线用 RECONCILE 四分类自身词汇（干净决策上发现被归「有效可行动」即判负），与 eval-3 的反方向红线（防「在演戏质疑」漏报）互补；evals/README.md 同步登记
 - **评估附带发现（登记待办，不在本次处理）**：①check_standard_doc.py 权威源落后平台 vendor 副本（641e776 三处误报修复只改 vendor 侧，需等平台工作区未提交改动落地后回迁最终全量 diff）；②sync evals README 断言计数过期（写 30+8+12+19，实测 32/27/27/31）；③gate eval-3 的 skills 字段（sdlc-test）与所在目录（sdlc-gate/evals/）错位，CI 对账不查此一致性；④平台自动化三个盲点恰是 skill eval 独有价值：deferred-link 挂起投影（仅 eval-m）、fr_points.group∈domains 交叉校验、defectRefs 不含详情负向校验
 
-新增 **sdlc-platform**（第 11 个 skill）：在对话里走平台首发链路。输入 MCP 写入，输出 MCP 只读已发布定稿；采纳、逐题澄清、发布仍由人确认。交给开发的文件由本机 skill 写，服务器只返回正文和路径。
+新增 **sdlc-platform**（第 11 个 skill）：在对话里把原始需求转成标准文档。输入 MCP 写入，输出 MCP 只读已发布定稿；采纳、逐题澄清、发布仍由人确认。交给开发的文件由本机 skill 写，服务器只返回正文和路径。
 
 
 sdlc-intent / sdlc-sync 审计回流：对一次平台真实迭代的定稿产物做三方审计（盲评 + 保真度 + 机检），确认的缺陷回流进 skill；首批落地后机检脚本实测又暴露信任级缺陷——表格行正则遇「| P01 |」（竖线后空格）全失配、章标题硬依赖「附录 A」字面、且所有「检查目标 0 行」的路径都报 PASS。裁定：「没检查到 = 通过」是机检的信任级缺陷，全部检查项失明必报 WARN。

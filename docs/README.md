@@ -22,7 +22,7 @@
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
 | [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
-| [sdlc-platform-安装.md](sdlc-platform-安装.md) | 参考 | 使用人自己安装 sdlc-platform 的步骤 | 要在 Cursor 或 Claude Code 里装平台首发 skill 时 |
+| [sdlc-platform-安装.md](sdlc-platform-安装.md) | 参考 | 使用人自己安装 sdlc-platform 的步骤 | 要在 Cursor 或 Claude Code 里装 sdlc-platform（原始需求转标准文档）时 |
 
 ## 三条阅读路径
 
