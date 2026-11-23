@@ -7,11 +7,11 @@ server 仓功能改动回流（对齐检查发现三处漂移，本批回流其�
 - **skills/sdlc-sync/SKILL.md**（回流 server d4c1404，飞书用户体系二期 §12）：前置节补写令牌条款——环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配），所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空省略该头，off 档平台不校验）；故障处置表 401 行改「先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确，确认无误仍 401 再向用户要 token 并 export 后重试」（原版本只说向用户要 token，不引导先查环境变量）
 - **skills/sdlc-intent/references/doc-pipeline.md**（回流 server 侧未提交工作区改动）：parse_doc 调用示例改平台链路真实形态——纯结构化单跑（不传 `--media-dir`/`--download`），媒体由平台 feishu_fetch 下载直传不经本脚本；`--download`/`--media-manifest` 降级为「仅手动离线诊断场景（依赖 lark-cli）」，参数表同步标注
 
-sdlc-platform evals 补齐（销账：全仓唯一无 evals 的 skill；对齐 CONTRIBUTING「新场景一律官方 JSON 结构」与官方 best-practices「至少三个评估场景」）：四场景覆盖状态机路由与采纳人工关（eval-1）、澄清附图处置（eval-2：读图写 extra/只写看得见的/不替人决定/不连答）、子命令幂等防护（eval-3：importing 中重发 import 不重发动作——锚定同日审核修复批 M1）、四项引导（eval-4：两段式 new 引导）；全部官方 JSON 结构 + 判负红线节，files 内联卡状态 fixture，业务词中性虚构、平台地址 `<平台地址>` 占位；evals/README.md 索引同步登记。
+sdlc-platform evals 补齐（销账：全仓唯一无 evals 的 skill；对齐 CONTRIBUTING「新场景一律官方 JSON 结构」与官方 best-practices「至少三个评估场景」）：四场景覆盖状态机路由与采纳人工关（eval-1）、澄清附图处置（eval-2：读图写 extra/只写看得见的/不替用户决定/不连答）、子命令幂等防护（eval-3：importing 中重发 import 不重发动作——锚定同日审核修复批 M1）、四项引导（eval-4：两段式 new 引导）；全部官方 JSON 结构 + 判负红线节，files 内联卡状态 fixture，业务词中性虚构、平台地址 `<平台地址>` 占位；evals/README.md 索引同步登记。
 
 审核修复批（对 gitlab 合入的 sdlc-platform 做双维度 CR——业务连续性/数据一致性 + 官方 agent-skills best-practices 对照——后的回流修复）：补 MCP 工具完全限定名、子命令幂等防护、话术表缺口、安装文档时效口径、README 图表对齐；安装命令实测留档。
 
-- **skills/sdlc-platform/SKILL.md**：①MCP 工具调用全部改完全限定名（`sdlc-in:get_iteration_status` 等 20 行，best-practices「MCP 工具引用」要求 ServerName:tool_name 防多 MCP 环境解析歧义；前置表工具列保留裸名——它是 server→工具归属定义表，行内已绑定）；②「进入哪一步」补幂等防护句：子命令动作与卡 `step` 对不上时不重发动作（importing 中重发 import 不再调 `sdlc-in:import_requirement`；已 published 的卡收到 quality/synthesize 先查状态按状态说话）；③「对人怎么说」表补两行——importing 被动查到专用话术（原只有 30 秒超时句）、clarify 场合句归位总表（原游离在 step 表，违背「对人只说表里的句子」自我声明），step 表 clarify 行加回指
+- **skills/sdlc-platform/SKILL.md**：①MCP 工具调用全部改完全限定名（`sdlc-in:get_iteration_status` 等 20 行，best-practices「MCP 工具引用」要求 ServerName:tool_name 防多 MCP 环境解析歧义；前置表工具列保留裸名——它是 server→工具归属定义表，行内已绑定）；②「进入哪一步」补幂等防护句：子命令动作与卡 `step` 对不上时不重发动作（importing 中重发 import 不再调 `sdlc-in:import_requirement`；已 published 的卡收到 quality/synthesize 先查状态按状态说话）；③「对用户怎么说」表补两行——importing 被动查到专用话术（原只有 30 秒超时句）、clarify 场合句归位总表（原游离在 step 表，违背「对用户只说表里的句子」自我声明），step 表 clarify 行加回指
 - **docs/sdlc-platform-安装.md**：「公开地址不一定含 sdlc-platform」时效表述改确定性口径（两仓同源同步都含；best-practices 避免时效性信息）
 - **README.md**：flowchart 补 sdlc-platform 旁路节点（独立平台链路→切片开发；「11 个 skill 一览」表已有而图无的图表不同代收口）
 - **安装命令实测（L4，只验证未改文件）**：`-g -a claude-code -s sdlc-platform` 参数组合隔离 HOME 实跑通过（产物落 `~/.claude/skills/sdlc-platform/SKILL.md`、frontmatter 可解析）；gitlab URL 源在无 git 凭据环境报 `SKILLS_GIT_AUTH_FAILED`——已配 git credential helper（如 macOS keychain）的用户环境可行，未配者走文档手动 clone 路径（同样需要凭据，交互式输入即可）
@@ -88,7 +88,7 @@ evals 冗余评估（全仓 10 skill × 平台仓联动，经全新上下文代�
 - **sdlc-doubt evals 新增 eval-4（官方 JSON 形态）**：干净决策零误报反例——ARTIFACT/CONTRACT 完整、已检查点在案的健康决策输入，断言诚实产出「维持原决策」、空问题清单合法、低价值观察至多归噪音；判负红线用 RECONCILE 四分类自身词汇（干净决策上发现被归「有效可行动」即判负），与 eval-3 的反方向红线（防「在演戏质疑」漏报）互补；evals/README.md 同步登记
 - **评估附带发现（登记待办，不在本次处理）**：①check_standard_doc.py 权威源落后平台 vendor 副本（641e776 三处误报修复只改 vendor 侧，需等平台工作区未提交改动落地后回迁最终全量 diff）；②sync evals README 断言计数过期（写 30+8+12+19，实测 32/27/27/31）；③gate eval-3 的 skills 字段（sdlc-test）与所在目录（sdlc-gate/evals/）错位，CI 对账不查此一致性；④平台自动化三个盲点恰是 skill eval 独有价值：deferred-link 挂起投影（仅 eval-m）、fr_points.group∈domains 交叉校验、defectRefs 不含详情负向校验
 
-新增 **sdlc-platform**（第 11 个 skill）：在对话里把原始需求转成标准文档。输入 MCP 写入，输出 MCP 只读已发布定稿；采纳、逐题澄清、发布仍由人确认。交给开发的文件由本机 skill 写，服务器只返回正文和路径。
+新增 **sdlc-platform**（第 11 个 skill）：在对话里把原始需求转成标准文档。输入 MCP 写入，输出 MCP 只读已发布定稿；采纳、逐题澄清、发布仍由用户确认。交给开发的文件由本机 skill 写，服务器只返回正文和路径。
 
 
 sdlc-intent / sdlc-sync 审计回流：对一次平台真实迭代的定稿产物做三方审计（盲评 + 保真度 + 机检），确认的缺陷回流进 skill；首批落地后机检脚本实测又暴露信任级缺陷——表格行正则遇「| P01 |」（竖线后空格）全失配、章标题硬依赖「附录 A」字面、且所有「检查目标 0 行」的路径都报 PASS。裁定：「没检查到 = 通过」是机检的信任级缺陷，全部检查项失明必报 WARN。
