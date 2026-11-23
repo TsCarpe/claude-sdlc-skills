@@ -2,6 +2,8 @@
 
 ## 未发布
 
+skill frontmatter 统一：description 中文语义句一律放最前（doubt / gate / handoff / release-check / test / ui-visual 调整顺序；design / guardrails / intent / sync 按原英文语义补写中文句，sync 英文句压缩以守 1024 字符上限；sdlc-platform 本就中文在前不动）；11 个 skill 全部新增 `metadata.version: "1.0.0"`（Agent Skills 规范扩展字段，各 skill 独立演进；SkillHub 上传后据此显示版本，缺省时服务器生成时间版本）与 `metadata.display-name`（SkillHub 展示名「SDLC·中文名」）。CLAUDE.md 护栏 2 与 CONTRIBUTING.md 第 2 条同步口径。
+
 server 仓功能改动回流（对齐检查发现三处漂移，本批回流其中两处；vendor 镜像机制断链修复——server 侧改动未经上游回流直接改镜像，下次下行同步会覆盖丢失）：
 
 - **skills/sdlc-sync/SKILL.md**（回流 server d4c1404，飞书用户体系二期 §12）：前置节补写令牌条款——环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配），所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空省略该头，off 档平台不校验）；故障处置表 401 行改「先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确，确认无误仍 401 再向用户要 token 并 export 后重试」（原版本只说向用户要 token，不引导先查环境变量）

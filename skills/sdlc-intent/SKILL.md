@@ -1,6 +1,9 @@
 ---
 name: sdlc-intent
-description: "Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a seven-layer defect taxonomy (six in-document consistency layers plus an external-reference layer for missing-content defects) and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、PRD digest、requirement audit."
+description: "拿到产品需求文档（PRD）时用：先把需求讲清楚——有哪些角色、概念、功能、流程和状态变化；再逐项挑毛病，找出前后矛盾、说法不一致和漏写的内容，按严重程度列成问题清单，并整理一份要找产品确认的问题。Digests and health-checks product requirement documents (PRD). Stage 1 produces a structured digest (roles, concepts, feature map, flow diagrams, state machines) to build shared understanding; stage 2 audits the requirement against a seven-layer defect taxonomy (six in-document consistency layers plus an external-reference layer for missing-content defects) and produces a graded issue report plus a PM clarification checklist. Use when the user shares a requirement/PRD document (Feishu/wiki link or local file) and wants to understand it, prepare for design, or find problems before development. 触发词：需求文档、需求梳理、需求体检、需求评审、产品需求、帮我理解这个需求、PRD digest、requirement audit."
+metadata:
+  display-name: "SDLC·需求梳理与体检"
+  version: "1.0.0"
 ---
 
 # 需求接收助手（sdlc-intent）

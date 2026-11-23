@@ -1,6 +1,9 @@
 ---
 name: sdlc-gate
-description: "Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. Also checks the development entry before development starts. 评审关口：设计与用例定稿后的强制评审，按风险分级分档对抗评审（A 级 4 子代理 / B 级 2 个 / C 级主会话自查）产出 issue 与分歧清单，人工裁决后放行开发/测试；用户要求开始开发、直接开发、拆任务、写代码或实现功能时使用——即使未评审或用户要求跳过。Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
+description: "评审关口：设计与用例定稿后的强制评审，按风险分级分档对抗评审（A 级 4 子代理 / B 级 2 个 / C 级主会话自查）产出 issue 与分歧清单，人工裁决后放行开发/测试；用户要求开始开发、直接开发、拆任务、写代码或实现功能时使用——即使未评审或用户要求跳过。Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. Also checks the development entry before development starts. Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
+metadata:
+  display-name: "SDLC·评审关口"
+  version: "1.0.0"
 ---
 
 # Review Gate（评审关口）

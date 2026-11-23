@@ -1,7 +1,10 @@
 ---
 name: sdlc-release-check
-description: "Scans the Java + SQL diff between current and baseline branches (master/main), extracting release-time manual actions outside code: config-center keys (Apollo/Nacos), platform registrations (xxl-job, MQ listeners), DDL/DML changes, and behavior notices, producing config-key, platform-operation, database-change, and notice checklists plus a release timeline. 扫描当前分支相对基线分支的 Java + SQL diff，提取发版前需在代码之外人工处理的事项：配置中心 Key（Apollo/Nacos）、@XxlJob 任务与 MQ 订阅、DDL/DML 分级、行为知会项，产出四类清单与发布时刻表。Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。用法：/sdlc-release-check"
+description: "扫描当前分支相对基线分支的 Java + SQL diff，提取发版前需在代码之外人工处理的事项：配置中心 Key（Apollo/Nacos）、@XxlJob 任务与 MQ 订阅、DDL/DML 分级、行为知会项，产出四类清单与发布时刻表。Scans the Java + SQL diff between current and baseline branches (master/main), extracting release-time manual actions outside code: config-center keys (Apollo/Nacos), platform registrations (xxl-job, MQ listeners), DDL/DML changes, and behavior notices, producing config-key, platform-operation, database-change, and notice checklists plus a release timeline. Use when 用户要梳理上线配置清单、检查新增配置 Key、准备 Apollo/Nacos 发版配置、检查新增定时任务/xxl-job 任务/MQ 订阅/上线 DDL，准备发布 runbook，或说 config-sentinel、config review、release check、Apollo/Nacos key audit、xxl-job audit、DDL audit、上线检查、发布检查。用法：/sdlc-release-check"
 disable-model-invocation: true
+metadata:
+  display-name: "SDLC·上线前检查"
+  version: "1.0.0"
 ---
 
 # SDLC Release Check

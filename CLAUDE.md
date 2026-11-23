@@ -17,7 +17,7 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 ## 改动护栏（硬规则）
 
 1. **新增/删除/改名 skill 必须同步 `.claude-plugin/marketplace.json` 的 `plugins[0].skills` 数组**——该数组是 plugin 渠道的完整集合（strict:false 下未列目录不加载）；漏登记 = 两渠道产物不一致
-2. SKILL.md frontmatter：`name` 必须 kebab-case（marketplace 校验）；`description` 中英混合（英文语义句 + 中文触发词），这是触发与 /plugin 列表展示的唯一入口
+2. SKILL.md frontmatter：`name` 必须 kebab-case（marketplace 校验）；`description` 中英混合（中文语义句在前 + 英文语义句 + 中文触发词），这是触发与 /plugin 列表展示的唯一入口；版本号写在 `metadata.version`（各 skill 独立演进，1.0.0 起，改到哪个升哪个），SkillHub 展示名写在 `metadata.display-name`（「SDLC·中文名」）
 3. **SKILL.md 保持精瘦**：细节放 references/，正文只留流程主干 + 指针；连续两层引用禁止（A 引 B、B 再引 C）
 4. 跨 skill 引用用**同级相对路径**（`../sdlc-doubt/SKILL.md`）并声明「单独安装时仅作来源说明」——不同用户安装 scope（全局/项目）不同，禁止写死绝对路径
 5. **脱敏红线**：不得出现真实项目名、公司名、内网地址、真实鉴权头字段、账号凭据；业务示例一律用中性虚构（商品/订单/评选活动类）。提交前跑机检（两级词表：fail 零容忍 / review 人工复核，词表与豁免清单在 `scripts/desens_words.json`——扩词改词表，不改脚本）：
