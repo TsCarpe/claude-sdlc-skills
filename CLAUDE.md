@@ -16,7 +16,7 @@ docs/                          # workflow（全流程叙述）/ large-req-playbo
 
 ## 改动护栏（硬规则）
 
-1. **新增/删除/改名 skill 必须同步 `.claude-plugin/marketplace.json` 的 `plugins[0].skills` 数组**——该数组是 plugin 渠道的完整集合（strict:false 下未列目录不加载）；漏登记 = 两渠道产物不一致
+1. **新增/删除/改名 skill 必须同步 `.claude-plugin/marketplace.json` 的 `plugins[0].skills` 数组**——该数组是 plugin 渠道的完整集合（strict:false 下未列目录不加载）；漏登记 = 两渠道产物不一致；同时同步 `scripts/build_suite_bundle.py` 的 `MEMBERS`（SkillHub 套件成员，不一致时脚本拒绝出包）
 2. SKILL.md frontmatter：`name` 必须 kebab-case（marketplace 校验）；`description` 中英混合（中文语义句在前 + 英文语义句 + 中文触发词），这是触发与 /plugin 列表展示的唯一入口；版本号写在 `metadata.version`（各 skill 独立演进，1.0.0 起，改到哪个升哪个），SkillHub 展示名写在 `metadata.display-name`（「SDLC·中文名」）
 3. **SKILL.md 保持精瘦**：细节放 references/，正文只留流程主干 + 指针；连续两层引用禁止（A 引 B、B 再引 C）
 4. 跨 skill 引用用**同级相对路径**（`../sdlc-doubt/SKILL.md`）并声明「单独安装时仅作来源说明」——不同用户安装 scope（全局/项目）不同，禁止写死绝对路径
@@ -38,6 +38,15 @@ git ls-files -s skills/sdlc-guardrails/templates/pre-commit skills/sdlc-test/tem
 ```
 
 需要真实冒烟时：在 /tmp 建试验项目 `npx skills add <本仓库路径> -s <skill名> --copy -y` 安装后新开会话触发，验完删除。
+
+## 打 SkillHub 套件包
+
+```bash
+python3 scripts/build_suite_bundle.py                                           # 新建套件，出 outputs/sdlc-suite-bundle-1.0.0.zip
+python3 scripts/build_suite_bundle.py --mode UPDATE --base-version 1.0.0 --version 1.1.0   # 出新版本
+```
+
+只打 git 已提交的 skills/。在 SkillHub「创建技能套件 → 本地导入」上传这一个 ZIP。改过的 skill 先改大 `metadata.version`（已发布版本不可覆盖）。
 
 ## evals 约定
 

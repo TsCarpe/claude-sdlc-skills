@@ -2,6 +2,8 @@
 
 ## 未发布
 
+新增 `scripts/build_suite_bundle.py`：从 git 提交取 skills/，生成 SkillHub Suite Bundle（根目录 `SUITE.yaml`，`kind: SkillSuiteBundle` + `skills/<name>/`），一次上传整套，不再逐个上传 skill。成员与顺序在脚本 `MEMBERS`，与 marketplace.json 不一致时拒绝出包；成员版本取各 SKILL.md 的 `metadata.version`；支持 `--mode CREATE|UPDATE`、`--base-version`、`--ref`、`--namespace`、`--visibility`。CLAUDE.md 护栏 1 补同步要求，并加「打 SkillHub 套件包」一节。
+
 skill frontmatter 统一：description 中文语义句一律放最前（doubt / gate / handoff / release-check / test / ui-visual 调整顺序；design / guardrails / intent / sync 按原英文语义补写中文句，sync 英文句压缩以守 1024 字符上限；sdlc-platform 本就中文在前不动）；11 个 skill 全部新增 `metadata.version: "1.0.0"`（Agent Skills 规范扩展字段，各 skill 独立演进；SkillHub 上传后据此显示版本，缺省时服务器生成时间版本）与 `metadata.display-name`（SkillHub 展示名「SDLC·中文名」）。CLAUDE.md 护栏 2 与 CONTRIBUTING.md 第 2 条同步口径。
 
 server 仓功能改动回流（对齐检查发现三处漂移，本批回流其中两处；vendor 镜像机制断链修复——server 侧改动未经上游回流直接改镜像，下次下行同步会覆盖丢失）：
