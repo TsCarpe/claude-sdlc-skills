@@ -41,7 +41,7 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 ```
 设计进度：
 - [ ] Step 1: 前置闸三道 + 输入定位（standard（如有）/ digest / audit / pm-checklist / Q 表载体 / 项目规范源）
-- [ ] Step 2: 存量勘察（现有接口/Req/组件/表结构）
+- [ ] Step 2: 存量勘察（现有接口/Req/组件/表结构 + 改动资产的调用方）
 - [ ] Step 3: 按 references/design-template.md 产出 design.md（A 全量 / B mini）
 - [ ] Step 4: 齐套自检（A/B 下表六项；C 按 C 模板自检）
 - [ ] Step 5: 落盘 + 🔒 暂停等确认点②定稿
@@ -49,7 +49,7 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`）的载体按�
 
 **Step 1 输入**：`intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影——**存在则以定稿为最高需求口径**：发布后的澄清定论已消化进正文，与三件套冲突时以 standard 为准）> intake 三件套 + 项目规范源（`.trellis/spec/` 或 `dev_standards/` 等项目自建规范目录，读不到则注明规范降级）+ ER 基线（如有）。
 
-**Step 2 存量勘察**：契约必须贴现状不悬空——读现有接口/Req/组件/表结构后落笔。MCP 优先（完全限定名 `codegraph:codegraph_explore`、`mysql:mysql_query`）；codegraph 缺失降级定向 grep + 读文件，mysql 缺失按设计内声明的表结构（均如实注明降级）。
+**Step 2 存量勘察**：契约必须贴现状不悬空——读现有接口/Req/组件/表结构后落笔；**要改动（非仅复用）的存量资产须追其调用方/消费方**，其中公共 Req/组件的受影响方写入 §3 ⑤，命中闸 3 判据即按其处置升级。MCP 优先（完全限定名 `codegraph:codegraph_explore`，含调用路径与影响面、`mysql:mysql_query`）；codegraph 缺失降级定向 grep + 读文件，mysql 缺失按设计内声明的表结构（均如实注明降级）。
 
 **Step 3** 读取 [references/design-template.md](references/design-template.md) 按骨架产出（A 全量 / B mini / C 轻量方案）；大需求落位与任务框架交接规则读取 [references/trellis-handoff.md](references/trellis-handoff.md)。
 
