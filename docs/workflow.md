@@ -96,7 +96,7 @@ flowchart TB
 | 6. AI 测试 | sdlc-test：cases → static（用例↔代码比对）→ exec（浏览器）→ report | **🔒关卡1** 用例审核；**🔒关卡2** 报告复验 | cases.md、reports/ |
 | 7. 收尾沉淀 | 归档 + 教训回写判断 + 文档同步 | — | 归档任务、规范增量、文档 |
 
-产物目录约定：每需求一目录 `sdlc/<需求名>/`（intake / design / review / test / dev 五子目录；design/ 放轻量链路 design.md，大需求设计随任务框架 parent 任务目录），环境配置集中 `sdlc/env/`（账号等本机敏感文件 gitignore）。
+产物目录约定：每需求一目录 `sdlc/<需求名>/`（intake / design / review / test / dev 五子目录；design/ 放轻量链路 design.md，大需求设计随任务框架 parent 任务目录，接平台后一律落 design/），环境配置集中 `sdlc/env/`（账号等本机敏感文件 gitignore）。
 
 ## 4. 支撑资产：四层结构
 
@@ -117,7 +117,7 @@ flowchart TB
 | | sdlc-release-check | 发版前扫描 Java+SQL diff：配置 Key / 平台注册操作 / DDL·DML 变更分级，汇总发布时刻表 | 📦 | 自创 |
 | | sdlc-guardrails | 横切引擎：写时红线拦截（PostToolUse hook + pre-commit 兜底 + `--check` 基线扫描），引擎一份全局、规则按项目 | 📦 | 自创 |
 | | sdlc-sync | 横切 · 产物出口/入口：三件套与用例上团队平台、拉回 PM 澄清答复与权威 digest/audit（pull-artifacts，发布后含 standard 定稿只读投影，下游 skill 以其为最高需求口径）、发布后开发包一键拉回本地（pull-dev-bundle：standard/design/cases/gate 裁决投影，平台本体为独立仓 sdlc-platform） | 📦 | 自创 |
-| **产物层** | sdlc/<需求名>/ | 每需求一目录：intake 三件套 / design 技术设计（轻量链路；大需求随 parent 任务目录）/ review issues / test cases+reports / dev 完成验证留档 | 📦（约定随 skill） | playbook+自创 |
+| **产物层** | sdlc/<需求名>/ | 每需求一目录：intake 三件套 / design 技术设计（轻量链路；大需求随 parent 任务目录，接平台后一律落 design/）/ review issues / test cases+reports / dev 完成验证留档 | 📦（约定随 skill） | playbook+自创 |
 | | 决策记录 / 开发日志 / 统一 ID 体系 | 决策 ADR / 日志 / 跨产物「命名空间.编号」引用不断链 | 🏠 | bp+自创 |
 
 ## 5. AI 与人的分工与平衡

@@ -3,7 +3,7 @@ name: sdlc-test
 description: "AI 测试智能体编排：开发完成验证（外部服务健康探测+冒烟）→用例生成→静态一致性→浏览器功能测试→报告；子命令 cases/dev/static/exec/spec/report 独立可重跑，两道人工关卡，通过用例可资产化为 Playwright spec。Orchestrates AI testing: dev-complete verification (health probe + smoke against an externally supplied service), case generation, static consistency checks, browser functional testing, and reports. Subcommands (cases/dev/static/exec/spec/report) are re-runnable with two human checkpoints; passing cases can be assetized into Playwright specs for zero-token regression. Use when 用户要求 AI 测试、生成测试用例、开发完成验证、冒烟自测、执行测试、提测验证、回归测试、生成回归脚本、spec 资产化，或说 AI testing、test generation、browser E2E、playwright spec。用法：/sdlc-test cases|dev|static|exec|spec|report 需求名"
 metadata:
   display-name: "SDLC·AI 测试"
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # AI 测试智能体
@@ -14,7 +14,7 @@ metadata:
 
 产物目录（相对当前项目根）：`sdlc/<需求名>/test/` 下放 `cases.md` 与 `reports/<日期>-r<N>/`；共享环境配置在 `sdlc/env/`。
 
-**前置依赖**：`python3`；`chrome-devtools` MCP（exec 浏览器操作）；`codegraph` / `mysql` MCP（static 与落库核验，缺失可降级）；Playwright / Node / npm（spec 回归档，模板见 `templates/`）。
+**前置依赖**：`python3`；`chrome-devtools` MCP（exec 浏览器操作）；`codegraph` / `mysql` MCP（static 与落库核验；codegraph 未安装或未初始化索引时，在回复里提示一次可运行 `codegraph init`——不用问答工具、不等待，本轮降级定向 grep + 读文件；未获用户明确同意不代为运行；mysql 缺失可降级）；Playwright / Node / npm（spec 回归档，模板见 `templates/`）。
 
 ## 路由
 
@@ -80,7 +80,7 @@ Dev 进度：
 0. 入口守卫：`python3 <skill 目录>/scripts/guard_exec.py <项目根> <需求名> static`（skill 目录 = 本 SKILL.md 所在目录：项目级安装为 `<项目根>/.claude/skills/sdlc-test`，全局安装为 `~/.claude/skills/sdlc-test`）——exit≠0 时停止并向用户呈现缺失清单（关卡1 未过/轮次命名违规/spec 资产失真），禁止绕过
 1. 读 `sdlc/env/repos.local.md` 获取前后端仓库路径（缺失则按 `references/env-template.md` 引导创建）；后端默认当前项目
 2. 按梳理文档 §7「关键规则与口径」的 需求.FR-xx 编号逐条提取业务规则（需求基准：standard 定稿优先，无则三件套；均缺失才回退原始 PRD 的规则/口径章节，并在 static.md 注明证据降级），并标注检测端：后端（接口校验/权限/状态流转/排序 SQL）或前端（按钮显隐/页面校验/提示文案/页签隐藏）
-3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则降级定向 grep + 读文件，结果注明证据降级
+3. 后端：用 `codegraph:codegraph_context`/`codegraph:codegraph_explore` 定位每条规则的 Controller → Service → Mapper/XML 链路；`mysql:mysql_query` 核对表结构。前端：`codegraph:codegraph_search`/`codegraph:codegraph_context` 传 `projectPath` 指向前端仓库索引定位页面/组件；无索引则先按前置依赖行提示一次建索引（不等待），再降级定向 grep + 读文件，结果注明证据降级
 4. 按 `references/static/static-check-template.md` 产出三态结论留档至本轮目录 `static.md`：✅符合 / ⚠️疑似偏差（附代码位置，前后端位置分别标注仓库）/ 🤔静态无法确认
 5. ⚠️ 项写入用例文件「重点验证项」区块，阶段3 优先执行；重大偏差立即报告用户
 

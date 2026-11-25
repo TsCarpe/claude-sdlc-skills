@@ -28,7 +28,7 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 |---|---|---|
 | mysql MCP | sdlc-gate（核对表结构）、sdlc-design（存量勘察核对表结构）、sdlc-test（落库核验） | gate 角色降级纯文档比对；design 按设计内声明的表结构并注明；test 落库断言降级「疑似」并注明 |
 | chrome-devtools MCP | sdlc-test exec | 降级 Playwright（再缺失则该阶段阻塞，不是跳过） |
-| codegraph MCP | sdlc-design（存量勘察）、sdlc-test static | 降级定向 grep + 读文件，结果注明证据降级 |
+| codegraph MCP | sdlc-design（存量勘察）、sdlc-gate（RECONCILE 代码核对）、sdlc-test static | 降级定向 grep + 读文件，结果注明证据降级；未初始化时先在回复里提示一次建索引（不等待） |
 | lark-cli | sdlc-intent（飞书文档/评论区）、sdlc-sync（push-artifacts 拉飞书原文快照） | intent 用本地 markdown 文件路径输入，跳过评论区整合；sync 无原文快照可推（快照是质检依据版本），先补 lark-cli 再推 |
 | YApi MCP | sdlc-test cases（接口契约摄入） | 跳过该信息源，用例按需求文档推导 |
 | Figma MCP（如 `figma-context-mcp`） | sdlc-ui-visual（基准获取） | 改用基准图模式；无结构化数据与原版 SVG 下载 |
@@ -86,7 +86,7 @@ A：见 [docs/README.md](README.md) 导读——三条阅读路径（上手用 /
 | pm-checklist | 待 PM 澄清清单：🔴/🟡/🔵 分级的问题表，带答复列可直接回传 |
 | 三件套 | digest + audit + pm-checklist，存于 `sdlc/<需求名>/intake/` |
 | 确认点①②③ | 大需求三段式的三个人工核对关口：①业务全貌逐行核对 ②技术骨架（D 表八类别齐套）③child prd 评审（见 playbook） |
-| Q 表 | 待确认项表（问题/当前假设/阻塞范围三列）；硬阻塞=未决口径只锁对应功能点的开发，不阻塞全局 |
+| Q 表 | 待确认项表（问题/当前假设/阻塞范围三列）；硬阻塞=答案不同则写接口契约形状不同的未决口径；只锁阻塞范围列所列分支，不阻塞全局 |
 | D 表 | 关键实现决策表，八类别必答（并发/对账/状态联动/统计口径/权限/回显/时间格式/外部降级），漏答不得过确认点② |
 | D 表/规则编号 | 跨产物引用统一 `命名空间.编号`：需求.FR-xx / 体检.P-xx / 功能.F-xx / 确认.Q-xx / 设计.D-xx / 用例.TC-xx / 缺陷.BUG-xx |
 | 三段式 | 大需求自顶向下拆分：第一段业务全貌 → 第二段技术骨架 → 第三段逐功能点切片（骨架 child 先行） |

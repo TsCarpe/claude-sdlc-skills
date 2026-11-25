@@ -10,7 +10,7 @@ metadata:
 
 把已确认的需求共识（平台 standard 定稿优先，无则 sdlc-intent 三件套）翻译成技术设计文档 `design.md`——供三方消费：sdlc-gate 评审、任务框架拆分执行、sdlc-test cases 并行推导。**设计写成文档本身就是发现过程**：契约、决策、公共资产在人能逐行核对的粒度上定死，下游切片免现场设计。
 
-**前置依赖**：`codegraph` MCP（存量勘察；缺失时降级定向 grep + 读文件）；`mysql` MCP（只读核对表结构，可选）。
+**前置依赖**：`codegraph` MCP（存量勘察；codegraph 未安装或未初始化索引时，在回复里提示一次可运行 `codegraph init`——不用问答工具、不等待，本轮降级定向 grep + 读文件；未获用户明确同意不代为运行；降级须如实注明）；`mysql` MCP（只读核对表结构，可选）。
 
 ## 路由（进入时先判）
 
@@ -30,13 +30,13 @@ Q 表（问题/当前假设/阻塞范围，编号 `确认.Q-xx`，实例写 确�
 2. 无 parent prd（轻量链路）→ 本 skill 在 design 头部**生成并维护**；之后才建 parent prd 的，prd 写「未决口径以 design 头部 Q 表为准」指针，不迁移不重抄
 3. 无未决口径 → design 头部写「Q 表：无」
 
-parent prd 指三段式第一段产物（任务目录下的 prd.md）；digest 头记录的输入源 prd 是需求原文，不算。来源 = pm-checklist 未答复项（无该文件则省）+ digest §假设清单「假设」类条目（推断类不入表——推断有原文推导链，不算未决口径）+ **设计期新发现**的未决口径（存量勘察、契约落笔时发现：先入表编号，再按闸 1 锁定）。
+parent prd 指三段式第一段产物（任务目录下的 prd.md）；digest 头记录的输入源 prd 是需求原文，不算。来源 = pm-checklist 未答复项（无该文件则省）+ digest §假设清单「假设」类条目（推断类不入表——推断有原文推导链，不算未决口径）+ **设计期新发现**的未决口径（存量勘察、契约落笔时发现）：出口按 design-template「设计期问题去向表」判——须产品拍板但不改契约形状的不入表、以 H 假设承接；入表的先编号，再按闸 1 判是否锁定。
 
 ## 前置闸（任一未过按处置执行，不带病设计）
 
 | 闸 | 判据 | 处置 |
 |---|---|---|
-| 1. Q 表硬阻塞 | 存在阻塞写接口核心逻辑的未决口径 | 被锁功能点照常按「当前假设」产出，契约/D 表相应行标 **「锁定待拍板（确认.Q-xx）」**；**不得拒绝启动整个设计、不得把锁定扩大到未阻塞功能点**（未决口径只锁对应功能点，不阻塞全局） |
+| 1. Q 表硬阻塞 | 存在答案不同则写接口契约形状不同的未决口径（可判定定义见 design-template「设计期问题去向表」） | 受影响的功能点照常按「当前假设」产出；只给受该口径影响的契约行与 D 表行标 **「锁定待拍板（确认.Q-xx）」**，不受影响的行不标；Q 表「阻塞范围」列写到分支粒度，开发任务按该列锁、列外不锁；**不得拒绝启动整个设计** |
 | 2. 分级已拍板 | digest 头风险分级处于提议态（未拍板） | 停，先请人拍板（拿不准从高） |
 | 3. tier 只升不降 | 存量勘察发现影响面证据（公共组件/对外契约/并发一致性）且当前低于 A 级 | 回写 digest 头升级并附证据；cases 已产出须同步 cases 头，issues 已产出同步 issues 头；按新级产出 |
 
@@ -53,9 +53,9 @@ parent prd 指三段式第一段产物（任务目录下的 prd.md）；digest �
 - [ ] Step 5: 落盘 + 🔒 暂停等确认点②定稿
 ```
 
-**Step 1 输入**：`intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影——**存在则以定稿为最高需求口径**：发布后的澄清定论已消化进正文，与三件套冲突时以 standard 为准）> intake 三件套 + 项目规范源（`.trellis/spec/` 或 `dev_standards/` 等项目自建规范目录，读不到则注明规范降级）+ ER 基线（如有）。三段式链路另读 parent prd（任务目录下的 prd.md，如 `.trellis/tasks/<task>/prd.md`）——Q 表载体与落位判据据此判定。
+**Step 1 输入**：`intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影——**存在则以定稿为最高需求口径**：发布后的澄清定论已消化进正文，与三件套冲突时以 standard 为准）> intake 三件套 + 项目规范源（`.trellis/spec/` 或 `dev_standards/` 等项目自建规范目录，读不到则注明规范降级）+ ER 基线（如有）。三段式链路另读 parent prd（任务目录下的 prd.md，如 `.trellis/tasks/<task>/prd.md`）——Q 表载体据此判定；落位另看卡级 `.platform`（见 trellis-handoff「落位规则」）。
 
-**Step 2 存量勘察**：契约必须贴现状不悬空——读现有接口/Req/组件/表结构后落笔；**要改动（非仅复用）的存量资产须追其调用方/消费方**，其中公共 Req/组件的受影响方写入 §3 ⑤，命中闸 3 判据即按其处置升级。MCP 优先（完全限定名 `codegraph:codegraph_explore`，含调用路径与影响面、`mysql:mysql_query`）；codegraph 缺失降级定向 grep + 读文件，mysql 缺失按设计内声明的表结构（均如实注明降级）。
+**Step 2 存量勘察**：契约必须贴现状不悬空——读现有接口/Req/组件/表结构后落笔；**要改动（非仅复用）的存量资产须追其调用方/消费方**，其中公共 Req/组件的受影响方写入 §3 ⑤，命中闸 3 判据即按其处置升级。MCP 优先（完全限定名 `codegraph:codegraph_explore`，含调用路径与影响面、`mysql:mysql_query`）；codegraph 缺失或未初始化降级定向 grep + 读文件（每会话每项目提示一次建索引；用户答复建索引后，下一轮用 codegraph 复核 §3 ⑤ 受影响方），mysql 缺失按设计内声明的表结构（均如实注明降级）。
 
 **Step 3** 读取 [references/design-template.md](references/design-template.md) 按骨架产出（A 全量 / B mini / C 轻量方案）；大需求落位与任务框架交接规则读取 [references/trellis-handoff.md](references/trellis-handoff.md)。
 
@@ -70,7 +70,7 @@ parent prd 指三段式第一段产物（任务目录下的 prd.md）；digest �
 | 5 | audit 🔴/🟡 问题去向逐条有落点（已承接 / 转 Q 表 / 本期不做+理由） |
 | 6 | Q 表就位（复用注明来源 prd 并列出新增编号 / 已按定位规则生成 / 无未决口径写明「无」） |
 
-**Step 5 落盘 + 🔒 暂停**。落盘路径按链路判（规则见 trellis-handoff「落位规则」）：已有 parent prd = parent 任务目录；其余（A/B/C 级）= `sdlc/<需求名>/design/design.md`（C 级为 `plan.md`，一页）；修订沿用已有文件的原路径；轻量链路的 parent 任务在 gate 放行后才建。确认点② 措辞：
+**Step 5 落盘 + 🔒 暂停**。落盘路径按链路判（规则见 trellis-handoff「落位规则」）：已接平台（卡级 `.platform` 存在）或无 parent prd = `sdlc/<需求名>/design/design.md`（C 级为 `plan.md`，一页）；已有 parent prd 且未接平台 = parent 任务目录；修订沿用已有文件的原路径；轻量链路的 parent 任务在 gate 放行后才建。确认点② 措辞：
 
 > 设计产物已生成于 <路径>（A/B = design.md；C = plan.md），请逐行核对（确认点②**定稿**——ack 是定稿信号，不构成质量放行；放行唯一口径 = sdlc-gate issues 头「评审状态=已放行」）。同时测试用例应从需求基准（standard 定稿优先，无则三件套）**并行独立推导**（`/sdlc-test cases <需求名>`，生成时禁止读本设计——交叉审查依赖用例在场，不做「设计先行、用例后补」降级档）。两线定稿后运行 `/sdlc-gate <需求名>` 开评审；**gate 放行后才可拆 subtask、启动开发**（guard_dev 开发入口校验）。
 
@@ -86,6 +86,6 @@ parent prd 指三段式第一段产物（任务目录下的 prd.md）；digest �
 
 ## 边界
 
-- 只产设计产物（A/B `design.md`；C `design/plan.md`），**不做任务编排**（建任务/拆 subtask/排期归任务框架；拆分规则随 §7 实施切分约束交付，见 trellis-handoff.md）。例外：三段式链路设计期新发现的未决口径追加到 parent prd §6（需求侧载体，非技术结论入 prd）
+- 只产设计产物（A/B `design.md`；C `design/plan.md`），**不做任务编排**（建任务/拆 subtask/排期归任务框架；拆分规则随 §7 实施切分约束交付，见 trellis-handoff.md）。例外：三段式链路设计期新发现的未决口径追加到 parent prd §6（需求侧载体，非技术结论入 prd），及接平台后在 parent prd 输入源锚点条登记 design 路径指针
 - **不评审**（设计评审归 sdlc-gate）；单点决策存疑走 sdlc-doubt 旁路
 - 不替代 sdlc-intent：需求侧口径冲突回需求侧裁决，禁止设计期静默择一

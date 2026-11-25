@@ -148,7 +148,7 @@ sdlc/
     repos.local.md          # 代码仓库本地路径（gitignore，本机供给）
   <需求名>/
     intake/                 # sdlc-intent 三件套（digest/audit/pm-checklist）
-    design/                 # sdlc-design 技术设计 design.md（轻量链路；大需求在 parent 任务目录）
+    design/                 # sdlc-design 技术设计 design.md（轻量链路；大需求在 parent 任务目录；接平台后一律落 design/）
     test/
       cases.md              # 用例 checklist
       reports/

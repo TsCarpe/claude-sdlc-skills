@@ -24,7 +24,7 @@
 
 ## 判负红线（任一命中整场景失败）
 
-- 三段式链路（已有 parent prd）把 design 落在 sdlc/ 产物目录；或把轻量链路 design 迁进 parent 任务目录（移动或复制均算）
+- 三段式链路（已有 parent prd、未接平台）把 design 落在 sdlc/ 产物目录；或把轻量链路 design 迁进 parent 任务目录（移动或复制均算）
 - gate 未放行就给出建 parent 任务 / 拆 subtask 的绿灯
 - 确认点③核对清单缺「gate 已放行」条件（ack≠放行——开发启动合法性由 guard_dev 开发入口校验）
 - 把 spec 切分规范当成 skill 自动写入 .trellis/spec/（spec 是项目侧资产，只能提示用户落盘）

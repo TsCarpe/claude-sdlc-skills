@@ -70,7 +70,7 @@ flowchart TB
 | 体检编号 | 级 | 去向 | 落点 | 说明 |
 |---|---|---|---|---|
 | 体检.P04 | 🔴 | 已承接 | 功能.F07 | PM 答复：公示开始后才能执行颁奖 |
-| 体检.P11 | 🔴 | 转 Q 表 | 确认.Q6 | 来源待定，走 Q 表硬阻塞规则 |
+| 体检.P11 | 🔴 | 转 Q 表 | 确认.Q6 | 公示期内获奖结果能否撤销未定，走 Q 表硬阻塞规则（阻塞范围列写到分支） |
 ```
 
 ## 步骤 3：设计与用例并行独立产出（互不阅读）
@@ -166,7 +166,7 @@ sdlc/
 ├── env/                          # 环境配置层（test.md/ui-recipe.md 入库；账号等 *.local.md gitignore）
 └── 区域评选活动/                  # 一需求一目录
     ├── intake/                   # digest / audit / pm-checklist（sdlc-intent 产出）
-    ├── design/                   # design.md（sdlc-design 产出；轻量链路落此，大需求随任务框架 parent 任务目录）
+    ├── design/                   # design.md（sdlc-design 产出；轻量链路落此，大需求随任务框架 parent 任务目录；接平台后一律落 design/）
     ├── review/                   # issues-<日期>.md（sdlc-gate 产出）
     ├── test/                     # cases.md（用例+缺陷跟踪权威文件）+ reports/<日期>-r<N>/（sdlc-test 产出）
     └── dev/                      # 开发完成验证留档（verify-*.md + smoke.md，/sdlc-test dev 产出）

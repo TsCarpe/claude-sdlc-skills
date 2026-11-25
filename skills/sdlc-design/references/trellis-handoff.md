@@ -25,6 +25,8 @@
 
 轻量链路 design 之后转任务框架执行时**不迁**：parent prd 技术方案区与上下文清单登记 `sdlc/` 下的原路径——sdlc-sync pull-dev-bundle 按该路径对账，迁走即出现两份。与 sdlc-gate 前置输入同口径（三段式按任务系统约定位置、其余按 `sdlc/<需求名>/design/` 定位设计文档）。
 
+需求已接平台（卡级 `sdlc/<需求名>/.platform` 存在，以 sdlc-sync bind / submit 写入的为准）时**一律落 `sdlc/<需求名>/design/design.md`**，三段式链路也一样：平台定稿由 sdlc-sync pull-dev-bundle 只写到该路径并在其上加定稿锚点；parent prd 在输入源锚点条登记该路径为指针。判据误判的方向只是多落 `sdlc/`，无副作用。design 已落在 parent 任务目录、之后才接平台的：首次拉取后以带锚点的那份为需求与契约口径；parent 目录副本不删，改名 `design.local.md` 留档，其中平台定稿没有的内容（§7 切分约束、横切矩阵、H 接受条件）由人决定走平台修订并入，或在切片期作为补充约束登记进上下文清单；不得两份并存各改。
+
 ## prd.md 结构建议
 
 design.md 直接作为任务输入后，任务框架的需求澄清环节（Trellis 的 brainstorm）**退化为 scope 确认**——不再逐问推导需求，只确认边界。prd.md 两区结构：
@@ -39,7 +41,7 @@ design.md 直接作为任务输入后，任务框架的需求澄清环节（Trel
 - Acceptance criteria：业务级验收（对应 digest 规则表 + parent prd 验收标准）
 
 ## 技术方案区（指针，实现前必读）
-- 技术设计：<design.md 路径>（三段式 = 同任务目录；轻量链路 = `sdlc/<需求名>/design/design.md`，不迁）——接口契约 / D 表决策 / 公共资产清单 / §7 实施切分约束
+- 技术设计：<design.md 路径>（三段式未接平台 = 同任务目录；其余 = `sdlc/<需求名>/design/design.md`，均不迁）——接口契约 / D 表决策 / 公共资产清单 / §7 实施切分约束
 - 未决口径：以 design 头部 Q 表为准（不在本文档重复）
 - 上游共识：`sdlc/<需求名>/intake/digest-<日期>.md`
 ```
@@ -76,7 +78,7 @@ sdlc-design 产 design.md
 
 ## spec 切分规范模板
 
-项目级常驻规范（一次落盘，全部任务自动注入；Trellis 落 `.trellis/spec/` 下，如 `slicing.md`）。**本 skill 只提示落盘，不代写项目文件**；未落盘时拆分纪律以 design §7 头部降级声明为准。**回复中给出下述模板全文**供用户粘贴：
+项目级常驻规范（一次落盘，全部任务自动注入；Trellis 落 `.trellis/spec/` 下，如 `slicing.md`）。**本 skill 只提示落盘，不代写项目文件**；项目已用任务框架而切分规范未落盘时，拆分纪律以 design §7 头部降级声明为准，**回复中给出下述模板全文**供用户粘贴；项目没有任务框架时不贴，只说明接入任务框架时再落：
 
 ```markdown
 # 任务切分规范

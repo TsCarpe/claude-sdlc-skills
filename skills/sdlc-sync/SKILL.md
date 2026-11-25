@@ -198,7 +198,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 | intake | detail.digest/audit + answers | `intake/` 三件套 | **完整执行第 2 节 pull-artifacts 的三件套部分——digest/audit/pm-checklist（含其全部红线），此处不重述** |
 | standard | detail.standard | `intake/standard-<拉取日YYYYMMDD>.md` | **落盘规则与凭据复用第 2 节 pull-artifacts 第 4 步（同键），此处不重述**；仅发布后存在 |
 | assumptions | detail.standard.content.assumptions | `intake/assumptions-<拉取日YYYYMMDD>.md` | #14 假设投影：发布快照的遗留假设结构化清单（编号/状态/pending/refs/inBody 两列表 + assumptionSummary 汇总行）落盘给开发入口；未定案（pending）条数>0 时**开发包含未定案假设警告**；content 缺该键（旧快照/未跑机检）→ 跳过并提示，不阻断（格式见 dev-bundle-merge.md「假设投影」） |
-| design | `GET …/design` | `design/design.md` | phase=final → finalized.md 落盘 + 头部加**平台定稿锚点**（格式见 dev-bundle-merge.md，锚点后本地不可修改）；skipped → 不落文件、.platform 记 skipDeclared、提示本地 plan.md 不受锁；draft/none → 跳过 + 开发包不完整警告；本地已有**无锚点** design.md → 内容相同仅补锚点行，不同报告差异等确认后覆盖 |
+| design | `GET …/design` | `design/design.md` | phase=final → finalized.md 落盘 + 头部加**平台定稿锚点**（格式见 dev-bundle-merge.md，锚点后本地不可修改）；skipped → 不落文件、.platform 记 skipDeclared、提示本地 plan.md 不受锁；draft/none → 跳过 + 开发包不完整警告；本地已有**无锚点** design.md → 内容相同仅补锚点行，不同报告差异等确认后覆盖；用户说明本地 design 在别处（如三段式落在 parent 任务目录）→ 落盘前提示两份并存风险：以带锚点的本文件为准，原位置副本改名留档，不得两份并存各改 |
 | cases | `GET /api/cases?reqId=` + **逐条 detail** | `test/cases.md` | list 面无 pre/steps/expect，明细必须逐条 detail；本地已有 → diff 报告（**删除项须列明将带走的执行历史**）等用户确认后按区块合并（见 dev-bundle-merge.md）；本地无 → 按模板全量重建；0 条跳过提示。平台用例评论不回流（凭据检测不到评论变化），提示人工上平台查看 |
 | gate | `GET …/gate` | `review/issues-<openedAt日期YYYYMMDD>-r<轮号>.md` | 取最新轮；**issuesMd=null（平台升级前存量轮未留档）→ 不产出 issues 文件**，提示两条出路：① 本地通道过关卡（guard_dev 显式豁免（基线=无）+ cases 头人工置已确认过关卡1）；② 平台后续发生实质变更自然触发 reopen，新轮有留档、届时重拉。否则以平台留档 md 原文为底 + 裁决回填（头部状态/裁决列/落点列/汇总表，见 dev-bundle-merge.md「gate 投影」） |
 
