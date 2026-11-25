@@ -5,7 +5,7 @@
 ## 核心约定
 
 1. **新增 / 删除 / 改名 skill**：必须同步 `.claude-plugin/marketplace.json` 的 `plugins[0].skills` 数组（plugin 渠道只加载该数组列出的目录）
-2. **SKILL.md frontmatter**：`name` kebab-case；`description` 含英文语义句 + 中文触发词（这是触发的唯一入口，写清楚「Use when …」）。命中插件审核危险模式（扫 diff/配置中心/DDL 等）的 skill 须加 `disable-model-invocation: true`——仅用户可经斜杠命令显式调用，description 里的触发词降级为面向用户的使用时机说明（现仅 sdlc-release-check）
+2. **SKILL.md frontmatter**：`name` kebab-case；`description` 中文语义句在前，再接英文语义句 + 中文触发词（这是触发的唯一入口，写清楚「Use when …」）；版本号写 `metadata.version`（各 skill 独立演进，1.0.0 起，改到哪个升哪个），SkillHub 展示名写 `metadata.display-name`（「SDLC·中文名」）。命中插件审核危险模式（扫 diff/配置中心/DDL 等）的 skill 须加 `disable-model-invocation: true`——仅用户可经斜杠命令显式调用，description 里的触发词降级为面向用户的使用时机说明（现仅 sdlc-release-check）
 3. **精瘦 SKILL.md**：流程主干放正文，细节放 `references/`，评估场景放 `evals/`；引用最多一层
 4. **脱敏**：不出现真实项目/公司/内网信息，业务示例用中性虚构词；提交前跑 CLAUDE.md 中的敏感词扫描（应零命中）
 5. **中文为主**：正文中文，frontmatter description 与 README 顶部保留英文简介

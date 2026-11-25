@@ -22,7 +22,7 @@
 | [dev-standards-reference/](dev-standards-reference/README.md) | 参考实现 | 项目级分层规范体系全套示例（入口/细则/checklist/guardrails） | 要给自己的项目搭「CTX 底座」时照抄结构 |
 | [project-setup.md](project-setup.md) | 参考 | 项目侧接入清单：guardrails / runner / 环境文件配在哪、怎么来的 | 装完 skill 准备接 harness、搭回归 runner、配测试环境时 |
 | [faq.md](faq.md) | 参考 | 安装触发、降级矩阵、术语表 | 装了没反应 / 报依赖缺失时 |
-| [sdlc-platform-安装.md](sdlc-platform-安装.md) | 参考 | 使用人自己安装 sdlc-platform 的步骤 | 要在 Cursor 或 Claude Code 里装平台首发 skill 时 |
+| [sdlc-platform-安装.md](sdlc-platform-安装.md) | 参考 | 用户自己安装 sdlc-platform 的步骤 | 要在 Cursor 或 Claude Code 里装 sdlc-platform（原始需求转标准文档）时 |
 
 ## 三条阅读路径
 
@@ -62,7 +62,7 @@
 | 怎么给自己的项目配红线拦截？ | [sdlc-guardrails/README.md](../skills/sdlc-guardrails/README.md) + [sdlc-guardrails/references/guardrails.example.yaml](../skills/sdlc-guardrails/references/guardrails.example.yaml) |
 | 产物间怎么互相引用？ | [design/sdlc-id-linkage-plan.md](design/sdlc-id-linkage-plan.md) §2 命名空间注册表 |
 | 装完 skill 后项目侧还要配什么？ | [project-setup.md](project-setup.md) |
-| 使用人怎么装 sdlc-platform？ | [sdlc-platform-安装.md](sdlc-platform-安装.md) |
+| 用户怎么装 sdlc-platform？ | [sdlc-platform-安装.md](sdlc-platform-安装.md) |
 | C 约束/H 假设、反馈层级标注怎么定的？ | [ai-native-alibaba-handbook.md](ai-native-alibaba-handbook.md) §4 |
 | 标准需求文档「够不够开工/够不够验收」怎么判？ | [standard-doc-review-v3.8.0-5.md](standard-doc-review-v3.8.0-5.md) P0 六项 + 机检盲区 |
 | 机检该加哪些检查项 / 平台该加哪些质量门禁？ | [platform-quality-metrics-gaps.md](platform-quality-metrics-gaps.md) |

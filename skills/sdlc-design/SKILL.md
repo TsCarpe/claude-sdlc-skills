@@ -1,6 +1,9 @@
 ---
 name: sdlc-design
-description: "Produces the technical design document (design.md) from the confirmed requirement digest: solution alternatives, data model, tiered interface contracts, shared-asset inventory with delivery ownership, decision table (C-constraint/H-assumption), and implementation slicing constraints handed to task frameworks like Trellis. Use when the requirement digest is confirmed and design is due, or the user says 技术设计、详细设计、概要设计、出设计、设计文档、接口契约、D 表、方案骨架、切分约束、sdlc-design. 用法：/sdlc-design 需求名"
+description: "需求确认后，帮你写技术设计文档（design.md）：列出几种方案供选择，定好数据表和接口，说清公共组件归谁做，把关键决定和前提假设记下来，再说明开发时怎么拆成小任务。Produces the technical design document (design.md) from the confirmed requirement digest: solution alternatives, data model, tiered interface contracts, shared-asset inventory with delivery ownership, decision table (C-constraint/H-assumption), and implementation slicing constraints handed to task frameworks like Trellis. Use when the requirement digest is confirmed and design is due, or the user says 技术设计、详细设计、概要设计、出设计、设计文档、接口契约、D 表、方案骨架、切分约束、sdlc-design. 用法：/sdlc-design 需求名"
+metadata:
+  display-name: "SDLC·技术设计"
+  version: "1.0.0"
 ---
 
 # 技术设计（sdlc-design）

@@ -1,7 +1,10 @@
 ---
 name: sdlc-handoff
-description: 'Session handoff and takeover that works with any coding agent. 会话交接与会话接手：旧会话上下文将满、或任务要换会话/换机器/换 agent 继续时，把当前任务压缩成一张自足的交接卡（write）；新会话读取交接卡并直接继续（resume），覆盖开发、排查、梳理、调研、文档等任意任务。Use when 交接、接手、继续上次的工作、上下文满了、换个会话做、上次做到哪了、pick up where I left off, handoff, resume previous work, context is full. 用法：/sdlc-handoff write|resume|list'
+description: '会话交接与会话接手：旧会话上下文将满、或任务要换会话/换机器/换 agent 继续时，把当前任务压缩成一张自足的交接卡（write）；新会话读取交接卡并直接继续（resume），覆盖开发、排查、梳理、调研、文档等任意任务。Session handoff and takeover that works with any coding agent. Use when 交接、接手、继续上次的工作、上下文满了、换个会话做、上次做到哪了、pick up where I left off, handoff, resume previous work, context is full. 用法：/sdlc-handoff write|resume|list'
 license: MIT
+metadata:
+  display-name: "SDLC·会话交接"
+  version: "1.0.0"
 ---
 
 # 交接（sdlc-handoff）
