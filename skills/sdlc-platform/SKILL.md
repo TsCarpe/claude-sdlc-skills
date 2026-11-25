@@ -1,16 +1,16 @@
 ---
 name: sdlc-platform
-description: "在产物平台上，把原始需求变成标准需求文档。新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替用户采纳、答题或发布。用法：/sdlc-platform new|status|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先列出命令，再问要做哪一步。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、查状态、到哪了。"
+description: "在产物平台上，把原始需求变成标准需求文档。新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替用户采纳、答题或发布。用法：/sdlc-platform new|status|source|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先列出命令，再问要做哪一步。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、查状态、到哪了、看原文、查看原始需求。"
 metadata:
   display-name: "SDLC·生成标准需求文档"
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # 原始需求转标准文档（sdlc-platform）
 
-用户在对话里输入 `/sdlc-platform`，再跟子命令。正式数据在产物平台。本 skill 只调用两个 MCP，不自己做质检、不自己写标准文档、不调用 `sdlc-sync`。
+用户在对话里输入 `/sdlc-platform`，再跟子命令。正式数据在产物平台。本 skill 只调用两个 MCP（看原文时另执行平台返回的下载命令），不自己做质检、不自己写标准文档、不调用 `sdlc-sync`。
 
-设计、用例、门禁、变更重走不在这一版。卡片 `step` 为 `changed` 时，说「对用户怎么说」里「changed」那一句，然后停下。点名了步骤也一样。
+设计、用例、门禁、变更重走不在这一版。卡片 `step` 为 `changed` 时，说「对用户怎么说」里「changed」那一句，然后停下。点名了步骤也一样。只有 `source`（看原文）例外：它只读，任何 `step` 都照常做。
 
 ## 用法
 
@@ -20,6 +20,7 @@ metadata:
 |---|---|---|
 | `new [迭代名]` | 新建迭代 | 整条消息只有 `new` 时，先说明要一次给齐四项，再给可复制的多行代码块。禁止先问迭代名，禁止把四项并成一行。已写了迭代名还缺项就缺哪样问哪样。四样齐了再导入 |
 | `status [迭代名]` | 查状态 | 只查状态 |
+| `source [迭代名]` | 看原文 | 把平台上当前的原始需求存成本地 md 文件，对话里只给文件链接和目录 |
 | `import [迭代名]` | 导入需求 | 导入并等原文落库 |
 | `quality [迭代名]` | 开始质检 | 触发质检，不等草稿 |
 | `adopt [迭代名]` | 采纳质检 | 采纳平台上的质检草稿 |
@@ -39,7 +40,7 @@ metadata:
 
 对用户说话像客服：用「您」，短句，先说现在到哪了，再说可以做什么。不说教。下面表里的句子照着用，花括号换成这次的内容，其余不要改，也不要再补一句内部状态。
 
-这些只给代理看，不要念给用户：任务编号、`taskId`、`currentTask`、`running`、`queued`、`done`、`failed`、`cancelled`、`step`、`ok`，以及平台 `message` 的原文。查进度时不说卡号。卡号和版本只在导出定稿、交给开发时说。
+这些只给代理看，不要念给用户：任务编号、`taskId`、`currentTask`、`running`、`queued`、`done`、`failed`、`cancelled`、`step`、`ok`，以及平台 `message` 的原文。查进度时不说卡号。卡号和版本只在看原文、导出定稿、交给开发时说。
 
 平台 `message` 用来判断步骤，不原样念。失败时把原因说成白话；原因本身已是一句中文时，整理后告诉用户，不要带字段名。
 
@@ -49,11 +50,11 @@ metadata:
 | new 且没给迭代名 | 新建迭代需要一次给齐迭代名、项目名称、需求名、来源。来源可以填飞书链接，也可以直接把需求正文贴过来。请把下面代码块改成这次的内容，一次发回来就行。需求名不要和迭代名写成同一个。 |
 | 缺迭代名 | 请把迭代名发我，例如 v1.0-登录。 |
 | 缺项目名称、需求名或来源 | 只问缺的那一项。例如：还缺来源，飞书链接或需求正文都可以。 |
-| 导入成功 | 原文已经到了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。需要的话，我可以帮您开始质检。 |
+| 导入成功 | 原文已经到了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。需要的话，我可以帮您开始质检，也可以先把原文存到本地给您看。 |
 | importing（不是刚发起导入查到的） | 原文还在导入中。稍后可以再让我看一下，也可以到产物平台上看。 |
 | importing 满 30 秒 | 原文还在导入，大概还要 10 分钟，请您耐心等一下。稍后可以用同一个迭代名让我再看一下，也可以直接到产物平台上看。 |
 | import_failed | 原文没有导入成功。{白话原因} 您看是改来源后再试，还是先到产物平台上看一下。 |
-| quality_ready | 原文已经到了。需要的话，我可以帮您开始质检。 |
+| quality_ready | 原文已经到了。需要的话，我可以帮您开始质检，也可以先把原文存到本地给您看。 |
 | quality 已发起 | 质检已经开始了，结果还要等一会儿。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
 | quality_running | 质检还在进行，结果还没出来。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
 | adopt | 质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。 |
@@ -63,6 +64,8 @@ metadata:
 | publish | 标准文档草稿好了，请核对下面这篇。确认要发布的话，跟我说「发布标准文档」。 |
 | published | 标准文档已经发布。您可以让我导出定稿，也可以交给开发。 |
 | changed | 这张需求已经在变更流程里，我这边先不继续往下走。请到产物平台上处理。 |
+| source 成功 | 原始需求已经存到本地了，第{version}版，{updatedAt}更新。需要修改的话，请到产物平台上点「编辑原文」。 |
+| source 下载失败 | 这一步没有完成。原文文件没有下载下来，请稍后再试，也可以直接到产物平台上看。 |
 | 工具返回 ok: false | 这一步没有完成。{白话原因} |
 
 ## 前置
@@ -71,10 +74,10 @@ metadata:
 
 | MCP | 路径 | 工具 |
 |---|---|---|
-| 输入 `sdlc-in` | `/mcp/in` | `get_iteration_status`、`import_requirement`、`start_quality_check`、`adopt_quality_draft`、`submit_clarification`、`start_standard_doc`、`publish_standard` |
+| 输入 `sdlc-in` | `/mcp/in` | `get_iteration_status`、`get_source`、`import_requirement`、`start_quality_check`、`adopt_quality_draft`、`submit_clarification`、`start_standard_doc`、`publish_standard` |
 | 输出 `sdlc-out` | `/mcp/out` | `export_standard`、`handoff_to_developer` |
 
-平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、导出、交给开发不带。工具返回 `ok: false` 时，用「对用户怎么说」里那一句告诉用户并停下，不要贴 `error` 字段名。有 `pendingAssumptions` 时向用户要一句放行理由，再带 `confirm_note` 重发。有 `machineCheck` 时把失败项改成白话给用户，不要改文档。
+平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、看原文、导出、交给开发不带。工具返回 `ok: false` 时，用「对用户怎么说」里那一句告诉用户并停下，不要贴 `error` 字段名。有 `pendingAssumptions` 时向用户要一句放行理由，再带 `confirm_note` 重发。有 `machineCheck` 时把失败项改成白话给用户，不要改文档。
 
 ## 装完确认
 
@@ -114,7 +117,7 @@ metadata:
 
 ## 进入哪一步
 
-先看子命令或中文命令（命令速查）。点了就做那一步。子命令的动作与卡的 `step` 对不上时，不重发动作，按 `step` 对应那一步走：卡在 `importing`，重发 `import` 不再调 `sdlc-in:import_requirement`，改说「importing」对应话术；已 `published` 的卡收到 `quality` 或 `synthesize`，先 `sdlc-in:get_iteration_status`，按状态说话，不发起。没点名，但给了迭代名，就先 `sdlc-in:get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
+先看子命令或中文命令（命令速查）。点了就做那一步。`source` 不看 `step`，直接按「看原文」做，不用先查状态。其他子命令的动作与卡的 `step` 对不上时，不重发动作，按 `step` 对应那一步走：卡在 `importing`，重发 `import` 不再调 `sdlc-in:import_requirement`，改说「importing」对应话术；已 `published` 的卡收到 `quality` 或 `synthesize`，先 `sdlc-in:get_iteration_status`，按状态说话，不发起。没点名，但给了迭代名，就先 `sdlc-in:get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
 
 | `step` | 做什么 |
 |---|---|
@@ -164,6 +167,10 @@ metadata:
 
 `sdlc-in:publish_standard` 提交的是平台上已有的标准文档草稿，不是你重写的正文。红级挂起不能发布。黄级或蓝级挂起时，工具会拒绝并给出 `pendingAssumptions`：向用户要一句放行理由，放进 `confirm_note` 再发。理由必须是用户写的。
 
+## 看原文
+
+调用 `sdlc-in:get_source`。`ok: false` 时用「对用户怎么说」里「工具返回 ok: false」那句。成功后按 agent 所在的 shell 原样执行返回的 `bashCommand`（bash / zsh / Git Bash）或 `powershellCommand`（Windows PowerShell），不要自己拼路径或改命令；Windows PowerShell 里不要用 `curl`（它是 `Invoke-WebRequest` 的别名）。命令报错就是失败：说「source 下载失败」那句并停下，不要改用写文件工具重写正文。命令最后一行输出的是本地绝对路径。成功后依次给：「source 成功」那句（{version}、{updatedAt} 用返回值）；Markdown 链接，文字「打开原始需求」，地址是命令输出的绝对路径的 `file://` URL（空格和中文要百分号编码，同「交给开发」的写法；Windows 写成 `file:///C:/Users/…`，反斜杠换成 `/`）；再贴返回的 `outline` 作为目录（`outline` 为空就不贴）。不在对话里贴正文、不摘要、不改写，不要写进当前 git 仓库。文件是只读视图，原文以平台为准，用户要改原文就引导到产物平台点「编辑原文」。卡的任何 `step`（含 published、changed）都可以看原文。
+
 ## 导出定稿
 
 调用 `sdlc-out:export_standard`。把返回的 `markdown` 贴回对话，并带上卡号和版本。不要写文件。`ok: false` 时什么都不要写。
@@ -195,6 +202,7 @@ metadata:
 | `/sdlc-platform export` | `sdlc-out:export_standard` |
 | `/sdlc-platform handoff` | `sdlc-out:handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
 | `/sdlc-platform status` | 只调用 `sdlc-in:get_iteration_status` |
+| `/sdlc-platform source` | 只调用 `sdlc-in:get_source`，再原样执行返回的下载命令 |
 | `/sdlc-platform new` | 按「新建迭代」 |
 
 对用户说的话只使用「对用户怎么说」。不要把工具返回的 `status`、`taskId`、`message` 念出来。
