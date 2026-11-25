@@ -16,12 +16,12 @@ sdlc-design 冒烟剩余缺口批（A 组十条 + 无 ER 基线 + B 组五条；
 - **落盘回报内容清单**（design-template 去向表之后；SKILL.md Step 5 只留指针）：八项——落位原因（判据和机制都要说）、设计期新增的 Q、H 假设与推导清单、提请需求侧订正阻塞范围、补文档缺口、输入降级声明各项、audit 不存在时提示补体检、以用户说明为接平台判据时提示 `/sdlc-sync bind`
 - **上下文清单登记的归属与时机**（trellis-handoff「上下文清单登记」+ SKILL.md 边界）：拆 subtask 的会话在第一个 subtask 启动前登记，sdlc-design 不代写。登记 design 的落位原路径，可以在任务目录之外；任务框架的清单读不到任务目录外路径时（第一个 subtask 注入为空即为信号），改为在每个 subtask prd 的「上游注入清单」节列绝对路径——该路径形态未在真实任务框架上验证，只留降级口径
 - **接平台判据扩到用户口述**（trellis-handoff「落位规则」+ SKILL.md Step 5 + playbook §2 + sdlc-gate 前置输入表）：卡级 `.platform` 存在，或用户说明已在平台建卡 / 发布——sdlc-platform「交给开发」把绑定文件写在用户主目录，项目内看不到。后一种情况落盘后提示运行 `/sdlc-sync bind`，不代跑
-- **B 组其余**：`skills/sdlc-sync/SKILL.md` 前置节的「由 bind 子命令或首次 push 后写入」改为「卡级文件由 bind 或 submit 写入，仓库级文件另可由平台地址自检固化」（push-artifacts 节没有写绑定文件的步骤）。sdlc-guardrails、sdlc-intent 的 description 只删英文冗余短语，压到 CI 的 1000 字节上限内（1041 → 969、1035 → 990），中文触发句未动。`docs/dev-standards-reference/details/feishu-tech-review-guide.md` 补一句 design 不一定在任务目录
+- **B 组其余**：`skills/sdlc-sync/SKILL.md` 前置节的「由 bind 子命令或首次 push 后写入」改为「卡级文件由 bind 或 submit 写入，仓库级文件另可由平台地址自检固化」（push-artifacts 节没有写绑定文件的步骤）。sdlc-guardrails、sdlc-intent 的 description 只删英文冗余短语，压到 CI 的 1000 字节上限内（1041 → 969、1035 → 990），中文触发句未动；sdlc-sync 的 description 用法串去掉 `<子命令>` 的尖括号（被 CI 的 XML 标签正则误命中）。`docs/dev-standards-reference/details/feishu-tech-review-guide.md` 补一句 design 不一定在任务目录
 - **不修并记明理由**：sdlc-gate 的 RECONCILE 代码核对表未加 codegraph 提示——向用户提示是会话入口的行为，已写在该 skill 的前置依赖行；子代理不负责向用户提示
 - **evals**：新增 eval-12（薄 digest：先推导、冲突类、无 ER 基线、收敛三则）、eval-13（输入残缺：audit 不存在、缺编号的读接口、输入降级声明）、eval-14（用户口述已建卡）。eval-1 补输入降级声明与 D 表两项锚点；eval-3 当前假设锚点；eval-4 登记归属与降级口径；eval-9、eval-10 补「存量无同类」限定；eval-10 补落盘回报一次汇总
 - **版本号**：sdlc-design 1.1.0 → 1.2.0；sdlc-sync、sdlc-gate 1.1.0 → 1.1.1；sdlc-guardrails、sdlc-intent 1.0.0 → 1.0.1
 - **冒烟**（全新上下文子代理，不喂 eval 文件，主会话判卷）：最终结果 eval-10 六条全中、eval-11 四条全中、eval-12 六条全中、eval-13 五条全中、eval-14 四条全中，eval-4 八条中七条全中、一条半中（关卡接入没有复述整张表，但也没点出 playbook §7 这个权威出处）；判负红线零触发。冒烟抓到并已修两处 skill 没写清：「无 ER 基线」被写进了输入降级声明行（eval-12 首跑触发红线，明写「不写进头部输入降级声明行」后重跑通过）；落盘回报的落位原因只说判据不说机制（eval-14 两次未中，改为「判据和机制都要说」后第三次通过）。冒烟途中发现两处试验夹具有污染（上一轮产出的 prd 指针行没删干净），已用干净夹具重跑
-- **边界与待办**：① sdlc-sync 的 server 仓 vendor 镜像需要同步；② 四个 skill 版本号变了，SkillHub 套件要重新出包；③ gate 预审的输出示例把「设计新增、需求没有的约束」当 issue，推导得出的结论可能被预审报出来——口径来源列的推导链是裁决依据，属预期摩擦；④ 三段式场景的子代理会在设计落盘的回复末尾贴切分规范模板全文，按现行文本合规（trellis-handoff 要求项目已用任务框架而规范未落盘时回复中给出全文，SKILL.md Step 3 让设计期读该文件），未改；⑤ CI 现有两处存量红灯不在本批范围：sdlc-sync 的 description 含 `<子命令>` 被 XML 标签正则命中，sdlc-intent 的 digest-template 有两处断链
+- **边界与待办**：① sdlc-sync 的 server 仓 vendor 镜像需要同步；② 四个 skill 版本号变了，SkillHub 套件要重新出包；③ gate 预审的输出示例把「设计新增、需求没有的约束」当 issue，推导得出的结论可能被预审报出来——口径来源列的推导链是裁决依据，属预期摩擦；④ 三段式场景的子代理会在设计落盘的回复末尾贴切分规范模板全文，按现行文本合规（trellis-handoff 要求项目已用任务框架而规范未落盘时回复中给出全文，SKILL.md Step 3 让设计期读该文件），未改；⑤ CI 现有一处存量红灯不在本批范围：sdlc-intent 的 digest-template 有两处断链
 
 sdlc-design 设计期问题去向表 + 接平台落位 + codegraph 提示批（方案经全新上下文代理对抗式评审后落地）：
 
