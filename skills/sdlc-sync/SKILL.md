@@ -3,7 +3,7 @@ name: sdlc-sync
 description: "把需求、设计、用例这些文档在本地和团队平台之间同步：把平台上的需求分析、答复和定稿拉到本地，开发前把本地对齐到平台上的最终版；平台那边走不通时，也能从本地推上去。两边不一致时以平台为准。Syncs SDLC artifacts between local markdown and the authoritative web platform: submit (create the platform card), pull-artifacts, pull-dev-bundle, fallback pushes (push-artifacts / pull-answers / publish / push-cases), and bind (platform address + card reqId). Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、绑定需求卡、配平台地址、换绑、sdlc-sync. 用法：/sdlc-sync <子命令> 需求名 [only:standard|design|cases|gate|intake]；bind 需求名 REQ-ID [--platform URL]"
 metadata:
   display-name: "SDLC·平台产物同步"
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # 产物同步桥（sdlc-sync）

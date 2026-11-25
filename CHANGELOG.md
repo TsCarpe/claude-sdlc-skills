@@ -2,6 +2,24 @@
 
 ## 未发布
 
+sdlc-design 存量改动先追调用方批（借鉴外部架构类 skill 的一条判据「动代码前先追改动触及的系统」——设计期与切片期连成一条链）：
+
+- **skills/sdlc-design/SKILL.md**：Step 2 存量勘察补「要改动（非仅复用）的存量资产须追其调用方/消费方，公共 Req/组件的受影响方写入 §3 ⑤，命中闸 3 判据即升级」；Step 4 自检第 2 项补「有存量改动时 ⑤ 须列受影响方」
+- **切片级条款「存量改动先追调用方」**（五处同口径）：design-template §7 / trellis-handoff spec 切分规范模板第 5 条 / playbook §3 / workflow §2 / stage2 模板 §7——切片动代码前列出触及的存量资产及调用方，对照 §3 ⑤，公共资产出现未声明的受影响方即偏差回写，不得就地扩大改动范围；design-template B 级 mini 裁剪表注明该条款仅改到存量资产时保留
+- **skills/sdlc-design/evals/eval-8-existing-change-callers.md**（新增，官方 JSON + 判负红线）+ README 索引登记；eval-4 的切分规范条目同步
+- **全新上下文冒烟**（不喂 eval 文件、主会话判卷）：eval-8 五条预期全中、判负红线零触发（codegraph 缺失的 grep 降级路径；`codegraph_explore` 能否列全调用方未验证）；eval-4 落位 / jsonl 登记 / 确认点③四条件 / 关卡接入引用命中，「给出规范模板全文」只给了出处指针、「声明框架无关」未出现——待定是改 skill 措辞还是改 eval 锚点
+- **既有问题修复批**（冒烟暴露；方案经全新上下文代理对抗式评审后落地）：
+  - 落位规则按链路判、不按风险分级（trellis-handoff「落位规则」+ SKILL.md Step 5）：三段式链路（已有 parent prd）落 parent 任务目录，其余（A/B/C 级轻量链路）落 `sdlc/<需求名>/design/design.md`；轻量链路转任务框架执行时**不迁**，prd 与上下文清单登记原路径（sdlc-sync pull-dev-bundle 按该路径对账）。SKILL.md 路由补「已存在 design.md」的定位口径与「修订沿用原路径」，Step 1 补 parent prd 的定位
+  - Q 表单一载体、三态齐套（SKILL.md「Q 表定位规则」+ design-template Q 表块 + stage1 模板头部）：有 parent prd 以其 §6 为唯一载体并列出设计期新增编号 / 无则 design 头部生成、后建 prd 的写指针 / 无未决口径写「无」；来源补「设计期新发现」；边界补「追加到 parent prd §6」例外
+  - 横切功能点：例子由「定时状态流转」改为具体形态（状态流转的注册 / 重注册 / 移除 / 幂等守卫），补排除句「全部落点集中在单一调度类、无接口侧注册/移除联动的不在此列」（trellis-handoff / design-template §7.2 / playbook §1 §3 / workflow §2 / faq / stage1–3 模板）；§7.2 补「无横切功能点时保留表头、写明无」
+  - design-template 与 stage2 模板示例改用 `功能.Fxx` 命名空间（自引用 D 表不动）；Q 表编号列示例统一为 `确认.Q1`
+  - `sdlc/env/dev.md` 缺失处置（design-template §7.1 与 C 级表 / stage2 / stage3）：compile 命令取自项目构建配置、无依据写「待确认」；dev.md 未建写「待按 env-template 创建」并列为第一个切片启动前置；SKILL.md C 级自检相应改为「验证口径成立」
+  - SKILL.md Step 5 拆为「确认点②措辞 + C 级例外 + 定型 C 转规则」；「拆分开发」展开为「拆 subtask、启动开发」，并显式写出轻量链路 parent 任务在 gate 放行后才建；trellis-handoff 明确「回复中给出切分规范模板全文」
+- **evals**：新增 eval-9（三段式链路：落位 / Q 表载体 / 单一调度类不进横切矩阵 / dev.md 缺失）；eval-4 重新对锚为轻量链路（design 不迁、规范模板全文、gate 未放行不建 parent），删「声明框架无关」一条；eval-1 第 6 条措辞随 Step 5 结构调整
+- **版本号**：sdlc-design 1.0.0 → 1.1.0、sdlc-sync 1.0.0 → 1.1.0（`metadata.version`）
+- **第二轮冒烟**（三个全新上下文子代理并行）：eval-9 六条全中、eval-4 七条全中、eval-1 六条全中，判负红线零触发。冒烟抓到并已修五处：Step 5 替换后残留一份旧引文（补丁缺陷）、确认点②措辞里夹着只对轻量链路成立的括注、Q 编号列示例与命名空间规则不一致、「后以 design 为准」主语不明、无横切点时矩阵写法未定——五处修在冒烟之后，未再复跑
+- **待定（本批不处理）**：三段式链路接平台时 design 落位口径（parent 目录 vs sdlc/，pull-dev-bundle 固定写后者）；「转 Q 表」与「H 假设承接」的分工判据、「阻塞写接口核心逻辑」的阈值、「未决口径」的入表门槛；降级声明在头部的落位；digest 缺节（无状态机 / ER）时的处置；上下文清单登记由谁在哪个阶段做；D 表回写声明与 playbook 不一致（模板已自注）；design-template 既有的两层引用
+
 sdlc-sync 平台地址防呆批（开发侧时序坑：AI 工具先于 export 启动 → 环境变量丢失 → 请求静默回退 127.0.0.1:8888，业务开发机表现为连接拒绝且提示语指向本机 dev.sh）：
 
 - **skills/sdlc-sync/SKILL.md**：①新增「平台地址自检（第 0 道，所有子命令共用）」——取址链 仓库级 `sdlc/.platform` 的 `platformUrl` > `SDLC_PLATFORM_URL` > 缺省；解析到缺省即硬中断、零网络请求，输出修复三选一（bind --platform（推荐）/ macOS 写 ~/.zshrc / Windows SetEnvironmentVariable）并带「重启 AI 工具」口径；显式连本机可继续但不固化缺省地址；环境变量/显式给址且首个请求非连接拒绝、仓库级文件不存在时顺手固化并报告；②新增 `### 0. bind` 子命令——纯本地两级绑定（仓库级地址 + 卡级 reqId），同卡幂等保留 pulled 凭据、换绑警告经确认覆盖并清凭据、`--platform` 缺省不创建仓库级文件；③前置节改两级绑定文件说明（仓库级建议提交 git，同事 clone 即零配置）；④pull-dev-bundle 前置检查链头部指回第 0 道；⑤失败处理「连接拒绝」行改「先核对本次实际地址（回退缺省为最常见成因）再谈启动服务」；⑥description 用法串与触发词补 bind

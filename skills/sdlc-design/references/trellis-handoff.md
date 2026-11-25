@@ -16,13 +16,14 @@
 
 ## 落位规则
 
+落位按**链路**判，不按风险分级——A 级轻量链路同样落 `sdlc/`：
+
 | 场景 | design.md 位置 |
 |---|---|
-| 大需求（A 级，走任务框架 parent 任务） | parent 任务目录（Trellis：`.trellis/tasks/<task>/design.md`） |
-| 轻量需求（B 级直达设计） | `sdlc/<需求名>/design/design.md` |
-| 无任务框架的项目 | `sdlc/<需求名>/design/design.md` |
+| 三段式链路（parent prd 已在任务目录，第一段产物） | parent 任务目录，与 prd.md 同目录（Trellis：`.trellis/tasks/<task>/design.md`） |
+| 其余（sdlc-intent → sdlc-design 轻量链路，A/B/C 级皆然） | `sdlc/<需求名>/design/design.md`（C 级 `plan.md`） |
 
-与 sdlc-gate 前置输入同口径（gate 按「任务系统约定位置」定位设计文档）。
+轻量链路 design 之后转任务框架执行时**不迁**：parent prd 技术方案区与上下文清单登记 `sdlc/` 下的原路径——sdlc-sync pull-dev-bundle 按该路径对账，迁走即出现两份。与 sdlc-gate 前置输入同口径（三段式按任务系统约定位置、其余按 `sdlc/<需求名>/design/` 定位设计文档）。
 
 ## prd.md 结构建议
 
@@ -38,7 +39,8 @@ design.md 直接作为任务输入后，任务框架的需求澄清环节（Trel
 - Acceptance criteria：业务级验收（对应 digest 规则表 + parent prd 验收标准）
 
 ## 技术方案区（指针，实现前必读）
-- 技术设计：`design.md`（同任务目录）——接口契约 / D 表决策 / 公共资产清单 / §7 实施切分约束
+- 技术设计：<design.md 路径>（三段式 = 同任务目录；轻量链路 = `sdlc/<需求名>/design/design.md`，不迁）——接口契约 / D 表决策 / 公共资产清单 / §7 实施切分约束
+- 未决口径：以 design 头部 Q 表为准（不在本文档重复）
 - 上游共识：`sdlc/<需求名>/intake/digest-<日期>.md`
 ```
 
@@ -50,7 +52,7 @@ design.md 直接作为任务输入后，任务框架的需求澄清环节（Trel
 sdlc-design 产 design.md
 → 人逐行核对 = 确认点②定稿（ack 是定稿信号，不构成质量放行）
 → sdlc-gate 评审 + 裁决 → 放行（issues 头「评审状态=已放行」）
-→ 任务框架建 parent 任务 + scope 确认（人工）
+→ gate 放行后，轻量链路在此建 parent 任务 + scope 确认（人工）；三段式链路的 parent 任务自第一段已存在
 → 拆 subtask（≈三段式的 child 切片，须遵守 design §7 切分约束）
 → 🔒 subtask prd 评审 = 确认点③，过四条件才 implement
 → 开发启动合法性由 guard_dev 开发入口校验（关卡接入节）
@@ -69,12 +71,12 @@ sdlc-design 产 design.md
 
 | 清单 | 登记条目 |
 |---|---|
-| implement.jsonl（实现上下文） | design.md（全文）+ 项目规范（`.trellis/spec/` 相关条目）+ 上游 digest |
+| implement.jsonl（实现上下文） | design.md（按落位规则的原路径，全文）+ 项目规范（`.trellis/spec/` 相关条目）+ 上游 digest |
 | check.jsonl（检查上下文） | design.md §7（实施切分约束 + 横切核验矩阵）+ 项目规范相关条目 |
 
 ## spec 切分规范模板
 
-项目级常驻规范（一次落盘，全部任务自动注入；Trellis 落 `.trellis/spec/` 下，如 `slicing.md`）。**本 skill 只提示落盘，不代写项目文件**；未落盘时拆分纪律以 design §7 头部降级声明为准。可直接粘贴：
+项目级常驻规范（一次落盘，全部任务自动注入；Trellis 落 `.trellis/spec/` 下，如 `slicing.md`）。**本 skill 只提示落盘，不代写项目文件**；未落盘时拆分纪律以 design §7 头部降级声明为准。**回复中给出下述模板全文**供用户粘贴：
 
 ```markdown
 # 任务切分规范
@@ -82,8 +84,9 @@ sdlc-design 产 design.md
 1. **骨架切片先行**：design §3 公共资产清单非空时，第一个 subtask 必须是骨架切片
    （交付枚举/常量/DDL/包目录/公共子结构），完成前业务切片不得启动；后续切片只消费
    公共资产、不得新建同功能项（确需新增须回写 design 公共资产清单）。
-2. **横切功能点不单独建 subtask**：无独立触发角色、落点分散多接口的功能（如定时状态
-   流转）随宿主切片交付；宿主切片完成后按 design §7.2 核验矩阵逐行补记核验结论
+2. **横切功能点不单独建 subtask**：无独立触发角色、落点分散多接口的功能（如状态流转：save 注册 /
+   edit 重注册 / 终止移除 / 处理器幂等守卫）随宿主切片交付；全部落点集中在单一调度类、无接口侧注册/移除联动的不在此列，
+   可独立成 subtask。宿主切片完成后按 design §7.2 核验矩阵逐行补记核验结论
    （补记时点：本任务 check 阶段，至迟 sdlc-test static 前）。
 3. **subtask 只内联 + 裁剪，禁现场设计**：通用上游结论由上下文清单注入（implement.jsonl
    登记上游文件），subtask prd 只内联本切片特有的裁剪/组合结论；发现一半内容是现场设计

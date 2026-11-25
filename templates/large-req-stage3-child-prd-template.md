@@ -35,7 +35,7 @@
 
 ## 验证命令
 
-开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟按风险分级，命令承载于 `sdlc/env/dev.md`）：
+开发完成验证走 `/sdlc-test dev <需求名>`（compile/boot/冒烟按风险分级；compile 命令取自项目构建配置，冒烟配置取自 `sdlc/env/dev.md`，该文件未建时先按 sdlc-test env-template「开发验证档」创建）：
 
 - C 级：compile + boot
 - A/B 级：+ 冒烟（smoke.md 核心链路）
@@ -48,7 +48,7 @@
 
 # 横切核验矩阵（挂 parent implement.md，宿主 child 完成后核验）
 
-> 横切功能点（无独立触发角色、代码落点分散多接口）不单独建 child，用此矩阵跟踪。
+> 横切功能点（无独立触发角色、代码落点分散多接口；全部落点集中在单一调度类、无接口侧注册/移除联动的不在此列）不单独建 child，用此矩阵跟踪。
 
 | 横切功能点 | 预期联动 | 落点宿主 child | 核验结论 |
 |---|---|---|---|
