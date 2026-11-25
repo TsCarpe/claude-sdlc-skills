@@ -12,7 +12,7 @@
     "step=adopt → 先说「对用户怎么说」里 adopt 那一句原文（质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。），不混入其他步骤话术",
     "把 qualityDraftMarkdown 原样给用户看，不改写、不摘要、不扩写",
     "等用户确认：用户没说「采纳质检」或发 adopt 之前，不调 sdlc-in:adopt_quality_draft",
-    "对用户不说卡号和版本（卡号只在导出定稿、交给开发时说），不念 taskId、currentTask、done 等内部字段"
+    "对用户不说需求编号和版本（需求编号只在导出定稿、交给开发时说），不念 taskId、currentTask、done 等内部字段"
   ]
 }
 ```

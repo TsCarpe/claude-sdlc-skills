@@ -1,72 +1,16 @@
 ---
 name: sdlc-platform
-description: "在产物平台上，把原始需求变成标准需求文档。新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替用户采纳、答题或发布。用法：/sdlc-platform new|status|source|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先列出命令，再问要做哪一步。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、查状态、到哪了、看原文、查看原始需求。"
+description: "在产物平台上，把原始需求变成标准需求文档。新建并导入原文、开始质检、采纳质检草稿、逐题澄清、合成并发布标准文档、导出定稿、交给开发。平台是定稿出处。不自己写标准文档，不替用户采纳、答题或发布。用法：/sdlc-platform new|status|source|import|quality|adopt|clarify|synthesize|publish|export|handoff [迭代名]。不带子命令时先介绍平台、按步骤列出命令，建议从第 1 步开始。也响应：导入需求、开始质检、采纳质检、澄清这题、生成标准文档、发布标准文档、导出定稿、交给开发、查状态、到哪了、看原文、查看原始需求。"
 metadata:
   display-name: "SDLC·生成标准需求文档"
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # 原始需求转标准文档（sdlc-platform）
 
 用户在对话里输入 `/sdlc-platform`，再跟子命令。正式数据在产物平台。本 skill 只调用两个 MCP（看原文时另执行平台返回的下载命令），不自己做质检、不自己写标准文档、不调用 `sdlc-sync`。
 
-设计、用例、门禁、变更重走不在这一版。卡片 `step` 为 `changed` 时，说「对用户怎么说」里「changed」那一句，然后停下。点名了步骤也一样。只有 `source`（看原文）例外：它只读，任何 `step` 都照常做。
-
-## 用法
-
-菜单里这一项是 `/sdlc-platform`（Codex 里是 `$sdlc-platform`），旁边的说明来自上面的 description。MCP 工具不是给用户点的命令，由本 skill 按子命令去调。
-
-| 子命令 | 等同 | 做什么 |
-|---|---|---|
-| `new [迭代名]` | 新建迭代 | 整条消息只有 `new` 时，先说明要一次给齐四项，再给可复制的多行代码块。禁止先问迭代名，禁止把四项并成一行。已写了迭代名还缺项就缺哪样问哪样。四样齐了再导入 |
-| `status [迭代名]` | 查状态 | 只查状态 |
-| `source [迭代名]` | 看原文 | 把平台上当前的原始需求存成本地 md 文件，对话里只给文件链接和目录 |
-| `import [迭代名]` | 导入需求 | 导入并等原文落库 |
-| `quality [迭代名]` | 开始质检 | 触发质检，不等草稿 |
-| `adopt [迭代名]` | 采纳质检 | 采纳平台上的质检草稿 |
-| `clarify [迭代名]` | 澄清这题 | 处置当前一题 |
-| `synthesize [迭代名]` | 生成标准文档 | 发起平台合成，不等草稿 |
-| `publish [迭代名]` | 发布标准文档 | 发布平台上已有的草稿 |
-| `export [迭代名]` | 导出定稿 | 把已发布 Markdown 回到对话 |
-| `handoff [迭代名]` | 交给开发 | 把定稿写到用户主目录，给出平台链接和开工句 |
-
-没写子命令，也没给迭代名：把这张表给用户，并说「对用户怎么说」里「没写子命令」那一句。不要一上来只问迭代名。
-
-只给了迭代名、没有子命令：先 `sdlc-in:get_iteration_status`，按卡片状态继续。对用户只说「对用户怎么说」里对应的那一句。
-
-用户的整条消息就是 `/sdlc-platform new`、后面没有迭代名：不要问迭代名。先说「对用户怎么说」里「new 且没给迭代名」那一句，再按「新建迭代」给可复制的多行代码块。`new` 后面已经写了迭代名、但还缺项目名称、需求名或来源：只问缺的那一项，用「对用户怎么说」里的口语。其他子命令缺迭代名时，只说「缺迭代名」那一句。状态里已有 `projectName` 就不要再问。中文命令和子命令同等。
-
-## 对用户怎么说
-
-对用户说话像客服：用「您」，短句，先说现在到哪了，再说可以做什么。不说教。下面表里的句子照着用，花括号换成这次的内容，其余不要改，也不要再补一句内部状态。
-
-这些只给代理看，不要念给用户：任务编号、`taskId`、`currentTask`、`running`、`queued`、`done`、`failed`、`cancelled`、`step`、`ok`，以及平台 `message` 的原文。查进度时不说卡号。卡号和版本只在看原文、导出定稿、交给开发时说。
-
-平台 `message` 用来判断步骤，不原样念。失败时把原因说成白话；原因本身已是一句中文时，整理后告诉用户，不要带字段名。
-
-| 场合 | 对用户说 |
-|---|---|
-| 没写子命令 | 您想做哪一步？从下面选一个发我就行。需要迭代名的，写在命令后面。 |
-| new 且没给迭代名 | 新建迭代需要一次给齐迭代名、项目名称、需求名、来源。来源可以填飞书链接，也可以直接把需求正文贴过来。请把下面代码块改成这次的内容，一次发回来就行。需求名不要和迭代名写成同一个。 |
-| 缺迭代名 | 请把迭代名发我，例如 v1.0-登录。 |
-| 缺项目名称、需求名或来源 | 只问缺的那一项。例如：还缺来源，飞书链接或需求正文都可以。 |
-| 导入成功 | 原文已经到了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。需要的话，我可以帮您开始质检，也可以先把原文存到本地给您看。 |
-| importing（不是刚发起导入查到的） | 原文还在导入中。稍后可以再让我看一下，也可以到产物平台上看。 |
-| importing 满 30 秒 | 原文还在导入，大概还要 10 分钟，请您耐心等一下。稍后可以用同一个迭代名让我再看一下，也可以直接到产物平台上看。 |
-| import_failed | 原文没有导入成功。{白话原因} 您看是改来源后再试，还是先到产物平台上看一下。 |
-| quality_ready | 原文已经到了。需要的话，我可以帮您开始质检，也可以先把原文存到本地给您看。 |
-| quality 已发起 | 质检已经开始了，结果还要等一会儿。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
-| quality_running | 质检还在进行，结果还没出来。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
-| adopt | 质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。 |
-| clarify | 先写需求域和类型（有内容才写），再贴题干、原文摘引和图片链接（空的不写），推荐项只标「推荐」。请您答复这一题。 |
-| synthesize_ready | 恭喜🎉，需求澄清都处理完了。您可以到产物平台上查看和修改已有答复。需要的话，我帮您生成标准文档。 |
-| synthesize 已发起，或 synthesize_running | 标准文档正在生成，稿子还没出来。可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
-| publish | 标准文档草稿好了，请核对下面这篇。确认要发布的话，跟我说「发布标准文档」。 |
-| published | 标准文档已经发布。您可以让我导出定稿，也可以交给开发。 |
-| changed | 这张需求已经在变更流程里，我这边先不继续往下走。请到产物平台上处理。 |
-| source 成功 | 原始需求已经存到本地了，第{version}版，{updatedAt}更新。需要修改的话，请到产物平台上点「编辑原文」。 |
-| source 下载失败 | 这一步没有完成。原文文件没有下载下来，请稍后再试，也可以直接到产物平台上看。 |
-| 工具返回 ok: false | 这一步没有完成。{白话原因} |
+设计、用例、门禁、变更重走不在这一版。需求的 `step` 为 `changed` 时，说「对用户怎么说」里「changed」那一句，然后停下。点名了步骤也一样。只有 `source`（看原文）例外：它只读，任何 `step` 都照常做。
 
 ## 前置
 
@@ -77,29 +21,89 @@ metadata:
 | 输入 `sdlc-in` | `/mcp/in` | `get_iteration_status`、`get_source`、`import_requirement`、`start_quality_check`、`adopt_quality_draft`、`submit_clarification`、`start_standard_doc`、`publish_standard` |
 | 输出 `sdlc-out` | `/mcp/out` | `export_standard`、`handoff_to_developer` |
 
-平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、看原文、导出、交给开发不带。工具返回 `ok: false` 时，用「对用户怎么说」里那一句告诉用户并停下，不要贴 `error` 字段名。有 `pendingAssumptions` 时向用户要一句放行理由，再带 `confirm_note` 重发。有 `machineCheck` 时把失败项改成白话给用户，不要改文档。
+平台开了写保护时，输入 MCP 要带同一个 `X-Token`。查状态、看原文、导出、交给开发不带。工具返回 `ok: false` 时，用「对用户怎么说」里那一句告诉用户并停下，不要贴 `error` 字段名。有 `pendingAssumptions` 时说「发布前有挂起」那一句，拿到用户写的理由后带 `confirm_note` 重发。有 `machineCheck` 时说「发布检查没过」那一句，把没过的项逐条改成白话列给用户，不要改文档。
 
-## 装完确认
+用户问「装好了没 / 怎么验证」时，读 [references/install-check.md](references/install-check.md) 照做。
 
-用户问「装好了没 / 怎么验证」时：先认出自己跑在哪个平台（Cursor、Claude Code、Devin、Codex），只说这个平台那一行的路径和命令，不要把四个平台都列给用户。认不出就问用户用的是哪个。然后让用户新开一轮对话。刚装上的 skill，当前这轮看不见。
+## 子命令
 
-| 平台 | skill 文件（只给当前仓库用时） | MCP 配在哪 | 查 MCP | 新对话里怎么调 |
-|---|---|---|---|---|
-| Cursor | `~/.cursor/skills/sdlc-platform/SKILL.md`（`.cursor/skills/…`） | `~/.cursor/mcp.json` | 设置里的 MCP 页，`sdlc-in`、`sdlc-out` 亮绿点 | 输入 `/` |
-| Claude Code | `~/.claude/skills/sdlc-platform/SKILL.md`（`.claude/skills/…`） | `claude mcp add -s user` | `claude mcp list` | 输入 `/` |
-| Devin | `~/.config/devin/skills/sdlc-platform/SKILL.md`（`.devin/skills/…`） | `~/.config/devin/mcp_config.json` | `devin mcp list` | 输入 `/` |
-| Codex | `~/.agents/skills/sdlc-platform/SKILL.md`（`.agents/skills/…`） | `~/.codex/config.toml` | `codex mcp list` | 输入 `$` 或 `/skills` |
+菜单里这一项是 `/sdlc-platform`（Codex 里是 `$sdlc-platform`），旁边的说明来自上面的 description。MCP 工具不是给用户点的命令，由本 skill 按子命令去调。中文命令和子命令同等。
 
-新对话里按上表调出 `sdlc-platform`，旁边是说明。选中后不写子命令就发送。
+### 给用户看的命令表
 
-- 装好了：列出上面的子命令，问要做哪一步。不要自己写需求文档。
-- 列表里没有这一项：skill 没被认到。让用户核对本平台那一行的 skill 文件，开头应是 `name: sdlc-platform`，然后新开对话。
-- 用户说没有这些工具：MCP 没接上，不是 skill 没装。让用户按本平台那一行核对 MCP 配置，改完新开对话。
-- 本机几处都装了 `sdlc-platform`、行为和本文不一致：可能读到了旧版。让用户只留本平台那一份，或都换成最新版。
+列命令给用户时，依次给：「开场白」那一句、下面这张表、表后内容，最后说「没写子命令」那一句。表按步骤顺序排，不要调换。不要加「调用」列，不要写成 `new [迭代名]` 这种带方括号的占位写法。「命令示例」一列是完整可用的命令，示例迭代名统一用 `v1.0-登录`。表格单元格放不下多行，新建迭代的五行模板放在表后，用三个反引号围成代码块（聊天里才有复制按钮），五行各占一行。表后依次原样附上：新建模板引导句、模板代码块、两条说明。命令前缀按当前平台写（Codex 写 `$sdlc-platform`，其他写 `/sdlc-platform`）。
+
+| 步骤 | 操作 | 命令示例 | 说明 |
+|---|---|---|---|
+| 1 | 新建迭代 | 见下方模板 | 完整填写迭代名、项目名称、需求名、来源，提交后自动导入原文 |
+| 2 | 开始质检 | `/sdlc-platform quality v1.0-登录` | 发起质检 |
+| 3 | 采纳质检 | `/sdlc-platform adopt v1.0-登录` | 采纳平台上的质检草稿 |
+| 4 | 澄清这题 | `/sdlc-platform clarify v1.0-登录` | 逐题回答澄清问题 |
+| 5 | 生成标准文档 | `/sdlc-platform synthesize v1.0-登录` | 发起生成标准文档 |
+| 6 | 发布标准文档 | `/sdlc-platform publish v1.0-登录` | 发布平台上已有的草稿 |
+| 7 | 导出定稿 | `/sdlc-platform export v1.0-登录` | 把已发布的定稿贴回对话 |
+| 8 | 交给开发 | `/sdlc-platform handoff v1.0-登录` | 把定稿存到本地，给出平台链接和给开发的说明 |
+| 随时 | 查进度 | `/sdlc-platform status v1.0-登录` | 看这个迭代现在到哪一步了 |
+| 随时 | 看原文 | `/sdlc-platform source v1.0-登录` | 把平台上的原始需求存成本地文件，提供原始文档链接 |
+| 随时 | 导入需求 | 到产物平台上点「重试导入」 | 原文导入失败时用；新建迭代时已自动导入 |
+
+新建迭代请复制以下模板，修改为实际内容后发送：
+
+```
+/sdlc-platform new
+迭代名：v1.0-登录
+项目名称：某某项目
+需求名：登录页改版
+来源：https://example.feishu.cn/wiki/……
+```
+
+- 使用时请将示例中的 v1.0-登录 替换为实际迭代名。
+- 来源可直接粘贴需求原文，也可提供飞书文档链接。
+
+### 子命令对应的调用（只给代理看）
+
+| 子命令 | 调用 | 要点 |
+|---|---|---|
+| `new` | 见「新建迭代」 | 四项齐了才调 `sdlc-in:import_requirement` |
+| `status` | 只调 `sdlc-in:get_iteration_status` | 只查状态 |
+| `source` | 只调 `sdlc-in:get_source`，再原样执行返回的下载命令 | 见「看原文」，不看 `step` |
+| `import` | `sdlc-in:import_requirement`，然后按「等导入」 | |
+| `quality` | `sdlc-in:start_quality_check` | 不等草稿 |
+| `adopt` | `sdlc-in:adopt_quality_draft` | |
+| `clarify` | `sdlc-in:submit_clarification` | 见「澄清这一题」 |
+| `synthesize` | `sdlc-in:start_standard_doc` | 不等草稿 |
+| `publish` | `sdlc-in:publish_standard` | 见「发布」 |
+| `export` | `sdlc-out:export_standard` | 见「导出定稿」 |
+| `handoff` | `sdlc-out:handoff_to_developer` | 见「交给开发」 |
+
+## 进入哪一步
+
+按下面顺序判断，命中一条就停：
+
+1. 没写子命令，也没给迭代名：按「给用户看的命令表」的顺序回复：开场白、命令表、表后内容、「没写子命令」那一句。不要一上来只问迭代名，不要问「想做哪一步」。
+2. 子命令是 `new`：按「新建迭代」。
+3. 子命令是 `source`：直接按「看原文」，不用先查状态。上一轮刚给过「导入成功」或「quality_ready」，用户回「要」「存到本地」「给我 md」之类，也按「看原文」，不要让用户再发 `source`。
+4. 其他子命令缺迭代名：只说「缺迭代名」那一句。
+5. 只给了迭代名、没有子命令：先 `sdlc-in:get_iteration_status`，按下表的 `step` 继续。
+6. 点了子命令：做那一步。动作与需求的 `step` 对不上时，不重发动作，先 `sdlc-in:get_iteration_status`，按下表的 `step` 说话。例如停在 `importing` 时重发 `import`，不再调 `sdlc-in:import_requirement`，改说「importing」那一句；已 `published` 的需求收到 `quality` 或 `synthesize`，按状态说话，不发起。
+
+| `step` | 做什么 |
+|---|---|
+| `new` | 按「新建迭代」 |
+| `importing` | 本轮刚发起导入的，见「等导入」；不是本轮发起的，说「importing」那一句，不轮询 |
+| `import_failed` | 停下。说「import_failed」那一句，下一行按「导入成功之后」第 2 条的写法给平台链接（文字改成「打开产物平台上的这个需求」）。不要原样念 `message`，不要让用户在对话里重发来源 |
+| `quality_ready` | 按「导入成功之后」给，用「quality_ready」那一句。不要自己开跑 |
+| `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
+| `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 原样给用户看。用户说「采纳质检」或发 `adopt` 才调用 `sdlc-in:adopt_quality_draft` |
+| `clarify` | 只展示 `nextQuestion` 这一题，按「澄清这一题」展示，然后等用户 |
+| `synthesize_ready` | 说「synthesize_ready」那一句 |
+| `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给用户核对。用户说「发布标准文档」或发 `publish` 才调用 `sdlc-in:publish_standard`。不要改这篇草稿 |
+| `published` | 说「published」那一句 |
+| `changed` | 说「changed」那一句，然后停下 |
 
 ## 新建迭代
 
-入口是 `/sdlc-platform new`。用户的整条消息就是这一句、后面没有迭代名：不要调用工具，也不要先问任何一项。禁止先说「先给我迭代名」或「等迭代名到了再问」。回复分成两段，顺序不能反。
+**整条消息只有 `/sdlc-platform new`、后面没有迭代名**：不要调用工具，也不要先问任何一项。禁止先说「先给我迭代名」或「等迭代名到了再问」。回复分成两段，顺序不能反。
 
 先写「对用户怎么说」里「new 且没给迭代名」那一句，一个字不要改。
 
@@ -113,41 +117,60 @@ metadata:
 来源：https://example.feishu.cn/wiki/……
 ```
 
-已经给了其中几样、还缺的：只问缺的那一项。四样齐了立刻 `sdlc-in:import_requirement`，`project_name` 传项目名称。导入成功后说「导入成功」那一句，把四项填进去，不要连着质检、采纳或发布。状态里 `projectName` 已有就沿用这个值，不要再问。项目名称为空或迭代还不存在才问。这和 `step` 为 `new` 是同一条。这个迭代名已经有卡：不要再建，改按那张卡的 `step` 继续。
+**已经给了其中几样、还缺的**：不要一项一项追问，一次把缺的全部说清。给了迭代名就先 `sdlc-in:get_iteration_status`：迭代下已有需求按「这个迭代已经建过」；`projectName` 已有就算已给。然后回复两段：
 
-## 进入哪一步
+1. 「new 缺项」那一句，{已给}写用户给了的项和值，{缺项}列出全部缺的项。
+2. 三个反引号围住的五行代码块，格式同上。用户给了的项填用户的值，原样不改；缺的项填示例值（迭代名：v1.0-登录，项目名称：某某项目，需求名：登录页改版，来源：https://example.feishu.cn/wiki/……）。
 
-先看子命令或中文命令（命令速查）。点了就做那一步。`source` 不看 `step`，直接按「看原文」做，不用先查状态。其他子命令的动作与卡的 `step` 对不上时，不重发动作，按 `step` 对应那一步走：卡在 `importing`，重发 `import` 不再调 `sdlc-in:import_requirement`，改说「importing」对应话术；已 `published` 的卡收到 `quality` 或 `synthesize`，先 `sdlc-in:get_iteration_status`，按状态说话，不发起。没点名，但给了迭代名，就先 `sdlc-in:get_iteration_status`。两样都没有，先列出命令，并说「没写子命令」那一句。
+不要自己补默认值凑四项，示例值只放在代码块里给用户改。
 
-| `step` | 做什么 |
-|---|---|
-| `new` | 按新建。整条消息只有 `new`：先说「new 且没给迭代名」那一句，再给「新建迭代」里的多行代码块。不要先问迭代名，不要把四项并成一行。`new` 后已经写了迭代名、还缺别的：只问缺的那一项。`projectName` 已有则沿用。四样都在就立刻导入，成功后说「导入成功」那一句。需求名不要照抄迭代名 |
-| `importing` | 见下方「等导入」 |
-| `import_failed` | 停下。说「import_failed」那一句，不要原样念 `message` |
-| `quality_ready` | 说「quality_ready」那一句。不要自己开跑 |
-| `quality_running` / `synthesize_running` | 说表里对应那一句。不要在对话里等，不要念任务号或英文状态 |
-| `adopt` | 先说「adopt」那一句，再把 `qualityDraftMarkdown` 给用户看。用户说「采纳质检」或发 `adopt` 才调用 `sdlc-in:adopt_quality_draft` |
-| `clarify` | 只展示 `nextQuestion` 这一题，展示按「对用户怎么说」clarify 句，然后等用户。题干前写需求域（`theme`）和类型（`levelLabel`），有内容才写，分别写成「需求域：…」「类型：…」。题干下面原样带上原文摘引（`quote`），空的不写。不写出处。图片（`images`）有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。推荐项只标注「推荐」，不要替用户选、不要替用户打字。用户附了图片或原话指向图片时，按「澄清这一题」把图里的有效信息写进答复，这不算替用户打字 |
-| `synthesize_ready` | 说「synthesize_ready」那一句 |
-| `publish` | 先说「publish」那一句，再把 `standardDraftMarkdown` 原样给用户核对。用户说「发布标准文档」或发 `publish` 才调用 `sdlc-in:publish_standard`。不要改这篇草稿 |
-| `published` | 说「published」那一句 |
-| `changed` | 说「changed」那一句，然后停下 |
+**四样齐了，先检查再导入**：下面任一条命中，都不调 `sdlc-in:import_requirement`，一次把命中的问题全说出来，再给五行代码块（没问题的项填用户的值，有问题的项填示例值）：
 
-用户发的是 `new`，但这张卡其实已经在：改走上表，不要再建一张。
+- 需求名和迭代名相同：去掉首尾空格、忽略中间空格和大小写后相同，就算相同。说「需求名同迭代名」那一句。
+- 某项还是模板示例：项目名称是「某某项目」，需求名是「登录页改版」，来源含 `example.feishu.cn`，或任一项含「……」「......」。说「还是示例」那一句，{示例项}列出这些项。
+
+两条都命中时两句都说，只给一个代码块。查状态之后也一定要回复，不能只调工具不说话。
+
+**检查通过**：立刻 `sdlc-in:import_requirement`，`project_name` 传项目名称，然后按「等导入」。导入成功后按「导入成功之后」给，不要连着质检、采纳或发布。需求名不要照抄迭代名。
+
+**项目名称**：状态里 `projectName` 已有就沿用，不要再问。项目名称为空或迭代还不存在才问。
+
+**这个迭代已经建过**（迭代下已有需求）：不要再建，也不做导入前检查。先说「迭代已存在」那一句，再按它的 `step` 继续。
 
 ## 等导入
 
-`sdlc-in:import_requirement` 返回后开始计时，反复调用 `sdlc-in:get_iteration_status`，累计不超过 30 秒。
+只在本轮刚调用 `sdlc-in:import_requirement` 后才进入。返回后开始计时，反复调用 `sdlc-in:get_iteration_status`，累计不超过 30 秒。
 
-- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。说「导入成功」那一句，把四项填进去。不要调用 `sdlc-in:start_quality_check`。
-- `import_failed`，或当前任务已是失败/取消：停下，说「import_failed」那一句。
+- `step` 离开 `importing` 和 `import_failed`，并且原文块已经在（`quality_ready` 或更后）：成功。按「导入成功之后」给。不要调用 `sdlc-in:start_quality_check`。
+- `import_failed`，或当前任务已是失败/取消：停下，按上表 `import_failed` 那一行做。
 - 满 30 秒仍是 `importing`：对话里不再等。说「importing 满 30 秒」那两句。不要说「这一轮已等够」「先停在这里」。
 
 质检和标准文档合成发起后都不要等。发起成功后分别说「quality 已发起」或「synthesize 已发起」那一句。不要复述 `taskId`、`taskStatus`。
 
+### 导入成功之后
+
+依次给：
+
+1. 「导入成功」那一句，四项填进去（查状态落到 `quality_ready` 时用「quality_ready」那一句）。
+2. 平台原文链接，单独一行：`[在产物平台查看原始需求](<平台地址>/reqs/{requirementId}?tab=origin)`。平台地址取环境变量 `SDLC_PLATFORM_URL`，去掉末尾的 `/`；`requirementId` 用 `sdlc-in:import_requirement` 或 `sdlc-in:get_iteration_status` 返回的。取不到平台地址就不给这一行，不要编地址。
+
+这一轮不要自己调 `sdlc-in:get_source`。用户回「要」「存到本地」「给我 md」之类，直接按「看原文」做。
+
 ## 澄清这一题
 
-展示当前题时，先写需求域和类型。`theme` 有内容才写，写成「需求域：…」；`levelLabel` 有内容才写，写成「类型：…」。空的不写。题干下面原样带上原文摘引。`quote` 有内容才写，写成「原文摘引：…」，不要改写、不要摘要。空的不写。不写出处。图片有内容才列在摘引下面，每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。空的不写。
+### 怎么展示
+
+按这个顺序，空的项整行不写：
+
+1. `theme` 写成「需求域：…」；`levelLabel` 写成「类型：…」。
+2. 题干。
+3. `quote` 写成「原文摘引：…」，原样，不要改写、不要摘要。不写出处。
+4. `images` 每张单独一行，只写原图片链接 `url` 原样。不要写图注，不要写图片描述，不要用 Markdown 图片。
+5. 选项。推荐项只标注「推荐」，不要替用户选、不要替用户打字。
+
+最后说「clarify」那一句，等用户。
+
+### 怎么提交
 
 `sdlc-in:submit_clarification` 的 `action` 只能是 `option`、`text`、`reject`、`defer` 之一，而且必须是用户刚刚说的：
 
@@ -159,50 +182,94 @@ metadata:
 | 驳回 | `reject` | `note` 必填。这句话不进定稿 |
 | 挂起 | `defer` | 可带 `note` |
 
-用户附了图片，或原话指向图片（如「前三个在图里」「见图」）时：产物平台只存文字，澄清页没有展示图片的地方。提交前先读图。`text` 先留用户的原话，再写从图里读到的、能回答这题的内容；选了选项再补图时，这些内容写进 `extra`。不要只提交「见图」「在图里」。只写图里看得见的事实。图里和原话都没写的，不要编，也不替用户做决定。提交后用一句话告诉用户从图里记下了什么。以后每一题都按这条做。
+用户附了图片，或原话指向图片（如「前三个在图里」「见图」）时：产物平台只存文字，澄清页没有展示图片的地方。提交前先读图。`text` 先留用户的原话，再写从图里读到的、能回答这题的内容；选了选项再补图时，这些内容写进 `extra`。不要只提交「见图」「在图里」。只写图里看得见的事实。图里和原话都没写的，不要编，也不替用户做决定。这不算替用户打字。提交后用一句话告诉用户从图里记下了什么。以后每一题都按这条做。
 
 一次只处置用户正在答的那一题。答完再取下一题，不要连答。
 
 ## 发布
 
-`sdlc-in:publish_standard` 提交的是平台上已有的标准文档草稿，不是你重写的正文。红级挂起不能发布。黄级或蓝级挂起时，工具会拒绝并给出 `pendingAssumptions`：向用户要一句放行理由，放进 `confirm_note` 再发。理由必须是用户写的。
+`sdlc-in:publish_standard` 提交的是平台上已有的标准文档草稿，不是你重写的正文。红级挂起不能发布。黄级或蓝级挂起时，工具会拒绝并给出 `pendingAssumptions`：说「发布前有挂起」那一句，把用户写的理由放进 `confirm_note` 再发。理由必须是用户写的。红级挂起被拒时说「发布前有阻断题挂起」那一句。
 
 ## 看原文
 
-调用 `sdlc-in:get_source`。`ok: false` 时用「对用户怎么说」里「工具返回 ok: false」那句。成功后按 agent 所在的 shell 原样执行返回的 `bashCommand`（bash / zsh / Git Bash）或 `powershellCommand`（Windows PowerShell），不要自己拼路径或改命令；Windows PowerShell 里不要用 `curl`（它是 `Invoke-WebRequest` 的别名）。命令报错就是失败：说「source 下载失败」那句并停下，不要改用写文件工具重写正文。命令最后一行输出的是本地绝对路径。成功后依次给：「source 成功」那句（{version}、{updatedAt} 用返回值）；Markdown 链接，文字「打开原始需求」，地址是命令输出的绝对路径的 `file://` URL（空格和中文要百分号编码，同「交给开发」的写法；Windows 写成 `file:///C:/Users/…`，反斜杠换成 `/`）；再贴返回的 `outline` 作为目录（`outline` 为空就不贴）。不在对话里贴正文、不摘要、不改写，不要写进当前 git 仓库。文件是只读视图，原文以平台为准，用户要改原文就引导到产物平台点「编辑原文」。卡的任何 `step`（含 published、changed）都可以看原文。
+调用 `sdlc-in:get_source`。`ok: false` 时用「工具返回 ok: false」那句。
+
+成功后按 agent 所在的 shell 原样执行返回的 `bashCommand`（bash / zsh / Git Bash）或 `powershellCommand`（Windows PowerShell），不要自己拼路径或改命令；Windows PowerShell 里不要用 `curl`（它是 `Invoke-WebRequest` 的别名）。命令报错就是失败：说「source 下载失败」那句并停下，不要改用写文件工具重写正文。
+
+命令最后一行输出的是本地绝对路径。成功后依次给：
+
+1. 「source 成功」那句（{version}、{updatedAt} 用返回值）。
+2. Markdown 链接，文字「打开原始需求」，地址是该绝对路径的 `file://` URL（写法见「file 链接」）。
+3. 返回的 `outline` 作为目录（`outline` 为空就不贴）。
+
+不在对话里贴正文、不摘要、不改写，不要写进当前 git 仓库。文件是只读视图，原文以平台为准，用户要改原文就引导到产物平台点「编辑原文」。任何 `step`（含 published、changed）都可以看原文。
 
 ## 导出定稿
 
-调用 `sdlc-out:export_standard`。把返回的 `markdown` 贴回对话，并带上卡号和版本。不要写文件。`ok: false` 时什么都不要写。
+调用 `sdlc-out:export_standard`。把返回的 `markdown` 贴回对话，并带上需求编号和版本。不要写文件。`ok: false` 时什么都不要写。
 
 ## 交给开发
 
 调用 `sdlc-out:handoff_to_developer`。`ok: false` 时不要写任何文件。成功后写到**用户主目录**，不要写进当前 git 仓库。路径用工具返回的，前面加上 `~/`，不要改名：
 
 1. 把 `markdown` 写到 `~/` + `markdownPath`。目录没有就建。同一天的同名文件覆盖。
-2. `.platform` 写到 `~/` + `platformPath`。`platformWrite` = `keep-if-same-req`：文件已在，且 JSON 里的 `reqId` 等于返回的 `requirementId`，则一个字都不要改（里面可能有拉取凭据）。文件没有、读不出 JSON、或 `reqId` 是另一张卡，则把 `platformJson` 原样写入。
+2. `.platform` 写到 `~/` + `platformPath`。`platformWrite` = `keep-if-same-req`：文件已在，且 JSON 里的 `reqId` 等于返回的 `requirementId`，则一个字都不要改（里面可能有拉取凭据）。文件没有、读不出 JSON、或 `reqId` 是另一个需求，则把 `platformJson` 原样写入。
 
 写完后按这个顺序交给用户。`copyForDeveloper` 和 `starter` 都不要改写：
 
 1. `docUrl`。这是产物平台上打开标准需求文档的链接。工具没返回 `docUrl` 时，用 `http://<平台地址>/reqs/` 接上 `requirementId`，再接 `?tab=std`。
-2. 本地定稿的打开链接。Markdown 链接，文字是「打开本地定稿」，地址是刚写好的绝对路径的 `file://` URL。空格和中文要百分号编码。不要只写 `~/` 开头的路径。
+2. 本地定稿的打开链接。Markdown 链接，文字是「打开本地定稿」，地址是刚写好的绝对路径的 `file://` URL（写法见「file 链接」）。不要只写 `~/` 开头的路径。
 3. `copyForDeveloper`。与平台「复制给开发」同一段四节文本，原样贴在本地链接和开工句之间。工具没返回这个字段时，按同一模板现拼，平台地址用 `http://<平台地址>`。用户在本机页面上点按钮时，地址栏是什么就写成什么。
 4. `starter` 原句。
 
-## 命令速查
+## file 链接
 
-| 命令 | 调用 |
+本地文件链接一律写成 `file://` + 绝对路径，空格和中文要百分号编码。Windows 写成 `file:///C:/Users/…`，反斜杠换成 `/`。
+
+## 对用户怎么说
+
+对用户说话像客服：用「您」，短句，先说现在到哪了，再说可以做什么。不说教。下面表里的句子照着用，花括号换成这次的内容，其余不要改，也不要再补一句内部状态。
+
+这些只给代理看，不要念给用户：任务编号、`taskId`、`currentTask`、`running`、`queued`、`done`、`failed`、`cancelled`、`step`、`ok`、`status`，以及平台 `message` 的原文。查进度时不说需求编号。需求编号和版本只在看原文、导出定稿、交给开发时说。
+
+对用户不说这些内部说法：卡、卡片、卡号、建卡、有卡（说「迭代」「需求」「需求编号」）；余额、额度、配额、token、模型、接口、服务端、任务（说「平台」「这一步」）；代码块（说「下面这段」「模板」）；md、Markdown（说「文件」「文档」）；MCP、工具、调用、字段、返回值（不提，直接说结果）。
+
+平台 `message` 用来判断步骤，不原样念。失败时把原因说成白话；原因本身已是一句中文时，整理后告诉用户，不要带字段名。{白话原因}按下表换：
+
+| 原因里提到的 | {白话原因} 说成 |
 |---|---|
-| `/sdlc-platform import` | `sdlc-in:import_requirement`，然后按「等导入」 |
-| `/sdlc-platform quality` | `sdlc-in:start_quality_check` |
-| `/sdlc-platform adopt` | `sdlc-in:adopt_quality_draft` |
-| `/sdlc-platform clarify` | `sdlc-in:submit_clarification` |
-| `/sdlc-platform synthesize` | `sdlc-in:start_standard_doc` |
-| `/sdlc-platform publish` | `sdlc-in:publish_standard` |
-| `/sdlc-platform export` | `sdlc-out:export_standard` |
-| `/sdlc-platform handoff` | `sdlc-out:handoff_to_developer`，写到用户主目录，并给出平台链接和本地定稿链接 |
-| `/sdlc-platform status` | 只调用 `sdlc-in:get_iteration_status` |
-| `/sdlc-platform source` | 只调用 `sdlc-in:get_source`，再原样执行返回的下载命令 |
-| `/sdlc-platform new` | 按「新建迭代」 |
+| 余额、额度、配额、欠费、限流、模型、token、AI 服务 | 平台这边暂时处理不了，请稍后再试。 |
+| 飞书、无权限、403、找不到文档、404 | 平台读不到这篇飞书文档，可能是链接不对，或者文档没开放给平台。 |
+| 超时、连接失败、网络 | 平台暂时连不上，请稍后再试。 |
+| 其他 | 用一句不带术语的话说清哪一步没成功；说不清就写「平台这边出了点问题」。 |
 
-对用户说的话只使用「对用户怎么说」。不要把工具返回的 `status`、`taskId`、`message` 念出来。
+| 场合 | 对用户说 |
+|---|---|
+| 开场白 | 产物平台帮您把原始需求经过质检和澄清，变成可直接交给开发的标准需求文档。 |
+| 没写子命令 | 建议从第 1 步「新建迭代」开始，按表中步骤依次执行。过程中可随时输入 `/sdlc-platform status 迭代名` 查看当前进度和下一步。 |
+| new 且没给迭代名 | 新建迭代需要一次给齐迭代名、项目名称、需求名、来源。来源可以填飞书链接，也可以直接把需求正文贴过来。请把下面这段模板改成这次的内容，一次发回来就行。需求名不要和迭代名写成同一个。 |
+| 迭代已存在 | 迭代「{迭代名}」之前已经建过了，这次不用再新建，我按它现在的进度接着说。 |
+| 需求名同迭代名 | 需求名和迭代名写成一样了，需求名要写这次具体做什么，例如「登录页改版」。请改一下下面这段里的需求名，再发回来。 |
+| 还是示例 | {示例项}还是模板里的示例，请改成这次的实际内容。来源可以填飞书链接，也可以直接把需求正文贴过来。 |
+| 缺迭代名 | 请把迭代名发我，例如 v1.0-登录。 |
+| new 缺项 | 已经收到{已给}，还缺{缺项}。来源可以填飞书链接，也可以直接把需求正文贴过来。请把下面这段里缺的几项改成这次的内容，一次发回来就行。需求名不要和迭代名写成同一个。 |
+| 导入成功 | 原文已经导入到产物平台了。迭代名是{迭代名}，项目是{项目名称}，需求是{需求名}，来源是{来源}。建议您先到产物平台上核对一下导入的原始需求。需要在本地看的话，跟我说一声，我直接把原文存成文件给您；确认没问题也可以让我开始质检。 |
+| importing（不是刚发起导入查到的） | 原文还在导入中。稍后可以再让我看一下，也可以到产物平台上看。 |
+| importing 满 30 秒 | 原文还在导入，大概还要 10 分钟，请您耐心等一下。稍后可以用同一个迭代名让我再看一下，也可以直接到产物平台上看。 |
+| import_failed | 原文没有导入成功，请到产物平台上点「重试导入」再试一次。 |
+| quality_ready | 原文已经导入到产物平台了。建议您先到产物平台上核对一下导入的原始需求。需要在本地看的话，跟我说一声，我直接把原文存成文件给您；确认没问题也可以让我开始质检。 |
+| quality 已发起 | 质检已经开始了，结果还要等一会儿。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| quality_running | 质检还在进行，结果还没出来。您可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| adopt | 质检结果出来了，请看下面这篇文档。确认要采纳的话，跟我说「采纳质检」。 |
+| clarify | 请您答复这一题。 |
+| synthesize_ready | 恭喜🎉，需求澄清都处理完了。您可以到产物平台上查看和修改已有答复。需要的话，我帮您生成标准文档。 |
+| synthesize 已发起，或 synthesize_running | 标准文档正在生成，稿子还没出来。可以过一会儿再让我看一下进度，也可以先到产物平台上看。 |
+| publish | 标准文档草稿好了，请核对下面这篇。确认要发布的话，跟我说「发布标准文档」。 |
+| 发布前有挂起 | 还有{n}道澄清题挂起没有答复。确认要先发布的话，请用一句话告诉我为什么可以先发布，我会一起记到平台上。 |
+| 发布前有阻断题挂起 | 还有{n}道必须答复的澄清题挂起着，这种情况不能发布。请先到产物平台上答复或驳回这几题，再让我发布。 |
+| 发布检查没过 | 标准文档草稿还有几处没通过平台检查，暂时不能发布。没通过的地方列在下面，您可以到产物平台上看一下。 |
+| published | 标准文档已经发布。您可以让我导出定稿，也可以交给开发。 |
+| changed | 这个需求已经在变更流程里，我这边先不继续往下走。请到产物平台上处理。 |
+| source 成功 | 原始需求已经存到本地了，第{version}版，{updatedAt}更新。需要修改的话，请到产物平台上点「编辑原文」。 |
+| source 下载失败 | 这一步没有完成。原文文件没有下载下来，请稍后再试，也可以直接到产物平台上看。 |
+| 工具返回 ok: false | 这一步没有完成。{白话原因} |
