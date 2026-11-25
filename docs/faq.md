@@ -37,7 +37,7 @@ A：每个 skill 对外部依赖都声明了降级路径，缺了不炸，但能
 | Pillow | sdlc-ui-visual compare.py | 脚本报错并提示 `pip3 install Pillow`；像素比对不可用 |
 | Playwright / Node / npm | sdlc-test spec 回归档 | 回归轮降级为 agent 逐用例执行，失去 runner 加速 |
 | git | sdlc-release-check（diff）、sdlc-guardrails（pre-commit）、sdlc-handoff（漂移校验/改动清单） | release-check 无法生成 diff；pre-commit 兜底不可用；handoff 退化为文件时间清单，交接本身不受影响 |
-| 平台环境（`SDLC_PLATFORM_URL` / `SDLC_PLATFORM_REPO`） | sdlc-sync | 平台不可用时本地工作流完整可用（降级 = 现状）；连接拒绝先确认平台已启动 |
+| 平台环境（`SDLC_PLATFORM_URL` / `SDLC_PLATFORM_REPO`） | sdlc-sync | 平台不可用时本地工作流完整可用（降级 = 现状）；连接拒绝先回 sdlc-sync 第 0 道自检核对实际地址（静默回退缺省已被拦截），属本地联调才需启动平台 |
 | Agent 工具（子代理） | sdlc-gate / sdlc-doubt | 核心机制依赖，缺失则该 skill 不可用 |
 
 **Q：和任务框架（如 Trellis）是什么关系？必须配合使用吗？**

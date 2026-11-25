@@ -1,6 +1,6 @@
 ---
 name: sdlc-sync
-description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pulls platform digest/audit/answers plus the published standard doc back into local intake files (pull-artifacts), aligns the local dev workspace with finalized platform artifacts - standard doc, design, cases, gate verdict projection (pull-dev-bundle) - and pushes local artifacts as fallback channels (push-artifacts / pull-answers / publish / push-cases). The platform is the single source of truth; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、sdlc-sync. 用法：/sdlc-sync submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases|pull-dev-bundle 需求名 [only:standard|design|cases|gate|intake]"
+description: "Syncs SDLC artifacts between local markdown workspace and the authoritative web platform: pull-artifacts (platform digest/audit/answers plus published standard back into local intake), pull-dev-bundle (finalized standard/design/cases/gate projected into the dev workspace), fallback pushes (push-artifacts / pull-answers / publish / push-cases). The platform is the single source of truth; local markdown is the process workspace / offline fallback. Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、绑定需求卡、配平台地址、换绑、sdlc-sync. 用法：/sdlc-sync bind 需求名 REQ-ID [--platform URL] | submit|push-artifacts|pull-answers|pull-artifacts|publish|push-cases|pull-dev-bundle 需求名 [only:standard|design|cases|gate|intake]"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -21,11 +21,11 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 
 ## 前置
 
-- 平台地址：环境变量 `SDLC_PLATFORM_URL`，缺省 `http://127.0.0.1:8888`（与 server config.py / web vite 代理一致）
+- 平台地址：取址链 **仓库级 `sdlc/.platform` 的 `platformUrl` > 环境变量 `SDLC_PLATFORM_URL` > 缺省 `http://127.0.0.1:8888`**（与 server config.py / web vite 代理一致）；所有发平台请求的子命令执行前先过「平台地址自检」第 0 道（见下节）
 - 写令牌：环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配）——所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空则省略该头，off 档平台不校验）
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
-- 需求对应关系与拉取凭据记录在 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)），首次 push 后写入
-- 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先确认服务已启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
+- 平台绑定**两级文件**：仓库级 `sdlc/.platform`（JSON：`{"platformUrl":"https://…"}`——环境级地址，建议提交 git，同事 clone 即零配置）与卡级 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——需求对应关系与拉取凭据，pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)）；由 `bind` 子命令或首次 push 后写入
+- 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先回「平台地址自检」核对本次实际地址，属平台开发者本地联调才需启动服务：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
 - 飞书快照/媒体读取：`lark-cli`（权限不足时降级为本地已有原文，不阻断）
 - 锚点附加（可选）：`python3` + sdlc-intent 的 `resolve_anchors.py`（同集合安装时；单独安装时跳过）
 
@@ -41,9 +41,33 @@ description: "Syncs SDLC artifacts between local markdown workspace and the auth
 | 「拉一下 PM 的答复 / 看看平台上答了没」 | pull-answers |
 | 「澄清完了，发布标准需求文档」 | publish |
 | 「把用例登记到平台 / 用例上平台」 | push-cases |
+| 「绑定需求卡 / 配平台地址 / 换绑」 | bind |
 | 「新需求建个卡片」 | submit |
 
+## 平台地址自检（第 0 道，所有发平台请求的子命令共用）
+
+执行任何子命令（bind 除外——它纯本地、不发请求）前，按取址链解析平台地址：
+
+1. 读仓库根 `sdlc/.platform` 的 `platformUrl`——存在即为准；与 `SDLC_PLATFORM_URL` 指向不同时向用户报告一句「以 sdlc/.platform 为准（env 指向 <env 地址/>）」
+2. 无该文件 → 用环境变量 `SDLC_PLATFORM_URL`
+3. 两者皆无 → 将落到缺省 `http://127.0.0.1:8888`（本机开发实例）：**立即中断，不发起任何网络请求**（含探测性 curl），输出修复指引（三选一）：
+   - `/sdlc-sync bind <需求名> <REQ-ID> --platform https://<平台地址>`（推荐：写入仓库级 `sdlc/.platform`，一次配置仓库内永久生效）
+   - macOS：终端执行 `echo 'export SDLC_PLATFORM_URL=https://<平台地址>' >> ~/.zshrc`，然后**从新终端重启 AI 工具**（已开着的会话读不到新变量——export 只对启动晚于它的进程生效）
+   - Windows：PowerShell 执行 `[Environment]::SetEnvironmentVariable('SDLC_PLATFORM_URL','https://<平台地址>','User')`，然后**重启 AI 工具**
+
+   用户显式说明要连本机开发实例时可继续，但缺省地址**不得写入** `sdlc/.platform`（防错误固化）。
+
+**固化（写时机）**：地址来源为环境变量或用户本轮显式给出、且首个平台请求返回非「连接拒绝」、而仓库级 `sdlc/.platform` 尚不存在 → 顺手写入 `{"platformUrl":"<实际地址>"}` 并向用户报告；文件已存在 → 以文件为准，不覆盖；解析出的地址为缺省 `http://127.0.0.1:8888`（含用户显式给出）时同样不固化——缺省地址永远不落仓库级文件（与第 3 条禁写一致）。
+
 ## 子命令规范
+
+### 0. bind —— 绑定需求卡与平台地址（本地入口，不发平台请求）
+
+`/sdlc-sync bind <需求名> <REQ-ID> [--platform <URL>]`，落两级文件（纯本地写，不校验 reqId 是否已在平台建卡）：
+
+1. 仓库级 `sdlc/.platform`：`--platform` 给出且与现有 `platformUrl` 不同 → 列新旧值，用户确认后覆盖；与现有一致或文件不存在 → 直接写入；`--platform` 缺省 → 文件存在不动、不存在跳过（留给取址链回退 env，或第 0 道自检拦截）
+2. 卡级 `sdlc/<需求名>/.platform`：不存在 → 创建 `{"reqId":"<REQ-ID>"}`；已绑定同一 reqId → **原文件整体保留（含 pulled 凭据）**；reqId 不同 → 换绑警告（pulled 凭据属旧卡，将失效）经用户确认后覆盖为 `{"reqId":"<REQ-ID>"}`（凭据清空重来）
+3. 完成后打印两文件最终内容 + 后续命令示例（`/sdlc-sync pull-dev-bundle <需求名> only:standard`）
 
 ### 1. submit —— 平台建卡（流程入口）
 
@@ -156,7 +180,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 把平台定稿产物投影到本地 `sdlc/<需求名>/`，供本地开发/测试按既有约定消费（guard_dev 开发入口、sdlc-test 关卡读到的即平台权威口径）。区块合并算法、gate 投影细节、凭据结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)。
 
-**前置检查链**（逐道过）：
+**前置检查链**（逐道过；第 0 道平台地址自检见上文，通过后才进入本链）：
 
 1. 定位 `sdlc/<需求名>/`；目录名歧义（多个前缀匹配）→ 列候选让用户选，不猜
 2. `GET /api/requirements/<reqId>` 看卡状态：`submitted/reviewing/clarifying` → 停（发布后才有开发包）；**`changed` → 默认停**，逐项列明中间态风险（增量合并已重写 FR 追踪表与 digest，design/issues 可能仍是旧版——拉到的是「新 FR + 旧设计 + 旧 issues」的拼接），用户确认照拉时**强制 only: 单产物**；`published` → 继续
@@ -189,7 +213,7 @@ changed 卡（`card.status == "changed"`）时提示：「该卡处于变更中�
 
 | 症状 | 处置 |
 |---|---|
-| 连接拒绝 | 平台未启动：`$SDLC_PLATFORM_REPO/scripts/dev.sh` |
+| 连接拒绝 | 先核对**本次实际使用的平台地址**（静默回退缺省已被第 0 道拦截——env/仓库级文件指向过期地址时回其修复指引；显式连本机时通常是服务未启动）；确认地址无误、属平台开发者本地联调，才需要启动服务：`$SDLC_PLATFORM_REPO/scripts/dev.sh` |
 | 404 需求不存在 | `.platform` 里 reqId 错误或卡片被删，向用户确认 |
 | 409 版本冲突 | 展示 conflicts 明细，等用户裁决 |
 | 401 | 平台写保护：先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确（非 GET 请求须带 `-H "X-Token: …"`）；确认无误仍 401 再向用户要 token 并 export 后重试 |

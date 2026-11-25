@@ -30,6 +30,7 @@
 - eval-l（`eval-l-standard-doc-noise-and-scope.md`，官方 JSON + 双 fixture + `--json`）：机检误报修复与范围纪律——clean 版断言体检段（`体检.P18、P19、P30` 续列 / `体检.P01~P30` 区间）不计幽灵、1.2 范围清单不被当错挂、引述计数不误报、无本期不做章；bad 版断言裸 `P21` 幽灵、含「或」的「五类 vs 4 条」真计数错误仍命中、本期不做章 >5% 报 WARN；另验 `--json` 四键恒定与空 answers 时 stdout 纯净；判负含误报、漏报、JSON 混入文本
 - eval-m（`eval-m-self-contained-failure-deferred.md`，官方 JSON + 双 fixture）：三盲区补盲正反双向——clean 版自包含声明一致（含「原型…报废」反向语境白名单不误报）、失败边行文进 WARN 语义档清单（inline 形态锚，分档后不 FAIL 拦截）、挂起项有遗留假设投影；bad 版自包含矛盾两处（页面示例为基准+详见附件）、`→ 生成失败` 行文无条件进语义档清单、挂起 P05 未投影（deferred-link WARN 与 p-coverage 连带 FAIL 并存）；判负含任一项失明或 clean 误报（failure-trigger 报 FAIL 即误报）
 - eval-n（`eval-n-failure-trigger-tiering.md`，官方 JSON + fixture）：failure-trigger 载体迁移 flow-viz 后的判定回归——state 图同义反复/空 label 边确定性 FAIL、data.edges 工单（kind=state/inline）、flow 图失败分支不误判、raw-json 围栏豁免、flowviz-carrier 拦截 mermaid 残留/坏 JSON/未闭合围栏；判负含确定性档误报漏报、载体拦截失明
+- eval-o（`eval-o-platform-url-guard.md`，官方 JSON）：平台地址自检第 0 道与 bind 绑定——env 为空且无仓库级 sdlc/.platform 时必须中断零网络请求（含探测性 curl）、修复指引三选一（bind/macOS zshrc/Windows SetEnvironmentVariable）、显式连本机不固化缺省地址、bind 同卡幂等保留凭据/换绑警告确认后覆盖清凭据、仓库级文件优先于 env；判负含静默回退 127.0.0.1:8888、缺省地址固化、覆盖丢凭据
 
 **补充人工场景（一行清单，无独立文件）**
 

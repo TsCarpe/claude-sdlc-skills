@@ -2,6 +2,14 @@
 
 ## 未发布
 
+sdlc-sync 平台地址防呆批（开发侧时序坑：AI 工具先于 export 启动 → 环境变量丢失 → 请求静默回退 127.0.0.1:8888，业务开发机表现为连接拒绝且提示语指向本机 dev.sh）：
+
+- **skills/sdlc-sync/SKILL.md**：①新增「平台地址自检（第 0 道，所有子命令共用）」——取址链 仓库级 `sdlc/.platform` 的 `platformUrl` > `SDLC_PLATFORM_URL` > 缺省；解析到缺省即硬中断、零网络请求，输出修复三选一（bind --platform（推荐）/ macOS 写 ~/.zshrc / Windows SetEnvironmentVariable）并带「重启 AI 工具」口径；显式连本机可继续但不固化缺省地址；环境变量/显式给址且首个请求非连接拒绝、仓库级文件不存在时顺手固化并报告；②新增 `### 0. bind` 子命令——纯本地两级绑定（仓库级地址 + 卡级 reqId），同卡幂等保留 pulled 凭据、换绑警告经确认覆盖并清凭据、`--platform` 缺省不创建仓库级文件；③前置节改两级绑定文件说明（仓库级建议提交 git，同事 clone 即零配置）；④pull-dev-bundle 前置检查链头部指回第 0 道；⑤失败处理「连接拒绝」行改「先核对本次实际地址（回退缺省为最常见成因）再谈启动服务」；⑥description 用法串与触发词补 bind
+- **skills/sdlc-sync/evals/eval-o-platform-url-guard.md**（新增，官方 JSON + 判负红线）+ README 索引登记：中断零请求（含探测性 curl）、修复指引、固化与幂等语义、仓库级文件优先于 env
+- **复查修正（对照官方 Skill 编写最佳实践复查：2 矛盾 + 2 措辞 + 全仓扫描补 1 处）**：SKILL.md 前置节「平台本体」行残留「先确认服务已启动」旧口径，对齐失败处理表（术语一致）；固化段补缺省地址排除（解析出地址为缺省（含显式给出）不固化——与缺省禁写禁令、eval-o 判负红线三方闭合）；第 0 道标题改「所有发平台请求的子命令共用」（bind 例外显式化）；失败处理表「连接拒绝」行成因按拦截后可达路径修正（静默回退缺省已不可能）；docs/faq.md 环境表连接拒绝口径同步对齐（全仓 grep 残留）
+- **description 瘦身（IDE 字节级校验飘红：1082 字节 > 1024 上限，字符数 884 本身达标）**：英文能力子句压缩为子命令主谓式——pull-artifacts / pull-dev-bundle / fallback pushes 三段式（1082→979 字节、781 字符），中文触发词与用法串全量保留，中英混合句式不变
+- **sdlc-platform-server（同批）**：vendor skills/sdlc-sync/SKILL.md 逐字节同步（复查修正后版本）
+
 server 仓功能改动回流（对齐检查发现三处漂移，本批回流其中两处；vendor 镜像机制断链修复——server 侧改动未经上游回流直接改镜像，下次下行同步会覆盖丢失）：
 
 - **skills/sdlc-sync/SKILL.md**（回流 server d4c1404，飞书用户体系二期 §12）：前置节补写令牌条款——环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配），所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空省略该头，off 档平台不校验）；故障处置表 401 行改「先核对 `SDLC_WRITE_TOKEN` 是否已设置且正确，确认无误仍 401 再向用户要 token 并 export 后重试」（原版本只说向用户要 token，不引导先查环境变量）
