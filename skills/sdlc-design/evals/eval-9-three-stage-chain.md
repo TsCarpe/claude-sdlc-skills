@@ -9,7 +9,7 @@
     "sdlc/award-works/intake/digest-<日期>.md（头部：风险分级：A（已拍板）；区块 8 假设清单「假设」类 0 条）",
     "sdlc/award-works/intake/audit-<日期>.md（🔴 1 条，已在 prd §6.5 承接）",
     "sdlc/award-works/intake/pm-checklist-<日期>.md（全部已答复）",
-    "代码库现状：需求含「活动结束后自动流转作品状态」，落点是单一调度类、无接口侧注册/移除联动；存量勘察时发现「驳回原因是否必填」digest 与 prd 均无口径，且阻塞审核写接口",
+    "代码库现状：需求含「活动结束后自动流转作品状态」，落点是单一调度类、无接口侧注册/移除联动；存量勘察时发现「驳回原因是否必填」digest 与 prd 均无口径，且阻塞审核写接口；存量无同类审核接口可参照",
     "sdlc/env/dev.md 不存在；项目根无构建文件"
   ],
   "expected_behavior": [

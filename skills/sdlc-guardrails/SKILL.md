@@ -1,9 +1,9 @@
 ---
 name: sdlc-guardrails
-description: "AI 每写一个文件，就按项目里定好的规则自动检查一遍，写了不该写的（比如禁用的写法、漏掉必须有的代码）当场拦下，不靠人记、不靠事后评审。规则由各项目自己写在 .claude/guardrails.yaml，检查程序全局装一份就行；提交代码时还会再查一次，也能一次性扫出老代码里已有的违规。Deterministic guardrail engine that enforces \"write-it-and-it's-wrong\" red-lines at write time - a PostToolUse hook runs engine/check.py on every Write/Edit and blocks violations per project-defined guardrails.yaml rules (forbid / require / require_if / count_ge), with pre-commit fallback and --check baseline scanning for legacy code. Engine is mechanism (one global copy), rules are content (per project). Use when 接入或配置红线拦截、给项目编写 guardrails 规则、排查 hook 拦截了或没拦、扫描存量违规基线，或用户说 guardrails、红线引擎、红线拦截、接入红线、规则文件、红线扫描、baseline scan."
+description: "AI 每写一个文件，就按项目里定好的规则自动检查一遍，写了不该写的（比如禁用的写法、漏掉必须有的代码）当场拦下，不靠人记、不靠事后评审。规则由各项目自己写在 .claude/guardrails.yaml，检查程序全局装一份就行；提交代码时还会再查一次，也能一次性扫出老代码里已有的违规。Deterministic guardrail engine that enforces \"write-it-and-it's-wrong\" red-lines at write time - a PostToolUse hook runs engine/check.py on every Write/Edit and blocks violations per project-defined guardrails.yaml rules (forbid / require / require_if / count_ge), with pre-commit fallback and --check baseline scanning for legacy code. Use when 接入或配置红线拦截、给项目编写 guardrails 规则、排查 hook 拦截了或没拦、扫描存量违规基线，或用户说 guardrails、红线引擎、红线拦截、接入红线、规则文件、红线扫描、baseline scan."
 metadata:
   display-name: "SDLC·写入红线拦截"
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # sdlc-guardrails：红线拦截引擎

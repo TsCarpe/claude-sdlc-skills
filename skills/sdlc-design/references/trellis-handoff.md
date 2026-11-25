@@ -25,7 +25,7 @@
 
 轻量链路 design 之后转任务框架执行时**不迁**：parent prd 技术方案区与上下文清单登记 `sdlc/` 下的原路径——sdlc-sync pull-dev-bundle 按该路径对账，迁走即出现两份。与 sdlc-gate 前置输入同口径（三段式按任务系统约定位置、其余按 `sdlc/<需求名>/design/` 定位设计文档）。
 
-需求已接平台（卡级 `sdlc/<需求名>/.platform` 存在，以 sdlc-sync bind / submit 写入的为准）时**一律落 `sdlc/<需求名>/design/design.md`**，三段式链路也一样：平台定稿由 sdlc-sync pull-dev-bundle 只写到该路径并在其上加定稿锚点；parent prd 在输入源锚点条登记该路径为指针。判据误判的方向只是多落 `sdlc/`，无副作用。design 已落在 parent 任务目录、之后才接平台的：首次拉取后以带锚点的那份为需求与契约口径；parent 目录副本不删，改名 `design.local.md` 留档，其中平台定稿没有的内容（§7 切分约束、横切矩阵、H 接受条件）由人决定走平台修订并入，或在切片期作为补充约束登记进上下文清单；不得两份并存各改。
+需求已接平台（判据：卡级 `sdlc/<需求名>/.platform` 存在，以 sdlc-sync bind / submit 写入的为准；或用户说明该需求已在平台建卡 / 发布——sdlc-platform「交给开发」把 `.platform` 写在用户主目录，项目内看不到，以用户说明为准）时**一律落 `sdlc/<需求名>/design/design.md`**，三段式链路也一样：平台定稿由 sdlc-sync pull-dev-bundle 只写到该路径并在其上加定稿锚点；parent prd 在输入源锚点条登记该路径为指针。判据误判的方向只是多落 `sdlc/`，无副作用。design 已落在 parent 任务目录、之后才接平台的：首次拉取后以带锚点的那份为需求与契约口径；parent 目录副本不删，改名 `design.local.md` 留档，其中平台定稿没有的内容（§7 切分约束、横切矩阵、H 接受条件）由人决定走平台修订并入，或在切片期作为补充约束登记进上下文清单；不得两份并存各改。
 
 ## prd.md 结构建议
 
@@ -76,6 +76,8 @@ sdlc-design 产 design.md
 | implement.jsonl（实现上下文） | design.md（按落位规则的原路径，全文）+ 项目规范（`.trellis/spec/` 相关条目）+ 上游 digest |
 | check.jsonl（检查上下文） | design.md §7（实施切分约束 + 横切核验矩阵）+ 项目规范相关条目 |
 
+**谁在何时登记**：拆 subtask 的那个会话，在第一个 subtask 启动前——轻量链路 = gate 放行后建 parent 任务时；三段式链路 = parent 任务已存在，gate 放行后、拆第一个 subtask 时。sdlc-design 不代写清单文件（任务编排归任务框架），只在 design §7.2 等处标明哪些内容须登记。登记的是 design 落位原路径，可以在任务目录之外；任务框架的清单读不到任务目录外路径时（第一个 subtask 的注入为空即为信号）→ 改为在每个 subtask prd 的「上游注入清单」节列这些文件的绝对路径、执行前先读，并在回报里注明。
+
 ## spec 切分规范模板
 
 项目级常驻规范（一次落盘，全部任务自动注入；Trellis 落 `.trellis/spec/` 下，如 `slicing.md`）。**本 skill 只提示落盘，不代写项目文件**；项目已用任务框架而切分规范未落盘时，拆分纪律以 design §7 头部降级声明为准，**回复中给出下述模板全文**供用户粘贴；项目没有任务框架时不贴，只说明接入任务框架时再落：
@@ -93,7 +95,7 @@ sdlc-design 产 design.md
 3. **subtask 只内联 + 裁剪，禁现场设计**：通用上游结论由上下文清单注入（implement.jsonl
    登记上游文件），subtask prd 只内联本切片特有的裁剪/组合结论；发现一半内容是现场设计
    → 停，回 design 补契约后再拆。
-4. **偏差回写阈值**：局部偏差 subtask 内记录即改不回写；影响 ER / 接口契约 / 公共组件 /
+4. **偏差回写阈值**：局部偏差 subtask 内记录即改不回写；影响 ER / 接口契约 / D 表决策 / 公共组件 /
    公共资产的偏差回写 design.md，且仅重审受影响切片。
 5. **存量改动先追调用方**：subtask 改到存量资产时，动代码前先列出触及的存量资产及其
    调用方/消费方，对照 design §3 ⑤——公共资产出现未声明的受影响方即偏差，按第 4 条

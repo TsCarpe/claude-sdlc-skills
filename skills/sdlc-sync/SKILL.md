@@ -3,7 +3,7 @@ name: sdlc-sync
 description: "把需求、设计、用例这些文档在本地和团队平台之间同步：把平台上的需求分析、答复和定稿拉到本地，开发前把本地对齐到平台上的最终版；平台那边走不通时，也能从本地推上去。两边不一致时以平台为准。Syncs SDLC artifacts between local markdown and the authoritative web platform: submit (create the platform card), pull-artifacts, pull-dev-bundle, fallback pushes (push-artifacts / pull-answers / publish / push-cases), and bind (platform address + card reqId). Use when the user wants to 拉取产物到本地 / 同步 digest 到本地 / 拉开发包 / 推送产物到平台 / 发布标准文档 / 用例上平台. 触发词：同步平台、产物上平台、拉取产物、拉回答复、拉开发包、开发包对齐、用例登记、绑定需求卡、配平台地址、换绑、sdlc-sync. 用法：/sdlc-sync <子命令> 需求名 [only:standard|design|cases|gate|intake]；bind 需求名 REQ-ID [--platform URL]"
 metadata:
   display-name: "SDLC·平台产物同步"
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # 产物同步桥（sdlc-sync）
@@ -27,7 +27,7 @@ metadata:
 - 平台地址：取址链 **仓库级 `sdlc/.platform` 的 `platformUrl` > 环境变量 `SDLC_PLATFORM_URL` > 缺省 `http://127.0.0.1:8888`**（与 server config.py / web vite 代理一致）；所有发平台请求的子命令执行前先过「平台地址自检」第 0 道（见下节）
 - 写令牌：环境变量 `SDLC_WRITE_TOKEN`（平台启用写保护时必配）——所有非 GET 的 curl 统一追加 `-H "X-Token: $SDLC_WRITE_TOKEN"`（变量为空则省略该头，off 档平台不校验）
 - 请求方式：一律用 `curl`，payload 写入临时文件后 `-d @file.json`（避免 shell 转义问题）
-- 平台绑定**两级文件**：仓库级 `sdlc/.platform`（JSON：`{"platformUrl":"https://…"}`——环境级地址，建议提交 git，同事 clone 即零配置）与卡级 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——需求对应关系与拉取凭据，pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)）；由 `bind` 子命令或首次 push 后写入
+- 平台绑定**两级文件**：仓库级 `sdlc/.platform`（JSON：`{"platformUrl":"https://…"}`——环境级地址，建议提交 git，同事 clone 即零配置）与卡级 `sdlc/<需求名>/.platform`（JSON：`{"reqId":"REQ-2026-001","pulled":{…}}`——需求对应关系与拉取凭据，pulled 为 pull-artifacts / pull-dev-bundle 共用的各产物版本凭据，结构见 [references/dev-bundle-merge.md](references/dev-bundle-merge.md)）；卡级文件由 `bind` 或 `submit` 子命令写入，仓库级文件另可由「平台地址自检」固化
 - 平台本体与验收脚本在你的平台仓库（环境变量 `SDLC_PLATFORM_REPO` 指向其 checkout；连接拒绝时先回「平台地址自检」核对本次实际地址，属平台开发者本地联调才需启动服务：`$SDLC_PLATFORM_REPO/scripts/dev.sh`）
 - 飞书快照/媒体读取：`lark-cli`（权限不足时降级为本地已有原文，不阻断）
 - 锚点附加（可选）：`python3` + sdlc-intent 的 `resolve_anchors.py`（同集合安装时；单独安装时跳过）

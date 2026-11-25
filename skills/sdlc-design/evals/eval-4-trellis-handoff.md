@@ -17,7 +17,8 @@
     "implement.jsonl 登记条目：design.md（原路径）+ 相关 spec + 上游 digest；check.jsonl 登记条目：design.md §7（拆分纪律+矩阵核验）+ 相关 spec",
     "回复中给出 .trellis/spec/ 切分规范模板全文（五条，含存量改动先追调用方）供粘贴，只提示落盘不代写；未落盘时 design §7 头部降级声明生效",
     "确认点③核对清单四条件完整呈现：契约符合度（发现现场设计 → 停，回 design 补契约）/ 内联注入完整性 / 技术级 AC 可测性 / gate 已放行",
-    "关卡接入（guard_dev 任务 start 拦截、verify 留档校验）引用 playbook §7 接入点表为权威，不自行复述（防双载体）"
+    "关卡接入（guard_dev 任务 start 拦截、verify 留档校验）引用 playbook §7 接入点表为权威，不自行复述（防双载体）",
+    "说明登记时机与归属：gate 放行后建 parent 时、由拆 subtask 的会话登记，设计阶段不代写；并给出框架读不到任务目录外路径时的降级口径（subtask prd 的「上游注入清单」节列绝对路径）"
   ]
 }
 ```

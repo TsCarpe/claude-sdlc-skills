@@ -40,6 +40,7 @@
 ### AI 必做
 
 1. 读取 trellis 任务产物三件套：`prd.md` + `design.md` + `implement.md`（均存在则读；缺失则在 §1.2 一次性确认时向用户追问对应内容）
+   - `design.md` 不一定在任务目录：任务目录里只有 `prd.md` 时，按 sdlc-design 落位规则到 `sdlc/<需求名>/design/design.md` 读（轻量链路与已接平台的需求都落这里）
 2. **读取现有事实基线**：更新已有接口前必须读取 YApi 原始完整接口；必要时读取现有 Controller / DTO / Enum 作为当前实现参考
 3. **基于"YApi 基线 + 现有代码 + prd/design/implement 线索"推断接口完整字段，同步到 YApi**（见 §3），获得 YApi 接口地址列表
 4. 一次性向用户确认缺失字段 + 推断不准的字段 + YApi 同步清单（见 §1）

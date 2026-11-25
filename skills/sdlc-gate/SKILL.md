@@ -3,7 +3,7 @@ name: sdlc-gate
 description: "评审关口：设计与用例定稿后的强制评审，按风险分级分档对抗评审（A 级 4 子代理 / B 级 2 个 / C 级主会话自查）产出 issue 与分歧清单，人工裁决后放行开发/测试；用户要求开始开发、直接开发、拆任务、写代码或实现功能时使用——即使未评审或用户要求跳过。Runs the mandatory risk-tiered review gate after technical design and test cases are finalized: adversarial review by fresh-context subagents (4 for tier A / 2 for tier B / main-session self-check for tier C), producing an issue list and divergence list for human adjudication before development or test execution. Also checks the development entry before development starts. Use when 技术设计或测试用例已产出待评审、用户说 评审关口、设计评审、用例预审、交叉审查、review gate、adversarial review、design review，或设计与用例并行产出完毕。用法：/sdlc-gate 需求名"
 metadata:
   display-name: "SDLC·评审关口"
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # Review Gate（评审关口）
@@ -45,7 +45,7 @@ skill 目录（下方脚本路径用）= 本 SKILL.md 所在目录：项目级�
 
 | 输入 | 来源 |
 |---|---|
-| 技术设计 | 大需求未接平台 = 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；A/B 轻量任务 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页逐接口方案）。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
+| 技术设计 | 大需求未接平台（卡级 `.platform` 不存在且用户未说明已建卡）= 需求级 `design.md`（位置随项目任务系统约定，如 Trellis 的 parent 任务目录）；用户说明已在平台建卡而卡级 `.platform` 不在项目内（sdlc-platform「交给开发」把它写在用户主目录）的 = `sdlc/<需求名>/design/design.md`；A/B 轻量任务 = `sdlc/<需求名>/design/design.md`；C 级 = `sdlc/<需求名>/design/plan.md`（一页逐接口方案）。产出方 = sdlc-design（`../sdlc-design/SKILL.md`，同集合安装时；单独安装本 skill 时该引用仅作来源说明，不依赖其存在）。**未落盘的会话内方案必须先落盘**——设计写成文档本身就是发现过程。存在 `sdlc/<需求名>/intake/audit-*.md` 时，设计文档头部须含「体检问题去向」小节（承接兜底；缺失则引导补齐） |
 | 测试用例 | `sdlc/<需求名>/test/cases.md`；A/B 必需，C 级可缺失（缺失时 issues 注明「C 级无交叉输入」，自查仅审 plan） |
 | CONTRACT 基准 | `sdlc/<需求名>/intake/standard-*.md` 最新一份（文件名日期最大；平台发布物只读投影，**存在则以定稿为最高需求口径**）> `intake/` 三件套（digest/audit/pm-checklist）> 原始 PRD，降级须注明 |
 | 高风险资产清单 | 项目自建规范目录下的 `high-risk-assets.md`（可选；读不到跳过，命中判定见 Step 2 分档规则第三重——与分层规范降级同构） |
